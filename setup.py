@@ -40,10 +40,7 @@ setup(name='speechtools',
                 'speechtools.graph',
                 'speechtools.sql'],
       install_requires=[
-          'sqlalchemy',
-          'textgrid',
           'acousticsim',
-          'py2neo',
           'polyglotdb'
       ],
     cmdclass={'test': PyTest},
