@@ -2,8 +2,6 @@ import sys
 from setuptools import setup
 from setuptools.command.test import test as TestCommand
 
-import speechtools
-
 def readme():
     with open('README.md') as f:
         return f.read()
@@ -21,7 +19,7 @@ class PyTest(TestCommand):
             sys.exit(errcode)
 
 setup(name='speechtools',
-      version=speechtools.__version__,
+      version='0.0.1',
       description='',
       long_description='',
       classifiers=[
