@@ -1,3 +1,5 @@
 pytest
 sphinx>=1.3b3
 numpydoc
+-e git://github.com/vispy/vispy.git#egg=vispy
+-e git://github.com/MontrealCorpusTools/PolyglotDB.git#egg=polyglotdb
