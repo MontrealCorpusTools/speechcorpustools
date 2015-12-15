@@ -16,7 +16,7 @@ praat = r'C:\Users\michael\Documents\Praat\praatcon.exe'
 
 config = CorpusConfig('acoustic', **graph_db)
 
-config.pause_words = ['sil']
+config.reaper_path = r'D:\Dev\Tools\REAPER-master\reaper.exe'
 
 def call_back(*args):
     args = [x for x in args if isinstance(x, str)]

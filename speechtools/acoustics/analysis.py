@@ -48,11 +48,11 @@ def acoustic_analysis(corpus_context):
             path = sf.filepath
 
         analyze_pitch(corpus_context, sf, path)
-        analyze_formants(corpus_context, sf, path)
+        #analyze_formants(corpus_context, sf, path)
         log.info('Acoustic analysis finished!')
         log.debug('Acoustic analysis took: {} seconds'.format(time.time() - log_begin))
 
-
+        break
 
     log.info('Finished acoustic analysis for {} corpus!'.format(corpus_context.corpus_name))
     log.debug('Total time taken: {} seconds'.format(time.time() - initial_begin))

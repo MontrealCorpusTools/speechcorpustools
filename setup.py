@@ -41,7 +41,8 @@ setup(name='speechtools',
                 'speechtools.sql'],
       install_requires=[
           'acousticsim',
-          'polyglotdb'
+          'polyglotdb',
+          'vispy'
       ],
     cmdclass={'test': PyTest},
     extras_require={
