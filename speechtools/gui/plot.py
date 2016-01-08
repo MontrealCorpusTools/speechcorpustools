@@ -12,6 +12,7 @@ from vispy.util.fourier import stft
 from vispy import scene
 from vispy.visuals.image import ImageVisual
 
+
 class SCTAudioCamera(PanZoomCamera):
     def __init__(self, rect=(0, 0, 1, 1), aspect=None, zoom = 'both', pan = 'both', **kwargs):
         super(SCTAudioCamera, self).__init__(rect, aspect, **kwargs)
@@ -333,6 +334,18 @@ class SCTAudioPlotWidget(PlotWidget):
         self.view.camera.set_range(x = (0, 30))
         #self.view.camera.set_range()
 
+    def durations(self, data, bins = 100):
+        # histogram of word or phone durations
+        self._configure_2d() 
+        # init histogram and make visible
+        self.unfreeze()
+        self.hist = scene.Histogram(data, bins, color = 'k', orientation = 'h')
+        self.view.add(self.hist)
+        self.visuals.append(self.hist)
+        # set histogram bounds and range
+        self.view.camera.set_bounds((0, max(data+[1])))
+        self.view.camera.set_range(x = (0, 30))
+
     def waveform(self, data, sr, annotations):
         self._configure_2d()
         plotmin = np.min(data)
@@ -389,6 +402,30 @@ class SCTAudioPlotWidget(PlotWidget):
         initial_view = 30
         self.view.camera.set_range(x = (0, initial_view))
 
+def get_histogram_mesh_data(data, bins=100, color='k', orientation='h'):
+    # shamlessly stolen from vispy.visuals.histogram.__init__()
+    data = np.asarray(data)
+    if data.ndim != 1:
+        raise ValueError('Only 1D data currently supported')
+    X, Y = (0, 1) if orientation == 'h' else (1, 0)
+
+    # do the histogramming
+    data, bin_edges = np.histogram(data, bins)
+    # construct our vertices
+    rr = np.zeros((3 * len(bin_edges) - 2, 3), np.float32)
+    rr[:, X] = np.repeat(bin_edges, 3)[1:-1]
+    rr[1::3, Y] = data
+    rr[2::3, Y] = data
+    bin_edges.astype(np.float32)
+    # and now our tris
+    tris = np.zeros((2 * len(bin_edges) - 2, 3), np.uint32)
+    offsets = 3 * np.arange(len(bin_edges) - 1,
+                            dtype=np.uint32)[:, np.newaxis]
+    tri_1 = np.array([0, 2, 1])
+    tri_2 = np.array([2, 0, 3])
+    tris[::2] = tri_1 + offsets
+    tris[1::2] = tri_2 + offsets
+    return (rr, tris)
 
 def generate_boundaries(annotations, text = True):
     plotdata = []
@@ -433,6 +470,45 @@ def generate_boundaries(annotations, text = True):
         output.append(text)
     return output
 
+class SCTSummaryWidget(vp.Fig):
+    def __init__(self, parent = None):
+        super(SCTSummaryWidget, self).__init__(size=(800, 400), show=False)
+        self._grid._default_class = SCTAudioPlotWidget
+        self.unfreeze()
+        self.parent = parent
+        self.annotations = None
+
+    def plot(self, annotations):
+        self.annotations = annotations
+        self[0:2,0].durations(self.init_data('w')) # word duration histogram
+        self[2:4,0].durations(self.init_data('p')) # phone duration histogram
+
+    def init_data(self, dur_type):
+        if dur_type == 'w': # get word durations
+            words = set([x['label'] for x in self.annotations])
+            data = [x['end']-x['begin'] for x in self.annotations]
+            self.parent.wordList.addItems(sorted(list(words)))
+        else: # get phone durations 
+            phones = set(np.concatenate([np.array(x['phones']) for x in self.annotations], axis = 0))
+            data = np.concatenate([np.array(x['phone_ends'])-np.array(x['phone_begins']) for x in self.annotations], axis = 0)
+            self.parent.phoneList.addItems(sorted(list(phones)))
+        return data
+
+    def update_data(self, labels, plot_type):
+        if self.annotations:
+            if plot_type == 'w':
+                data = [x['end']-x['begin'] for x in self.annotations if x['label'] in labels]
+                data = get_histogram_mesh_data(data)
+                self[0:2, 0].hist.set_data(*data)
+            elif plot_type == 'p':
+                data = np.concatenate([np.array(x['phone_ends'])-np.array(x['phone_begins']) for x in self.annotations], axis = 0)
+                phones = np.concatenate([np.array(x['phones']) for x in self.annotations], axis = 0)
+                data = [p[1] for p in zip(phones, data) if p[0] in labels]
+                data = get_histogram_mesh_data(data)
+                self[2:4, 0].hist.set_data(*data)
+
+
+
 class SCTAudioWidget(vp.Fig):
     def __init__(self):
 
@@ -448,6 +524,7 @@ class SCTAudioWidget(vp.Fig):
         print('read wav time', time.time() - begin)
         max_time = len(data) / sr
         begin = time.time()
+        print(self[0:2, 0])
         self[0:2, 0].annotations(annotations, max_time)
         #self[0:2, 0].xaxis.visible = False
         print('annotation time', time.time() - begin)
