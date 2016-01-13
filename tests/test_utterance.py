@@ -3,13 +3,15 @@ import pytest
 
 from speechtools.corpus import CorpusContext
 
+from polyglotdb.io import inspect_textgrid
+
+
 def test_utterance_nosilence(graph_db, textgrid_test_dir):
-    from polyglotdb.io.textgrid import inspect_discourse_textgrid, load_discourse_textgrid
     tg_path = os.path.join(textgrid_test_dir, 'phone_word_no_silence.TextGrid')
     with CorpusContext('word_phone_nosilence', **graph_db) as g:
         g.reset()
-        annotation_types = inspect_discourse_textgrid(tg_path)
-        load_discourse_textgrid(g, tg_path, annotation_types)
+        parser = inspect_textgrid(tg_path)
+        g.load(parser, tg_path)
 
         g.encode_utterances()
 

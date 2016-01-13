@@ -3,6 +3,8 @@ import pytest
 
 from speechtools.corpus import CorpusContext
 
+from polyglotdb.graph.func import Sum
+
 def test_encode_pause(acoustic_config):
     with CorpusContext(acoustic_config) as g:
         discourse = g.discourse('acoustic_corpus')
@@ -46,10 +48,10 @@ def test_query_with_pause(acoustic_config):
         g.encode_pauses(['sil', 'uh','um'])
         q = g.query_graph(g.word).filter(g.word.label == 'cares')
         q = q.columns(g.word.following.label.column_name('following'),
-                    g.pause.following.label.column_name('following_pause'),
-                    g.pause.following.duration.column_name('following_pause_duration')).order_by(g.word.begin)
+                    g.pause.following.label.column_name('following_pause')).order_by(g.word.begin)
+
+        results = q.aggregate(Sum(g.pause.following.duration).column_name('following_pause_duration'))
         print(q.cypher())
-        results = q.all()
         assert(len(results) == 1)
         assert(results[0].following == 'this')
         assert(results[0].following_pause == ['sil','um'])
@@ -58,11 +60,10 @@ def test_query_with_pause(acoustic_config):
         q = g.query_graph(g.word).filter(g.word.label == 'this')
         q = q.columns(g.word.previous.label.column_name('previous'),
                     g.pause.previous.label.column_name('previous_pause'),
-                    g.pause.previous.duration.column_name('previous_pause_duration'),
                     g.pause.previous.begin,
                     g.pause.previous.end).order_by(g.word.begin)
+        results = q.aggregate(Sum(g.pause.previous.duration).column_name('previous_pause_duration'))
         print(q.cypher())
-        results = q.all()
         assert(len(results) == 2)
         assert(results[1].previous == 'cares')
         assert(results[1].previous_pause == ['sil','um'])
@@ -71,11 +72,10 @@ def test_query_with_pause(acoustic_config):
         g.encode_pauses(['sil'])
         q = g.query_graph(g.word).filter(g.word.label == 'words')
         q = q.columns(g.word.following.label.column_name('following'),
-                    g.pause.following.label.column_name('following_pause'),
-                    g.pause.following.duration.column_name('following_pause_duration')).order_by(g.word.begin)
+                    g.pause.following.label.column_name('following_pause')).order_by(g.word.begin)
         q = q.order_by(g.word.begin)
+        results = q.aggregate(Sum(g.pause.following.duration).column_name('following_pause_duration'))
         print(q.cypher())
-        results = q.all()
         assert(len(results) == 5)
         assert(results[0].following == 'and')
         assert(results[0].following_pause == ['sil'])

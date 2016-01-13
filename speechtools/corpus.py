@@ -37,8 +37,8 @@ class CorpusContext(BaseContext):
             Base.metadata.create_all(self.engine)
 
     def query_graph(self, annotation_type):
-        if annotation_type.type not in self.relationship_types:
-            raise(GraphQueryError('The graph does not have any annotations of type \'{}\'.  Possible types are: {}'.format(annotation_type.name, ', '.join(sorted(self.relationship_types)))))
+        if annotation_type.type not in self.annotation_types:
+            raise(GraphQueryError('The graph does not have any annotations of type \'{}\'.  Possible types are: {}'.format(annotation_type.name, ', '.join(sorted(self.annotation_types)))))
         return GraphQuery(self, annotation_type, self.is_timed)
 
     def discourse_sound_file(self, discourse):
@@ -92,6 +92,7 @@ class CorpusContext(BaseContext):
         MERGE (prec)-[:precedes]->(foll)'''.format(corpus = self.corpus_name)
 
         self.graph.cypher.execute(statement)
+        self.annotation_types.add('pause')
 
     def reset_pauses(self):
         """
@@ -109,6 +110,10 @@ class CorpusContext(BaseContext):
         SET n :speech
         REMOVE n:pause'''.format(corpus=self.corpus_name)
         self.graph.cypher.execute(statement)
+        try:
+            self.annotation_types.remove('pause')
+        except KeyError:
+            pass
 
 
     def reset_utterances(self):
@@ -118,6 +123,7 @@ class CorpusContext(BaseContext):
         try:
             q = self.query_graph(self.utterance)
             q.delete()
+            self.annotation_types.remove('utterance')
         except GraphQueryError:
             pass
 
@@ -151,7 +157,7 @@ class CorpusContext(BaseContext):
 
         self.hierarchy['word'] = 'utterance'
         self.hierarchy['utterance'] = None
-        self.relationship_types.add('utterance')
+        self.annotation_types.add('utterance')
 
     def get_utterances(self, discourse,
                 min_pause_length = 0.5, min_utterance_length = 0):
