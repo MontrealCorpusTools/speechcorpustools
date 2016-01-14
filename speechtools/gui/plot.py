@@ -236,6 +236,50 @@ class SCTSpectrogramVisual(ImageVisual):
 
 Spectrogram = scene.visuals.create_visual_node(SCTSpectrogramVisual)
 
+class SelectionRect(scene.Rectangle):
+    def __init__(self):
+        self.initial_point = None
+        self.end_point = None
+
+        super(SelectionRect, self).__init__(color = 'y')
+        self._color.alpha = 0.5
+
+    def set_initial_time(self, time):
+        self.initial_point = time
+
+        self.update_selection()
+
+    def set_final_time(self, time):
+        self.end_point = time
+        self.update_selection()
+
+    def update_selection(self):
+        print(self.initial_point,self.end_point)
+        if self.initial_point is None or self.end_point is None:
+            self.visible = False
+            return
+        if self.initial_point < self.end_point:
+            width = self.end_point - self.initial_point
+            center = width / 2 + self.initial_point
+        elif self.initial_point > self.end_point:
+            width = self.initial_point - self.end_point
+            center = width / 2 + self.end_point
+        else:
+            self.visible = False
+            return
+        height = 2
+        self.center = [center, 0]
+        self.width = width
+        self.height = height
+        self.visible = True
+
+    def minimum_time(self):
+        if self.initial_point is None or self.end_point is None:
+            return None
+        if self.initial_point <= self.end_point:
+            return self.initial_point
+        return self.end_point
+
 class SCTAudioPlotWidget(PlotWidget):
     def _configure_1d(self, fg_color=None):
         if self._configured:
@@ -269,7 +313,10 @@ class SCTAudioPlotWidget(PlotWidget):
 
         self.xaxis.link_view(self.view)
         self.yaxis.link_view(self.view)
-
+        self.unfreeze()
+        self.playLine = scene.LinePlot([[0,-1], [0,1]], width = 30, color = 'r')
+        self.selectRect = SelectionRect()
+        self.freeze()
         self._configured = True
 
     def _configure_2d(self, fg_color=None):
@@ -302,7 +349,11 @@ class SCTAudioPlotWidget(PlotWidget):
 
         self.xaxis.link_view(self.view)
         self.yaxis.link_view(self.view)
-
+        self.unfreeze()
+        self.playLine = scene.LinePlot([[0,-1], [0,1]], width = 5, color = 'r')
+        self.playLine._line.method = 'agg'
+        self.selectRect = SelectionRect()
+        self.freeze()
         self._configured = True
 
     def spectrogram(self, x, window_length, step, sr, max_time):
@@ -318,6 +369,23 @@ class SCTAudioPlotWidget(PlotWidget):
         self.view.camera.set_range()
         return spec
 
+    def set_play_time(self, time):
+        self.playLine.set_data([[time, -2], [time, 2]], width = 5)
+
+    def set_begin_selection_time(self, time):
+        self.selectRect.set_initial_time(time)
+
+        mintime = self.selectRect.minimum_time()
+        if mintime is not None:
+            self.set_play_time(mintime)
+
+    def set_end_selection_time(self, time):
+        self.selectRect.set_final_time(time)
+
+        mintime = self.selectRect.minimum_time()
+        if mintime is not None:
+            self.set_play_time(mintime)
+
     def annotations(self, data, max_time = None):
         self._configure_1d()
         if max_time is None:
@@ -326,17 +394,23 @@ class SCTAudioPlotWidget(PlotWidget):
         for v in generate_boundaries(data):
             self.view.add(v)
             self.visuals.append(v)
-
-        breakline = scene.LinePlot([[0,0], [max_time,0]], width = 20, color = 'k')
+        breakline = scene.LinePlot([[-1,0], [max_time+1,0]], width = 5, color = 'k')
+        breakline._line.method = 'agg'
         self.view.add(breakline)
         self.visuals.append(breakline)
+        self.view.add(self.playLine)
+        self.visuals.append(self.playLine)
+        self.playLine._line.method = 'agg'
+        self.view.add(self.selectRect)
+        self.visuals.append(self.selectRect)
+
         self.view.camera.set_bounds((0, max_time), (-1, 1))
         self.view.camera.set_range(x = (0, 30))
         #self.view.camera.set_range()
 
     def durations(self, data, bins = 100):
         # histogram of word or phone durations
-        self._configure_2d() 
+        self._configure_2d()
         # init histogram and make visible
         self.unfreeze()
         self.hist = scene.Histogram(data, bins, color = 'k', orientation = 'h')
@@ -478,6 +552,10 @@ class SCTSummaryWidget(vp.Fig):
         self.parent = parent
         self.annotations = None
 
+    def updatePlots(self, data):
+        annotations = data[0]
+        self.plot(annotations)
+
     def plot(self, annotations):
         self.annotations = annotations
         self[0:2,0].durations(self.init_data('w')) # word duration histogram
@@ -488,7 +566,7 @@ class SCTSummaryWidget(vp.Fig):
             words = set([x['label'] for x in self.annotations])
             data = [x['end']-x['begin'] for x in self.annotations]
             self.parent.wordList.addItems(sorted(list(words)))
-        else: # get phone durations 
+        else: # get phone durations
             phones = set(np.concatenate([np.array(x['phones']) for x in self.annotations], axis = 0))
             data = np.concatenate([np.array(x['phone_ends'])-np.array(x['phone_begins']) for x in self.annotations], axis = 0)
             self.parent.phoneList.addItems(sorted(list(phones)))

@@ -3,7 +3,7 @@ import os
 import time
 base = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
 sys.path.insert(0,base)
-import polyglotdb.io as aio
+import polyglotdb.io as pgio
 
 from speechtools.corpus import CorpusContext
 
@@ -18,10 +18,11 @@ def call_back(*args):
     if args:
         print(' '.join(args))
 
-with CorpusContext('buckeye', **graph_db) as g:
-    g.reset()
+with CorpusContext('buckeye', **graph_db) as c:
+    c.reset()
     beg = time.time()
-    aio.load_directory_buckeye(g, path_to_buckeye,
-                                            call_back = call_back)
+    parser = pgio.inspect_buckeye(path_to_buckeye)
+    #parser.call_back = call_back
+    c.load(parser, path_to_buckeye)
     end = time.time()
     print('Time taken: {}'.format(end - beg))

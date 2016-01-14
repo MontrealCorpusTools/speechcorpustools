@@ -39,7 +39,7 @@ class CorpusContext(BaseContext):
     def query_graph(self, annotation_type):
         if annotation_type.type not in self.annotation_types:
             raise(GraphQueryError('The graph does not have any annotations of type \'{}\'.  Possible types are: {}'.format(annotation_type.name, ', '.join(sorted(self.annotation_types)))))
-        return GraphQuery(self, annotation_type, self.is_timed)
+        return GraphQuery(self, annotation_type)
 
     def discourse_sound_file(self, discourse):
         q = self.sql_session.query(SoundFile).join(SoundFile.discourse)

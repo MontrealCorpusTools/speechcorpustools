@@ -3,8 +3,7 @@ import os
 import time
 base = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
 sys.path.insert(0,base)
-#import polyglotdb.io as aio
-import polyglotdb.io.textgrid as tio
+import polyglotdb.io as pgio
 
 
 from speechtools.corpus import CorpusContext
@@ -25,12 +24,13 @@ reset = True
 
 if reset:
     print("Getting annotation types..")
-    annotation_types = tio.inspect_discourse_textgrid(path_to_gp)
+    parser = tio.inspect_textgrid(path_to_gp)
+    parser.call_back = print
     print('Loading corpus...')
-    with CorpusContext('gp_bulgarian', **graph_db) as g:
-        g.reset()
+    with CorpusContext('gp_bulgarian', **graph_db) as c:
+        c.reset()
         beg = time.time()
-        tio.load_directory_textgrid(g, path_to_gp, annotation_types, call_back = print)
+        c.load(parser, path_to_gp)
         end = time.time()
         print('Time taken: {}'.format(end - beg))
 
