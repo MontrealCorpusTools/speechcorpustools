@@ -22,7 +22,7 @@ with CorpusContext('buckeye', **graph_db) as c:
     c.reset()
     beg = time.time()
     parser = pgio.inspect_buckeye(path_to_buckeye)
-    #parser.call_back = call_back
+    parser.call_back = call_back
     c.load(parser, path_to_buckeye)
     end = time.time()
     print('Time taken: {}'.format(end - beg))

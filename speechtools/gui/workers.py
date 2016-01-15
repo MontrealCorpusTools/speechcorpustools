@@ -1,5 +1,7 @@
 import time
 
+from PyQt5 import QtGui, QtCore, QtWidgets
+
 from polyglotdb.gui.workers import FunctionWorker
 
 from speechtools.corpus import CorpusContext
@@ -28,6 +30,8 @@ class QueryWorker(FunctionWorker):
 
 
 class DiscourseQueryWorker(QueryWorker):
+    audioReady = QtCore.pyqtSignal(object)
+    annotationsReady = QtCore.pyqtSignal(object)
     def run(self):
         time.sleep(0.1)
         try:
@@ -37,6 +41,8 @@ class DiscourseQueryWorker(QueryWorker):
             discourse = self.kwargs['discourse']
 
             with CorpusContext(config) as c:
+                audio_file = c.discourse_sound_file(discourse).filepath
+                self.audioReady.emit(audio_file)
                 word = getattr(c,a_type)
                 q = c.query_graph(word).filter(word.discourse == discourse).times()
                 q = q.order_by(word.begin)
@@ -49,7 +55,6 @@ class DiscourseQueryWorker(QueryWorker):
 
                 #annotations = c.query_acoustics(q).pitch('reaper').all()
                 annotations = q.all()
-                audio_file = c.discourse_sound_file(discourse).filepath
         except Exception as e:
             self.errorEncountered.emit(e)
             print(e)
@@ -59,5 +64,5 @@ class DiscourseQueryWorker(QueryWorker):
             time.sleep(0.1)
             self.finishedCancelling.emit()
             return
-        self.dataReady.emit((annotations, audio_file))
+        self.annotationsReady.emit(annotations)
         print('done!')

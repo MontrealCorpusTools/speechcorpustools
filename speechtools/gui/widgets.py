@@ -27,7 +27,7 @@ class SelectableAudioWidget(QtWidgets.QWidget):
         self.setFocusPolicy(QtCore.Qt.StrongFocus)
         self.setFocus(True)
 
-        self.audioWidget = SCTAudioWidget()
+        self.audioWidget = SCTAudioWidget(2) # FIXME
         self.audioWidget.events.mouse_press.connect(self.on_mouse_press)
         self.audioWidget.events.mouse_release.connect(self.on_mouse_release)
         self.audioWidget.events.mouse_move.connect(self.on_mouse_move)
@@ -58,14 +58,17 @@ class SelectableAudioWidget(QtWidgets.QWidget):
         Mouse button press event
         """
         if event.button == 1 and self.rectselect == False:
-            pass
-
-        elif event.button == 1 and self.rectselect == True:
-            self.audioWidget[0:2, 0].set_end_selection_time(None)
-            tr = self.audioWidget.scene.node_transform(self.audioWidget[0:2, 0].visuals[0])
+            tr = self.audioWidget.scene.node_transform(self.audioWidget['annotations'].line_visuals[0])
             pos = tr.map(event.pos)
             time = pos[0]
-            self.audioWidget[0:2, 0].set_begin_selection_time(time)
+            self.audioWidget['annotations'].set_play_time(time)
+
+        elif event.button == 1 and self.rectselect == True:
+            self.audioWidget['annotations'].set_end_selection_time(None)
+            tr = self.audioWidget.scene.node_transform(self.audioWidget['annotations'].line_visuals[0])
+            pos = tr.map(event.pos)
+            time = pos[0]
+            self.audioWidget['annotations'].set_begin_selection_time(time)
 
     def on_mouse_release(self, event):
         is_single_click = not event.is_dragging or abs(np.sum(event.press_event.pos - event.pos)) < 10
@@ -74,22 +77,29 @@ class SelectableAudioWidget(QtWidgets.QWidget):
             pass
         elif event.button == 1 and is_single_click and self.rectselect == False:
 
-            tr = self.audioWidget.scene.node_transform(self.audioWidget[0:2, 0].visuals[0])
+            tr = self.audioWidget.scene.node_transform(self.audioWidget['annotations'].line_visuals[0])
             pos = tr.map(event.pos)
             time = pos[0]
-            self.audioWidget[0:2, 0].set_play_time(time)
+            self.audioWidget['annotations'].set_play_time(time)
 
     def on_mouse_move(self, event):
         if event.button == 1 and event.is_dragging and self.rectselect:
             #print('hello')
-            tr = self.audioWidget.scene.node_transform(self.audioWidget[0:2, 0].visuals[0])
+            tr = self.audioWidget.scene.node_transform(self.audioWidget['annotations'].line_visuals[0])
             pos = tr.map(event.pos)
             time = pos[0]
-            self.audioWidget[0:2, 0].set_end_selection_time(time)
+            self.audioWidget['annotations'].set_end_selection_time(time)
 
-    def updatePlots(self, data):
-        annotations, audio_file = data
-        self.audioWidget.plot(audio_file, annotations)
+    def updateAudio(self, audio_file):
+        self.audioWidget.update_audio(audio_file)
+        self.update()
+
+    def updateAnnotations(self, annotations):
+        self.audioWidget.update_annotations(annotations)
+        self.update()
+
+    def clearDiscourse(self):
+        self.audioWidget.clear_discourse()
 
 class QueryForm(QtWidgets.QWidget):
     finishedRunning = QtCore.pyqtSignal(object)
@@ -213,8 +223,10 @@ class DiscourseWidget(QtWidgets.QWidget):
         self.setLayout(layout)
 
     def changeDiscourse(self):
-        discourse = self.discourseList.currentItem().text()
-        self.discourseChanged.emit(discourse)
+        item = self.discourseList.currentItem()
+        if item is not None:
+            discourse = item.text()
+            self.discourseChanged.emit(discourse)
 
     def updateConfig(self, config):
         self.config = config
@@ -226,7 +238,7 @@ class DiscourseWidget(QtWidgets.QWidget):
                 self.discourseList.addItem(d)
 
 class ViewWidget(QtWidgets.QWidget):
-    plotDataReady = QtCore.pyqtSignal(object)
+    changingDiscourse = QtCore.pyqtSignal()
     def __init__(self, parent = None):
         super(ViewWidget, self).__init__(parent)
 
@@ -235,10 +247,8 @@ class ViewWidget(QtWidgets.QWidget):
         tabs = QtWidgets.QTabWidget()
 
         self.discourseWidget = SelectableAudioWidget()
-        self.plotDataReady.connect(self.discourseWidget.updatePlots)
 
         self.summaryWidget = SCTSummaryWidget(self)
-        self.plotDataReady.connect(self.summaryWidget.updatePlots)
 
         self.dataTabs = QtWidgets.QTabWidget()
 
@@ -261,12 +271,13 @@ class ViewWidget(QtWidgets.QWidget):
         self.setLayout(layout)
 
         self.worker = DiscourseQueryWorker()
-        self.worker.dataReady.connect(self.plotDataReady.emit)
+        self.worker.audioReady.connect(self.discourseWidget.updateAudio)
+        self.worker.annotationsReady.connect(self.discourseWidget.updateAnnotations)
+        self.changingDiscourse.connect(self.worker.stop)
+        self.changingDiscourse.connect(self.discourseWidget.clearDiscourse)
 
     def changeDiscourse(self, discourse):
-
-
-
+        self.changingDiscourse.emit()
         with CorpusContext(self.config) as c:
             phone_annotation = c.lowest_annotation
 
@@ -279,9 +290,6 @@ class ViewWidget(QtWidgets.QWidget):
 
         self.worker.setParams(kwargs)
         self.worker.run()
-
-        self.phoneList.selectAll()
-        self.wordList.selectAll()
 
     def updateConfig(self, config):
         self.config = config
