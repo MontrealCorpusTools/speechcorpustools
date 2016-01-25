@@ -1,3 +1,3 @@
 
 
-from .main import SCTSummaryWidget, SCTAudioWidget
+from .main import SCTSummaryWidget, AnnotationWidget, SpectralWidget

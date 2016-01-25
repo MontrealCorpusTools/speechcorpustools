@@ -2,79 +2,13 @@
 import time
 
 import numpy as np
-from scipy.io import wavfile
 
 from vispy import plot as vp, scene
 
-from .widgets import (SummaryPlotWidget, WaveformPlotWidget,
-                    SpectrogramPlotWidget, AnnotationPlotWidget, PitchPlotWidget)
+from .widgets import (SummaryPlotWidget,
+                    SpectralPlotWidget, AnnotationPlotWidget)
 
 from .helper import get_histogram_mesh_data
-
-class SCTGrid(scene.widgets.Grid):
-    def __init__(self, num_types, window_length, time_step, spacing=6, **kwargs):
-        self.num_types = num_types
-        self.window_length = window_length
-        self.time_step = time_step
-        super(SCTGrid, self).__init__(spacing, **kwargs)
-
-    def __getitem__(self, plot_type):
-        """Return an item or create it if the location is available"""
-        if plot_type == 'waveform':
-            idxs = (slice(4, 6), 0)
-        elif plot_type == 'spectrogram':
-            idxs = (slice(2,4), 0)
-        elif plot_type == 'annotations':
-            idxs = (slice(0,2), 0)
-        if not isinstance(idxs, tuple):
-            idxs = (idxs,)
-        if len(idxs) == 1:
-            idxs = idxs + (slice(None),)
-        elif len(idxs) != 2:
-            raise ValueError('Incorrect index: %s' % (idxs,))
-        lims = np.empty((2, 2), int)
-        for ii, idx in enumerate(idxs):
-            if isinstance(idx, int):
-                idx = slice(idx, idx + 1, None)
-            if not isinstance(idx, slice):
-                raise ValueError('indices must be slices or integers, not %s'
-                                 % (type(idx),))
-            if idx.step is not None and idx.step != 1:
-                raise ValueError('step must be one or None, not %s' % idx.step)
-            start = 0 if idx.start is None else idx.start
-            end = self.grid_size[ii] if idx.stop is None else idx.stop
-            lims[ii] = [start, end]
-        layout = self.layout_array
-        existing = layout[lims[0, 0]:lims[0, 1], lims[1, 0]:lims[1, 1]] + 1
-        if existing.any():
-            existing = set(list(existing.ravel()))
-            ii = list(existing)[0] - 1
-            if len(existing) != 1 or ((layout == ii).sum() !=
-                                      np.prod(np.diff(lims))):
-                raise ValueError('Cannot add widget (collision)')
-            return self._grid_widgets[ii][-1]
-        spans = np.diff(lims)[:, 0]
-
-        if plot_type == 'waveform':
-            obj = WaveformPlotWidget(self.num_types)
-        elif plot_type == 'spectrogram':
-            obj = SpectrogramPlotWidget(self.window_length, self.time_step)
-        elif plot_type == 'annotations':
-            obj = AnnotationPlotWidget(self.num_types)
-        item = self.add_widget(obj,
-                               row=lims[0, 0], col=lims[1, 0],
-                               row_span=spans[0], col_span=spans[1])
-        return item
-
-class SCTCentralWidget(scene.widgets.Widget):
-
-    def add_grid(self, *args, **kwargs):
-        """
-        Create a new Grid and add it as a child widget.
-        All arguments are given to Grid().
-        """
-        grid = SCTGrid(*args, **kwargs)
-        return self.add_widget(grid)
 
 class SCTSummaryWidget(vp.Fig):
     def __init__(self, parent = None):
@@ -118,66 +52,86 @@ class SCTSummaryWidget(vp.Fig):
                 self[2:4, 0].hist.set_data(*data)
 
 
+class SpectralWidget(vp.Fig):
+    def __init__(self, window_length = 0.005, time_step = 0.0001):
+        self.window_length = window_length
+        self.time_step = time_step
+        super(SpectralWidget, self).__init__()
+        self._grid._default_class = SpectralPlotWidget
 
-class SCTAudioWidget(scene.SceneCanvas):
-    def __init__(self, num_types, window_length = 0.005, time_step = 0.0001):
-        self._plot_widgets = []
-        self._grid = None  # initialize before the freeze occurs
-        super(SCTAudioWidget, self).__init__(size=(800, 400), bgcolor = 'w', show=False)
-        self._grid = self.central_widget.add_grid(num_types, window_length, time_step)
-        self._grid._default_class = SummaryPlotWidget
-        self['waveform']
-        self['spectrogram']
-        self['annotations']
-        self['waveform'].camera.link(self['annotations'].camera)
+    def update_sampling_rate(self, sr):
+        self[0:2, 0].set_sampling_rate(sr)
 
-    @property
-    def central_widget(self):
-        """ Returns the default widget that occupies the entire area of the
-        canvas.
-        """
-        if self._central_widget is None:
-            self._central_widget = SCTCentralWidget(size=self.size, parent=self.scene)
-        return self._central_widget
+    def update_signal(self, data):
+        self[0:2, 0].set_signal(data)
 
-    @property
-    def plot_widgets(self):
-        """List of the associated PlotWidget instances"""
-        return tuple(self._plot_widgets)
+    def update_selection_time(self, pos):
+        tr = self.scene.node_transform(self[0:2, 0].spec)
+        pos = tr.map([pos, 0])
+        pos = pos[0]
+        self[0:2, 0].set_selection_time(pos)
 
-    def __getitem__(self, idxs):
-        """Get an axis"""
-        pw = self._grid.__getitem__(idxs)
-        self._plot_widgets += [pw]
-        return pw
+    def update_play_time(self, pos):
+        tr = self.scene.node_transform(self[0:2, 0].spec)
+        pos = tr.map([pos, 0])
+        pos = pos[0]
+        self[0:2, 0].set_play_time(pos)
 
-    def clear_discourse(self):
-        self['spectrogram'].set_signal(None, None)
-        self['annotations'].set_annotations(None)
-        self['annotations'].set_max_time(None)
-        self['waveform'].set_signal(None, None)
-        self['waveform'].set_annotations(None)
+class AnnotationWidget(vp.Fig):
+    def __init__(self):
+        super(AnnotationWidget, self).__init__()
+        self._grid._default_class = AnnotationPlotWidget
 
-    def update_audio(self, audio_file):
-        begin = time.time()
-        sr, data = wavfile.read(audio_file)
-        data = data / 32768
-        print('read wav time', time.time() - begin)
-        max_time = len(data) / sr
+    def clear(self):
+        self.update_signal(None)
+        self.update_annotations(None)
 
-        begin = time.time()
-        self['annotations'].set_max_time(max_time)
-        self['spectrogram'].set_signal(data, sr)
-        print('spec time', time.time() - begin)
+    def update_hierarchy(self, hierarchy):
+        self[0:2, 0].set_hierarchy(hierarchy)
 
-        begin = time.time()
-        self['waveform'].set_signal(data, sr)
-        print('wave time', time.time() - begin)
-
+    def update_signal(self, data):
+        self[0:2, 0].set_signal(data)
 
     def update_annotations(self, annotations):
+        self[0:2, 0].set_annotations(annotations)
 
-        begin = time.time()
-        self['annotations'].set_annotations(annotations)
-        self['waveform'].set_annotations(annotations)
-        print('annotation time', time.time() - begin)
+    def get_play_time(self):
+        return self[0:2, 0].play_time_line.pos[0][0]
+
+    def transform_pos_to_time(self, pos):
+        tr = self.scene.node_transform(self[0:2, 0].waveform)
+        pos = tr.map(pos)
+        time = pos[0]
+        return time
+
+    def transform_time_to_pos(self, time):
+        tr = self.scene.node_transform(self[0:2, 0].waveform)
+        pos = tr.imap([time,0])
+        pos = pos[0]
+        return pos
+
+    def check_selection(self, event):
+        if event.source != self:
+            return
+        pos = event.pos
+        tr = self.scene.node_transform(self[0:2, 0].waveform)
+        pos = tr.map(pos)
+        time = pos[0]
+        vert = pos[1]
+        key = self[0:2, 0].pos_to_key(pos)
+        if key is None:
+            return
+        p, ind = self[0:2, 0].line_visuals[key].select_line(event)
+        self[0:2, 0].line_visuals[key].update_markers(ind)
+        if ind == -1:
+            return None
+        return key, ind
+
+    def update_selected_boundary(self, new_time, key, ind):
+        self[0:2, 0].line_visuals[key].update_boundary(ind, new_time)
+
+    def update_selection_time(self, time):
+        self[0:2, 0].set_selection_time(time)
+
+    def update_play_time(self, time):
+        self[0:2, 0].set_play_time(time)

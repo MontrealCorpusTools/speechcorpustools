@@ -25,7 +25,7 @@ class ScaledTicker(Ticker):
 
             # major = np.linspace(domain[0], domain[1], num=11)
             # major = MaxNLocator(10).tick_values(*domain)
-            major = _get_ticks_talbot(domain[0], domain[1], n_inches, 2)
+            major = _get_ticks_talbot(domain[0], domain[1], n_inches, 8)
 
             if self.scale is not None:
                 labels = ['%g' % (x * self.scale,) for x in major]

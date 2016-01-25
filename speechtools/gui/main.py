@@ -62,11 +62,11 @@ class MainWindow(QtWidgets.QMainWindow):
 
         self.corpusConfig = None
 
-        self.connectWidget = ConnectWidget(self)
-        self.connectWidget.configChanged.connect(self.updateConfig)
-        self.viewWidget = ViewWidget(self)
-        self.importWidget = ImportWidget(self)
-        self.exportWidget = ExportWidget(self)
+        #self.connectWidget = ConnectWidget(self)
+        #self.connectWidget.configChanged.connect(self.updateConfig)
+        #self.viewWidget = ViewWidget(self)
+        #self.importWidget = ImportWidget(self)
+        #self.exportWidget = ExportWidget(self)
 
         self.leftPane = LeftPane()
         self.configUpdated.connect(self.leftPane.updateConfig)
@@ -75,6 +75,8 @@ class MainWindow(QtWidgets.QMainWindow):
         self.rightPane.configUpdated.connect(self.configUpdated.emit)
         self.rightPane.discourseChanged.connect(self.leftPane.changeDiscourse)
 
+        self.leftPane.queryWidget.viewRequested.connect(self.rightPane.discourseWidget.changeView)
+        self.rightPane.discourseWidget.viewRequested.connect(self.leftPane.viewWidget.discourseWidget.changeView)
         self.mainWidget = CollapsibleWidgetPair(QtCore.Qt.Horizontal, self.leftPane,self.rightPane)
 
         #self.mainWidget.setStretchFactor(0, 1)

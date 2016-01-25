@@ -1,57 +1,111 @@
 
 import numpy as np
 
-from .base import SelectablePlotWidget
+from vispy import scene
 
-from ..visuals import SCTLinePlot, ScalingText, PhoneScalingText
+from .base import SelectablePlotWidget, PlotWidget
+
+from ..visuals import SCTLinePlot, ScalingText, PhoneScalingText, SCTAnnotation, SelectionLine
 
 from ..helper import generate_boundaries
 
 class AnnotationPlotWidget(SelectablePlotWidget):
-    def __init__(self, num_types, *args, **kwargs):
+    def __init__(self, *args, **kwargs):
         super(AnnotationPlotWidget, self).__init__(*args, **kwargs)
-        self._configure_1d()
+        self._configure_2d()
         self.unfreeze()
-        self.num_types = num_types
-        self.annotation_visuals = []
-        self.line_visuals = []
-        self.breakline = SCTLinePlot(None, width = 5, color = 'k')
-        self.breakline.method = 'agg'
+        self.hierarchy = None
+        self.num_types = 0
+        self.breakline = SCTLinePlot(None, width = 1, color = 'k')
+        self.waveform = SCTLinePlot(None, connect='strip', color = 'k')
+        self.annotation_visuals = {}
+        self.annotations = None
+        self.line_visuals = {}
         self.view.add(self.breakline)
+        self.view.add(self.waveform)
         self.visuals.append(self.breakline)
+        self.visuals.append(self.waveform)
         self.freeze()
+        self.play_time_line.visible = True
 
+    def pos_to_key(self, pos):
+        for k, v in self.line_visuals.items():
+            if v.contains_vert(pos):
+                return k
+        return None
+
+    def set_hierarchy(self, hierarchy):
+        for k,v in self.annotation_visuals.items():
+            v.parent = None
+        for k,v in self.line_visuals.items():
+            v.parent = None
+        self.hierarchy = hierarchy
+        self.num_types = len(self.hierarchy.keys())
+        self.annotation_visuals = {}
+        self.line_visuals = {}
         cycle = ['b', 'r']
-
-        for i in range(self.num_types):
+        for i, k in enumerate(self.hierarchy.highest_to_lowest):
             c = cycle[i % len(cycle)]
-            self.line_visuals.append(SCTLinePlot(None, connect='segments',
-                        width = 5, color = c))
-            self.view.add(self.line_visuals[i])
-            self.visuals.append(self.line_visuals[i])
-
-            self.annotation_visuals.append(ScalingText(None, pos = [0, 0]))
-            self.view.add(self.annotation_visuals[i])
-            self.visuals.append(self.annotation_visuals[i])
-
-    def set_max_time(self, max_time):
-        if max_time is None:
-            self.view.camera.set_bounds((0, 1), (-1, 1))
-            self.breakline.set_data(None)
-        else:
-            self.breakline.set_data(np.array([[-1,0], [max_time+1,0]]))
-            self.view.camera.set_bounds((0, max_time), (-1, 1))
+            self.annotation_visuals[k] = ScalingText(face = 'OpenSans') #FIXME Need to get a better font that covers more scripts, i.e. Thai
+            self.line_visuals[k] = SCTLinePlot(connect = 'segments', color = c)
+            self.view.add(self.annotation_visuals[k])
+            self.view.add(self.line_visuals[k])
+        ind = 0
+        for k, v in sorted(self.hierarchy.subannotations.items()):
+            for s in v:
+                c = cycle[ind % len(cycle)]
+                self.annotation_visuals[k, s] = ScalingText(face = 'OpenSans')
+                self.line_visuals[k, s] = SCTLinePlot(connect = 'segments', color = c)
+                self.view.add(self.annotation_visuals[k, s])
+                self.view.add(self.line_visuals[k, s])
+                ind += 1
 
     def set_annotations(self, data):
+        #Assume that data is the highest level of the hierarchy
+        self.annotations = data
         if data is None:
-            for i in range(self.num_types):
-                self.line_visuals[i].set_data(None)
-                self.annotation_visuals[i].set_data(None, [0, 0])
+            for k in self.hierarchy.keys():
+                self.line_visuals[k].set_data(None)
+                self.annotation_visuals[k].set_data(None, None)
+            for k,v in self.hierarchy.subannotations.items():
+                for s in v:
+                    self.line_visuals[k, s].set_data(None)
+                    self.annotation_visuals[k, s].set_data(None, None)
             return
+        if self.hierarchy is not None:
+            line_data, text_data = generate_boundaries(data, self.hierarchy)
+            for k in self.hierarchy.keys():
+                self.line_visuals[k].set_data(line_data[k])
+                self.annotation_visuals[k].set_data(text_data[k][0], pos = text_data[k][1])
+            for k, v in self.hierarchy.subannotations.items():
+                for s in v:
+                    self.line_visuals[k, s].set_data(line_data[k, s])
+                    self.annotation_visuals[k, s].set_data(text_data[k, s][0], pos = text_data[k, s][1])
 
-        line_data, text_data = generate_boundaries(data)
-        for i in range(self.num_types):
-            self.line_visuals[i].set_data(line_data[i])
-            self.annotation_visuals[i].set_data(text_data[i][0], pos = text_data[i][1])
+    def rank_key_by_relevance(self, key):
+        ranking = []
+        if isinstance(key, tuple):
+            for k, v in self.hierarchy.subannotations.items():
+                for s in v:
+                    if (k,s) == key:
+                        continue
+                    ranking.append((k,s))
+        for k in reversed(self.hierarchy.highest_to_lowest):
+            if k == key:
+                continue
+            ranking.append(k)
+        return ranking
 
-        self.view.camera.set_range(x = (0, 30))
+    def set_signal(self, data):
+        if data is None:
+            self.waveform.set_data(None)
+            return
+        self.waveform.set_data(data)
+        max_time = data[:,0].max()
+        min_time = data[:,0].min()
+        self.view.camera.rect = (min_time, -1, max_time - min_time, 2)
+        self.set_play_time(min_time)
+
+    def set_play_time(self, time):
+        pos = np.array([[time, -1.5], [time, 1.5]])
+        self.play_time_line.set_data(pos = pos)

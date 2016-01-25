@@ -17,6 +17,7 @@ class QueryWorker(FunctionWorker):
             with CorpusContext(config) as c:
                 a_type = getattr(c, a_type)
                 query = c.query_graph(a_type)
+                query = query.times().columns(a_type.discourse.column_name('discourse'))
                 results = query.all()
         except Exception as e:
             self.errorEncountered.emit(e)
@@ -39,20 +40,22 @@ class DiscourseQueryWorker(QueryWorker):
             s_type = self.kwargs['seg_type']
             config = self.kwargs['config']
             discourse = self.kwargs['discourse']
-
             with CorpusContext(config) as c:
                 audio_file = c.discourse_sound_file(discourse).filepath
                 self.audioReady.emit(audio_file)
                 word = getattr(c,a_type)
-                q = c.query_graph(word).filter(word.discourse == discourse).times()
+                q = c.query_graph(word).filter(word.discourse.name == discourse)
+                preloads = []
+                if a_type in c.hierarchy.subannotations:
+                    for s in c.hierarchy.subannotations[t]:
+                        preloads.append(getattr(word, s))
+                for t in c.hierarchy.get_lower_types(a_type):
+                    preloads.append(getattr(word, t))
+                    if t in c.hierarchy.subannotations:
+                        for s in c.hierarchy.subannotations[t]:
+                            preloads.append(getattr(getattr(word, t), s))
+                q = q.preload(*preloads)
                 q = q.order_by(word.begin)
-
-                word_sub_phone = getattr(word, s_type)
-
-                q.columns(word_sub_phone.label.column_name('phones'),
-                        word_sub_phone.begin.column_name('phone_begins'),
-                        word_sub_phone.end.column_name('phone_ends'))
-
                 #annotations = c.query_acoustics(q).pitch('reaper').all()
                 annotations = q.all()
         except Exception as e:

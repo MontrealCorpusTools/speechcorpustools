@@ -1,14 +1,14 @@
 
-from polyglotdb.graph.cypher import *
 
-def create_return_statement(query):
-    kwargs = {'order_by': '', 'additional_columns':'', 'columns':''}
+from polyglotdb.graph.cypher.returns import *
+
+from polyglotdb.graph.cypher.main import *
+
+def generate_return(query):
+    kwargs = {'order_by': '', 'columns':''}
     return_statement = ''
     if query._delete:
-        kwargs = {}
-        kwargs['alias'] = query.to_find.alias
-        return_statement = delete_template.format(**kwargs)
-        return return_statement
+        return generate_delete(query)
     set_strings = []
     set_label_strings = []
     remove_label_strings = []
@@ -62,56 +62,13 @@ def create_return_statement(query):
 
     if query._aggregate:
         template = aggregate_template
-        properties = []
-        for g in query._group_by:
-            properties.append(g.aliased_for_output())
-        if len(query._order_by) == 0 and len(query._group_by) > 0:
-            query._order_by.append((query._group_by[0], False))
-        for a in query._aggregate:
-            properties.append(a.for_cypher())
-        kwargs['aggregates'] = ', '.join(properties)
+        kwargs['aggregates'] = generate_aggregate(query)
     else:
         template = distinct_template
-        properties = []
-        for c in query._columns:
-            properties.append(c.aliased_for_output())
-        if properties:
-            kwargs['columns'] = ', '.join(properties)
+        kwargs['columns'] = generate_distinct(query)
 
-    properties = []
-    for c in query._order_by:
-        ac_set = set(query._additional_columns)
-        gb_set = set(query._group_by)
-        h_c = hash(c[0])
-        for col in ac_set:
-            if h_c == hash(col):
-                element = col.output_alias
-                break
-        else:
-            for col in gb_set:
-                if h_c == hash(col):
-                    element = col.output_alias
-                    break
-            else:
-                query._additional_columns.append(c[0])
-                element = c[0].output_alias
-        if c[1]:
-            element += ' DESC'
-        properties.append(element)
+    kwargs['order_by'] = generate_order_by(query)
 
-    if properties:
-        kwargs['order_by'] += '\nORDER BY ' + ', '.join(properties)
-
-    properties = []
-    for c in query._additional_columns:
-        if c in query._group_by:
-            continue
-        properties.append(c.aliased_for_output())
-    if properties:
-        string = ', '.join(properties)
-        if kwargs['columns'] or ('aggregates' in kwargs and kwargs['aggregates']):
-            string = ', ' + string
-        kwargs['additional_columns'] += string
     return template.format(**kwargs)
 
 def query_to_cypher(query):
@@ -137,15 +94,12 @@ def query_to_cypher(query):
     for k,v in annotation_levels.items():
         if k.has_subquery:
             continue
-        statements,optional_statements, withs, wheres, optional_wheres = generate_token_match(k,v, filter_annotations)
+        statements,optional_statements, withs, wheres, optional_wheres = generate_match(k,v, filter_annotations)
         all_withs.update(withs)
         match_strings.extend(statements)
         optional_match_strings.extend(optional_statements)
         optional_where_strings.extend(optional_wheres)
         where_strings.extend(wheres)
-
-    statements = generate_hierarchical_match(annotation_levels, query.corpus.hierarchy)
-    match_strings.extend(statements)
 
     kwargs['match'] = 'MATCH ' + ',\n'.join(match_strings)
 
@@ -154,11 +108,10 @@ def query_to_cypher(query):
         if optional_where_strings:
             kwargs['optional_match'] += '\nWHERE ' + ',\n'.join(optional_where_strings)
 
-    kwargs['where'] = criterion_to_where(query._criterion, wheres)
+    kwargs['where'] = generate_wheres(query._criterion, wheres)
 
     kwargs['with'] = generate_withs(query, all_withs)
 
-
-    kwargs['return'] = create_return_statement(query)
+    kwargs['return'] = generate_return(query)
     cypher = template.format(**kwargs)
     return cypher

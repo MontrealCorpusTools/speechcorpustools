@@ -91,7 +91,7 @@ class CorpusContext(BaseContext):
         WHERE NONE (x in nodes(p)[1..-1] where x:speech)
         MERGE (prec)-[:precedes]->(foll)'''.format(corpus = self.corpus_name)
 
-        self.graph.cypher.execute(statement)
+        self.execute_cypher(statement)
         self.annotation_types.add('pause')
 
     def reset_pauses(self):
@@ -190,7 +190,7 @@ AND NONE (x in ns where x:speech)
 WITH foll_node_word, prev_node_word
 RETURN prev_node_word.end AS begin, foll_node_word.begin AS end, foll_node_word.begin - prev_node_word.end AS duration
 ORDER BY begin'''.format(corpus = self.corpus_name, discourse = discourse)
-        results = self.graph.cypher.execute(statement, node_pause_duration = min_pause_length)
+        results = self.execute_cypher(statement, node_pause_duration = min_pause_length)
 
         collapsed_results = []
         for i, r in enumerate(results):
@@ -202,7 +202,7 @@ ORDER BY begin'''.format(corpus = self.corpus_name, discourse = discourse)
             else:
                 collapsed_results.append(r)
         utterances = []
-        q = self.query_graph(self.word).filter(self.word.discourse == discourse)
+        q = self.query_graph(self.word).filter(self.word.discourse.name == discourse)
         times = q.aggregate(Min(self.word.begin), Max(self.word.end))
         if len(results) < 2:
             begin = times.min_begin

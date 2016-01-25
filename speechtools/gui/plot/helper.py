@@ -26,41 +26,123 @@ def get_histogram_mesh_data(data, bins=100, color='k', orientation='h'):
     tris[1::2] = tri_2 + offsets
     return (rr, tris)
 
-def generate_boundaries(annotations, text = True):
-    plotdata = []
-    annodata = []
-    subannodata = []
-    subplotdata = []
-    posdata = []
-    subposdata = []
+def generate_boundaries(annotations, hierarchy):
+    max_sig = 1
+    min_sig = -1
+    num_types = len(hierarchy.keys())
+    lowest = hierarchy.lowest
+    size = max_sig / (num_types)
+    line_outputs = {x: [] for x in hierarchy.keys()}
+    text_pos = {x: [] for x in hierarchy.keys()}
+    text_labels = {x: [] for x in hierarchy.keys()}
+    subannotation_keys = []
+    for k,v in hierarchy.subannotations.items():
+        for s in v:
+            line_outputs[k,s] = []
+            text_pos[k,s] = []
+            text_labels[k,s] = []
+            subannotation_keys.append((k,s))
+    subannotation_keys.sort()
+    try:
+        sub_size = max_sig/len(subannotation_keys)
+    except ZeroDivisionError:
+        sub_size = max_sig
+    subannotation_keys = {s: i for i, s in enumerate(subannotation_keys)}
+    cur = 0
     for a in annotations:
-        midpoint = ((a['end']-a['begin']) /2) + a['begin']
-        annodata.append(a['label'])
-        posdata.append((midpoint, 0.5))
+        #if a.end < min_time:
+        #    continue
+        #if a.begin > max_time:
+        #    continue
+        end = a.end
+        begin = a.begin
+        midpoint = ((end - begin) / 2) + begin
+        vert_min = max_sig - size
+        vert_max = max_sig
+        vert_mid = (vert_max - vert_min)/2 + vert_min
+        text = a.label
+        if text is None:
+            text = ''
+        text_labels[a._type].append(text)
+        text_pos[a._type].append((midpoint, vert_mid))
 
-        plotdata.append([a['begin'],0])
-        plotdata.append([a['begin'],1])
-        plotdata.append([a['end'],0])
-        plotdata.append([a['end'],1])
-        for i, p in enumerate(a.phones):
-            p_begin = a.phone_begins[i]
-            p_end = a.phone_ends[i]
-            midpoint = ((p_end - p_begin) /2) + p_begin
-            subannodata.append(p)
-            subposdata.append((midpoint, -0.5))
+        line_outputs[a._type].append([begin,vert_min])
+        line_outputs[a._type].append([begin,vert_max])
+        line_outputs[a._type].append([end,vert_min])
+        line_outputs[a._type].append([end,vert_max])
+        if a._type in hierarchy.subannotations:
+            for stype in hierarchy.subannotations[a._type]:
+                subs = getattr(a, stype)
+                for s in subs:
+                    end = s.end
+                    begin = s.begin
+                    midpoint = ((end - begin) / 2) + begin
+                    text = s.label
+                    if text is None:
+                        text = ''
+                    ind = subannotation_keys[a._type,stype]
+                    vert_max = min_sig + sub_size * (ind+1)
+                    vert_min = min_sig + sub_size * (ind)
+                    vert_mid = (vert_max - vert_min)/2 + vert_min
+                    line_outputs[a._type,stype].append([begin,vert_min])
+                    line_outputs[a._type,stype].append([begin,vert_max])
+                    line_outputs[a._type,stype].append([end,vert_min])
+                    line_outputs[a._type,stype].append([end,vert_max])
 
-            subplotdata.append([p_begin,-1])
-            subplotdata.append([p_begin,0])
-            subplotdata.append([p_end,-1])
-            subplotdata.append([p_end,0])
+        for i, t in enumerate(hierarchy.get_lower_types(a._type)):
+            elements = getattr(a, t)
+            i += 1
+            for e in elements:
+                if t == lowest:
+                    vert_min = 0
+                    vert_max = max_sig - size * i
+                else:
+                    vert_min = max_sig - size * (i+1)
+                    vert_max = vert_min + size
+                vert_mid = (vert_max - vert_min)/2 + vert_min
+                end = e.end
+                begin = e.begin
+                midpoint = ((end - begin) /2) + begin
+                text_labels[t].append(e.label)
+                text_pos[t].append((midpoint, vert_mid))
 
-    line_outputs = []
-    text_outputs = []
-    line_outputs.append( np.array(plotdata))
-    line_outputs.append(np.array(subplotdata))
-    if text:
-        text_outputs.append((annodata, np.array(posdata)))
-        text_outputs.append((subannodata, np.array(subposdata)))
+                line_outputs[t].append([begin,vert_min])
+                line_outputs[t].append([begin,vert_max])
+                line_outputs[t].append([end,vert_min])
+                line_outputs[t].append([end,vert_max])
+                if t in hierarchy.subannotations:
+                    for stype in hierarchy.subannotations[t]:
+                        subs = getattr(e, stype)
+                        for s in subs:
+                            ind = subannotation_keys[t,stype]
+                            end = s.end
+                            begin = s.begin
+                            midpoint = ((end - begin) / 2) + begin
+                            vert_max = min_sig + sub_size * (ind+1)
+                            vert_min = min_sig + sub_size * (ind)
+                            vert_mid = (vert_max - vert_min)/2 + vert_min
+                            text_pos[t,stype].append((midpoint, vert_mid))
+                            try:
+                                text = s.label
+                            except AttributeError:
+                                text = None
+                            if text is None:
+                                text = ''
+
+                            text_labels[t,stype].append(text)
+                            line_outputs[t,stype].append([begin,vert_min])
+                            line_outputs[t,stype].append([begin,vert_max])
+                            line_outputs[t,stype].append([end,vert_min])
+                            line_outputs[t,stype].append([end,vert_max])
+
+    text_outputs = {}
+    for t in hierarchy.highest_to_lowest:
+        line_outputs[t] = np.array(line_outputs[t])
+        text_outputs[t] = (text_labels[t], np.array(text_pos[t]))
+    for k in subannotation_keys.keys():
+        line_outputs[k] = np.array(line_outputs[k])
+        text_outputs[k] = (text_labels[k], np.array(text_pos[k]))
+
     return line_outputs, text_outputs
 
 

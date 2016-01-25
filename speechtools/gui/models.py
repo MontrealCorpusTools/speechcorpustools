@@ -19,6 +19,17 @@ class QueryResultsModel(QtCore.QAbstractTableModel):
             return self.columns[col]
         return None
 
+    def times(self, index):
+        row = index.row()
+        result = self.rows[row]
+
+        return result.begin, result.end
+
+    def discourse(self, index):
+        row = index.row()
+        result = self.rows[row]
+
+        return result.discourse
 
     def data(self, index, role = None):
         if not index.isValid():

@@ -1,6 +1,7 @@
 import numpy as np
 
 from vispy.scene.cameras.panzoom import PanZoomCamera
+from vispy.scene.cameras.base_camera import BaseCamera
 from vispy.geometry import Rect
 
 from .helper import rescale
@@ -23,20 +24,6 @@ class SCTAudioCamera(PanZoomCamera):
         self._ybounds = ybounds
 
     def set_range(self, x = None, y = None):
-        if x is None:
-            x = self._xbounds
-        elif self._xbounds:
-            if x[0] < self._xbounds[0]:
-                x = (self._xbounds[0], x[1])
-            if x[1] > self._xbounds[1]:
-                x = (x[0], self._xbounds[1])
-        if y is None:
-            y = self._ybounds
-        elif self._ybounds:
-            if y[0] < self._ybounds[0]:
-                y = (self._ybounds[0], y[1])
-            if y[1] > self._ybounds[1]:
-                y = (y[0], self._ybounds[1])
         super(SCTAudioCamera, self).set_range(x=x, y=y, margin =0)
 
     def link(self, camera):
@@ -56,6 +43,8 @@ class SCTAudioCamera(PanZoomCamera):
             The center of the view. If not given or None, use the
             current center.
         """
+        if self.zoom is None:
+            return
         if self._zoomed:
             return
         assert len(center) in (2, 3, 4)
@@ -119,6 +108,8 @@ class SCTAudioCamera(PanZoomCamera):
             The distance to pan the view, in the coordinate system of the
             scene.
         """
+        if self._pan_axis is None:
+            return
         if self._panned:
             return
         if len(pan) == 1:

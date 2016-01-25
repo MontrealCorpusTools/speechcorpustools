@@ -1,9 +1,11 @@
+from struct import pack
 import numpy as np
-from PyQt5 import QtGui, QtCore, QtWidgets
+from scipy.io import wavfile
+from PyQt5 import QtGui, QtCore, QtWidgets, QtMultimedia
 
 from polyglotdb.gui.widgets import ConnectWidget, ImportWidget, ExportWidget
 
-from .plot import SCTAudioWidget, SCTSummaryWidget
+from .plot import AnnotationWidget, SpectralWidget, SCTSummaryWidget
 
 from .workers import QueryWorker, DiscourseQueryWorker
 
@@ -18,24 +20,221 @@ def get_system_font_height():
     fm = QtGui.QFontMetrics(f)
     return fm.height()
 
+class SubannotationDialog(QtWidgets.QDialog):
+    def __init__(self, type = None,
+                subannotation_types = None, parent = None):
+        super(SubannotationDialog, self).__init__(parent)
+        layout = QtWidgets.QFormLayout()
+
+        if subannotation_types is None:
+            subannotation_types = []
+        self.completer = QtWidgets.QCompleter(subannotation_types)
+        self.completer.setCaseSensitivity(QtCore.Qt.CaseInsensitive)
+        self.typeEdit = QtWidgets.QLineEdit()
+        self.typeEdit.setCompleter(self.completer)
+        if type is not None:
+            self.typeEdit.setText(type)
+
+        layout.addRow('Type', self.typeEdit)
+
+        mainlayout = QtWidgets.QVBoxLayout()
+        mainlayout.addLayout(layout)
+
+        aclayout = QtWidgets.QHBoxLayout()
+
+        self.acceptButton = QtWidgets.QPushButton('Save')
+        self.acceptButton.clicked.connect(self.accept)
+        self.rejectButton = QtWidgets.QPushButton('Cancel')
+        self.rejectButton.clicked.connect(self.reject)
+
+        aclayout.addWidget(self.acceptButton)
+        aclayout.addWidget(self.rejectButton)
+
+        mainlayout.addLayout(aclayout)
+
+        self.setLayout(mainlayout)
+
+        self.setWindowTitle('Add subannotation')
+
+class NoteDialog(QtWidgets.QDialog):
+    def __init__(self, parent = None):
+        super(NoteDialog, self).__init__(parent)
+        layout = QtWidgets.QFormLayout()
+
+        self.typeEdit = QtWidgets.QLineEdit()
+        self.typeEdit.setText('notes')
+
+        self.notesEdit = QtWidgets.QLineEdit()
+
+        layout.addRow('Note type', self.typeEdit)
+        layout.addRow('Note contents', self.notesEdit)
+
+        mainlayout = QtWidgets.QVBoxLayout()
+        mainlayout.addLayout(layout)
+
+        aclayout = QtWidgets.QHBoxLayout()
+
+        self.acceptButton = QtWidgets.QPushButton('Save')
+        self.acceptButton.clicked.connect(self.accept)
+        self.rejectButton = QtWidgets.QPushButton('Cancel')
+        self.rejectButton.clicked.connect(self.reject)
+
+        aclayout.addWidget(self.acceptButton)
+        aclayout.addWidget(self.rejectButton)
+
+        mainlayout.addLayout(aclayout)
+
+        self.setLayout(mainlayout)
+
+        self.setWindowTitle('Add note')
+
+    def accept(self):
+        contents = self.notesEdit.text()
+        if not contents:
+            self.reject()
+        else:
+            super(NoteDialog, self).accept()
+
+    def value(self):
+        type = self.typeEdit.text()
+        if not type:
+            type = 'notes'
+        contents = self.notesEdit.text()
+        return {type: contents}
+
+class Generator(QtCore.QBuffer):
+
+    def __init__(self, format, parent):
+        super(Generator, self).__init__(parent)
+
+        self.format = format
+
+
+    def start(self):
+        self.open(QtCore.QIODevice.ReadOnly)
+
+    def generateData(self, data):
+        m_buffer = QtCore.QByteArray()
+        pack_format = ''
+
+        if self.format.sampleSize() == 8:
+            if self.format.sampleType() == QtMultimedia.QAudioFormat.UnSignedInt:
+                scaler = lambda x: ((1.0 + x) / 2 * 255)
+                pack_format = 'B'
+            elif self.format.sampleType() == QtMultimedia.QAudioFormat.SignedInt:
+                scaler = lambda x: x * 127
+                pack_format = 'b'
+        elif self.format.sampleSize() == 16:
+            if self.format.sampleType() == QtMultimedia.QAudioFormat.UnSignedInt:
+                scaler = lambda x: (1.0 + x) / 2 * 65535
+                pack_format = '<H' if self.format.byteOrder() == QtMultimedia.QAudioFormat.LittleEndian else '>H'
+            elif self.format.sampleType() == QtMultimedia.QAudioFormat.SignedInt:
+                scaler = lambda x: x * 32767
+                pack_format = '<h' if self.format.byteOrder() == QtMultimedia.QAudioFormat.LittleEndian else '>h'
+
+        assert(pack_format != '')
+
+        sampleIndex = 0
+        for i in range(data.shape[0]):
+            packed = pack(pack_format, int(data[i]))
+            for _ in range(self.format.channelCount()):
+                m_buffer.append(packed)
+
+        self.setData(m_buffer)
+
 class SelectableAudioWidget(QtWidgets.QWidget):
     def __init__(self, parent = None):
         super(SelectableAudioWidget, self).__init__(parent)
+        self.signal = None
+        self.sr = None
+        self.annotations = None
+        self.hierarchy = None
+        self.min_time = None
+        self.max_time = None
+        self.min_vis_time = None
+        self.max_vis_time = None
+        self.selected_boundary = None
+        self.selected_time = None
         self.rectselect = False
+        self.allowEdit = False
         layout = QtWidgets.QVBoxLayout()
 
         self.setFocusPolicy(QtCore.Qt.StrongFocus)
-        self.setFocus(True)
 
-        self.audioWidget = SCTAudioWidget(2) # FIXME
+        self.audioWidget = AnnotationWidget()
         self.audioWidget.events.mouse_press.connect(self.on_mouse_press)
         self.audioWidget.events.mouse_release.connect(self.on_mouse_release)
         self.audioWidget.events.mouse_move.connect(self.on_mouse_move)
+        self.audioWidget.events.mouse_wheel.connect(self.on_mouse_wheel)
         w = self.audioWidget.native
         w.setFocusPolicy(QtCore.Qt.NoFocus)
         layout.addWidget(w)
 
+        self.spectrumWidget = SpectralWidget()
+        self.spectrumWidget.events.mouse_press.connect(self.on_mouse_press)
+        self.spectrumWidget.events.mouse_release.connect(self.on_mouse_release)
+        self.spectrumWidget.events.mouse_move.connect(self.on_mouse_move)
+        self.spectrumWidget.events.mouse_wheel.connect(self.on_mouse_wheel)
+        w = self.spectrumWidget.native
+        w.setFocusPolicy(QtCore.Qt.NoFocus)
+        layout.addWidget(w)
+        self.setFocus(True)
+
         self.setLayout(layout)
+
+        self.m_device = QtMultimedia.QAudioDeviceInfo.defaultOutputDevice()
+        self.m_output = None
+
+        self.m_format = QtMultimedia.QAudioFormat()
+        self.m_format.setSampleRate(16000)
+        self.m_format.setChannelCount(1)
+        self.m_format.setSampleSize(16)
+        self.m_format.setCodec('audio/pcm')
+        self.m_format.setByteOrder(QtMultimedia.QAudioFormat.LittleEndian)
+        self.m_format.setSampleType(QtMultimedia.QAudioFormat.SignedInt)
+
+        info = QtMultimedia.QAudioDeviceInfo(QtMultimedia.QAudioDeviceInfo.defaultOutputDevice())
+        if not info.isFormatSupported(self.m_format):
+            qWarning("Default format not supported - trying to use nearest")
+            self.m_format = info.nearestFormat(self.m_format)
+
+        self.m_audioOutput = QtMultimedia.QAudioOutput(self.m_device, self.m_format)
+        self.m_audioOutput.notify.connect(self.notified)
+        #self.m_audioOutput.stateChanged.connect(self.handleStateChanged)
+        self.m_audioOutput.setNotifyInterval(5)
+
+        self.m_generator = Generator(self.m_format, self)
+
+    def updatePlayTime(self, time):
+        pos = self.audioWidget.transform_time_to_pos(time)
+        self.audioWidget.update_play_time(time)
+        self.spectrumWidget.update_play_time(pos)
+
+    def notified(self):
+        sample = self.m_generator.pos() / self.m_format.bytesPerFrame()
+        time = sample / self.m_format.sampleRate()
+        if time >= self.max_vis_time:
+            self.m_audioOutput.stop()
+        self.updatePlayTime(time)
+
+    def set_begin_selection_time(self, time):
+        self.selection_initial_time = time
+        #self.selectRect.set_initial_time(time)
+
+        #mintime = self.selectRect.minimum_time()
+        #if mintime is not None:
+        #    self.set_play_time(mintime)
+
+    def set_end_selection_time(self, time):
+        self.selection_final_time = time
+        #self.selectRect.set_final_time(time)
+
+        #mintime = self.selectRect.minimum_time()
+        #if mintime is not None:
+        #    self.set_play_time(mintime)
+
+    def focusNextPrevChild(self, next_):
+        return False
 
     def keyPressEvent(self, event):
         """
@@ -43,6 +242,22 @@ class SelectableAudioWidget(QtWidgets.QWidget):
         """
         if event.key() == QtCore.Qt.Key_Shift:
             self.rectselect = True
+        if event.key() == QtCore.Qt.Key_Tab:
+            print('hello')
+            if self.m_audioOutput.state() == QtMultimedia.QAudio.StoppedState or \
+                self.m_audioOutput.state() == QtMultimedia.QAudio.IdleState:
+                time = self.audioWidget.get_play_time()
+                if time >= self.max_vis_time:
+                    time = self.min_vis_time
+                print(time)
+                print(self.m_generator.pos())
+                self.m_generator.seek(int((time-0.1) * self.sr) * self.m_format.bytesPerFrame())
+                print(self.m_generator.pos())
+                self.m_audioOutput.start(self.m_generator)
+            elif self.m_audioOutput.state() == QtMultimedia.QAudio.ActiveState:
+                self.m_audioOutput.suspend()
+            elif self.m_audioOutput.state() == QtMultimedia.QAudio.SuspendedState:
+                self.m_audioOutput.resume()
         else:
             print(event.key())
 
@@ -53,22 +268,53 @@ class SelectableAudioWidget(QtWidgets.QWidget):
         if event.key() == QtCore.Qt.Key_Shift:
             self.rectselect = False
 
+    def find_annotation(self, key, time):
+        annotation = None
+        for a in self.annotations:
+            if a.end < self.min_vis_time:
+                continue
+            if isinstance(key, tuple):
+                elements = getattr(a, key[0])
+                for e in elements:
+                    subs = getattr(e, key[1])
+                    for s in subs:
+                        if time >= s.begin and time <= s.end:
+                            annotation = s
+                            break
+                        index += 1
+                    if annotation is not None:
+                        break
+            elif key != a._type:
+                elements = getattr(a, key)
+                for e in elements:
+                    if time >= e.begin and time <= e.end:
+                        annotation = e
+                        break
+                    index += 1
+            elif time >= a.begin and time <= a.end:
+                annotation = a
+            if annotation is not None:
+                break
+        return annotation
+
     def on_mouse_press(self, event):
         """
         Mouse button press event
         """
         if event.button == 1 and self.rectselect == False:
-            tr = self.audioWidget.scene.node_transform(self.audioWidget['annotations'].line_visuals[0])
-            pos = tr.map(event.pos)
-            time = pos[0]
-            self.audioWidget['annotations'].set_play_time(time)
+            time = self.audioWidget.transform_pos_to_time(event.pos)
+            selection = self.audioWidget.check_selection(event)
+            if selection is not None:
+                self.selected_boundary = selection
+                self.selected_time = time
+            else:
+                self.audioWidget.update_play_time(time)
+                self.spectrumWidget.update_play_time(event.pos[0])
 
         elif event.button == 1 and self.rectselect == True:
-            self.audioWidget['annotations'].set_end_selection_time(None)
-            tr = self.audioWidget.scene.node_transform(self.audioWidget['annotations'].line_visuals[0])
-            pos = tr.map(event.pos)
-            time = pos[0]
-            self.audioWidget['annotations'].set_begin_selection_time(time)
+            self.set_end_selection_time(None)
+            time = self.audioWidget.transform_pos_to_time(event.pos)
+            self.set_begin_selection_time(time)
 
     def on_mouse_release(self, event):
         is_single_click = not event.is_dragging or abs(np.sum(event.press_event.pos - event.pos)) < 10
@@ -77,29 +323,219 @@ class SelectableAudioWidget(QtWidgets.QWidget):
             pass
         elif event.button == 1 and is_single_click and self.rectselect == False:
 
-            tr = self.audioWidget.scene.node_transform(self.audioWidget['annotations'].line_visuals[0])
-            pos = tr.map(event.pos)
-            time = pos[0]
-            self.audioWidget['annotations'].set_play_time(time)
+            time = self.audioWidget.transform_pos_to_time(event.pos)
+            self.updatePlayTime(time)
+            print(self.m_audioOutput.state())
+            if self.m_audioOutput.state() == QtMultimedia.QAudio.SuspendedState:
+                self.m_audioOutput.stop()
+                self.m_audioOutput.reset()
+        elif event.button == 1 and self.selected_boundary is not None and self.allowEdit:
+            self.save_selected_boundary()
+            self.selected_boundary = None
+            self.selected_time = None
+            self.audioWidget.update_selection_time(self.selected_time)
+        elif event.button == 2:
+            key = self.audioWidget.pos_to_key(event.pos)
+            if key is None:
+                return
+            time = self.audioWidget.transform_pos_to_time(event.pos)
+            annotation = self.find_annotation(key, time)
+            menu = QtWidgets.QMenu(self)
+
+            subannotation_action = QtWidgets.QAction('Add subannotation...', self)
+            note_action = QtWidgets.QAction('Add note...', self)
+            check_annotated_action = QtWidgets.QAction('Mark as annotated', self)
+            mark_absent_action = QtWidgets.QAction('Mark as absent', self)
+            if not isinstance(key, tuple):
+                menu.addAction(subannotation_action)
+            else:
+                menu.addAction(check_annotated_action)
+                menu.addAction(mark_absent_action)
+
+            menu.addAction(note_action)
+
+            action = menu.exec_(event.native.globalPos())
+            if action == subannotation_action:
+                dialog = SubannotationDialog()
+                if dialog.exec_():
+                    pass
+            elif action == note_action:
+                dialog = NoteDialog()
+                if dialog.exec_():
+                    annotation.update_properties(**dialog.value())
 
     def on_mouse_move(self, event):
+        snap = True
         if event.button == 1 and event.is_dragging and self.rectselect:
-            #print('hello')
-            tr = self.audioWidget.scene.node_transform(self.audioWidget['annotations'].line_visuals[0])
-            pos = tr.map(event.pos)
-            time = pos[0]
-            self.audioWidget['annotations'].set_end_selection_time(time)
+            time = self.audioWidget.transform_pos_to_time(event.pos)
+            self.set_end_selection_time(time)
+        elif event.button == 1 and event.is_dragging and self.selected_boundary is not None and self.allowEdit:
+            self.selected_time = self.audioWidget.transform_pos_to_time(event.pos)
+            if snap:
+                keys = self.audioWidget[0:2, 0].rank_key_by_relevance(self.selected_boundary[0])
+                for k in keys:
+                    p, ind = self.audioWidget[0:2, 0].line_visuals[k].select_line(event)
+                    if ind != -1:
+                        self.selected_time = p[0]
+                        break
+            self.audioWidget.update_selected_boundary(self.selected_time, *self.selected_boundary)
 
-    def updateAudio(self, audio_file):
-        self.audioWidget.update_audio(audio_file)
-        self.update()
+            self.audioWidget.update_selection_time(self.selected_time)
+            selected_pos = self.audioWidget.transform_time_to_pos(self.selected_time)
+            self.spectrumWidget.update_selection_time(selected_pos)
+        elif event.button == 1 and event.is_dragging:
+            last_time = self.audioWidget.transform_pos_to_time(event.last_event.pos)
+            cur_time = self.audioWidget.transform_pos_to_time(event.pos)
+            delta = last_time - cur_time
+            self.pan(delta)
+            #Figure out how much time it's panned since the last event
+            #Update visible bounds
+        elif event.button is None:
+            self.audioWidget.check_selection(event)
+
+    def on_mouse_wheel(self, event):
+        center_time = self.audioWidget.transform_pos_to_time(event.pos)
+        factor = (1 + 0.007) ** (-event.delta[1] * 30)
+        self.zoom(factor, center_time)
+        event.handled = True
+
+    def zoom(self, factor, center_time):
+        if self.max_vis_time == self.max_time and self.min_vis_time == self.min_time and factor > 1:
+            return
+
+        left_space = center_time - self.min_vis_time
+        right_space = self.max_vis_time - center_time
+
+        min_time = center_time - left_space * factor
+        max_time = center_time + right_space * factor
+
+        if max_time > self.max_time:
+            max_time = self.max_time
+        if min_time < self.min_time:
+            min_time = self.min_time
+        self.max_vis_time = max_time
+        self.min_vis_time = min_time
+        self.updateVisible()
+
+    def pan(self, time_delta):
+        if self.max_vis_time == self.max_time and time_delta > 0:
+            return
+        if self.min_vis_time == self.min_time and time_delta < 0:
+            return
+        min_time = self.min_vis_time + time_delta
+        max_time = self.max_vis_time + time_delta
+        if max_time > self.max_time:
+            new_delta = time_delta - (max_time - self.max_time)
+            min_time = self.min_vis_time + new_delta
+            max_time = self.max_vis_time + new_delta
+        if min_time < self.min_time:
+            new_delta = time_delta - (min_time - self.min_time)
+            min_time = self.min_vis_time + new_delta
+            max_time = self.max_vis_time + new_delta
+        self.min_vis_time = min_time
+        self.max_vis_time = max_time
+        self.updateVisible()
+
+    def updateVisible(self):
+        if self.annotations is None:
+            self.audioWidget.update_annotations(None)
+        else:
+            annos = [x for x in self.annotations if x.end > self.min_vis_time
+                and x.begin < self.max_vis_time]
+            self.audioWidget.update_annotations(annos)
+        min_time, max_time = self.min_vis_time, self.max_vis_time
+        if self.signal is None or self.sr is None:
+            self.audioWidget.update_signal(None)
+            self.spectrumWidget.update_signal(None)
+        else:
+            min_samp = np.floor(min_time * self.sr)
+            max_samp = np.ceil(max_time * self.sr)
+            print(max_time - min_time)
+            sig = self.signal[min_samp:max_samp]
+
+            t = np.arange(sig.shape[0]) / self.sr + min_time
+            data = np.array((t, sig)).T
+            self.audioWidget.update_signal(data)
+            max_samp = np.ceil((max_time + 0.005) * self.sr)
+            self.spectrumWidget.update_signal(self.signal[min_samp:max_samp])
+            self.updatePlayTime(self.min_vis_time)
+            if self.m_audioOutput.state() == QtMultimedia.QAudio.SuspendedState:
+                self.m_audioOutput.stop()
+                self.m_audioOutput.reset()
+
+    def save_selected_boundary(self):
+        key, ind = self.selected_boundary
+        actual_index = int(ind / 4)
+        print(ind % 4)
+        index = 0
+        selected_annotation = None
+        for a in self.annotations:
+            if a.end < self.min_vis_time:
+                continue
+            if isinstance(key, tuple):
+                elements = getattr(a, key[0])
+                for e in elements:
+                    subs = getattr(e, key[1])
+                    for s in subs:
+                        if index == actual_index:
+                            selected_annotation = s
+                            break
+                        index += 1
+                    if selected_annotation is not None:
+                        break
+            elif key != a._type:
+                elements = getattr(a, key)
+                for e in elements:
+                    if index == actual_index:
+                        selected_annotation = e
+                        break
+                    index += 1
+            elif index == actual_index:
+                selected_annotation = a
+            if selected_annotation is not None:
+                break
+        mod = ind % 4
+
+        if mod == 0:
+            selected_annotation.update_properties(begin = self.selected_time)
+        else:
+            selected_annotation.update_properties(end = self.selected_time)
+        selected_annotation.save()
 
     def updateAnnotations(self, annotations):
-        self.audioWidget.update_annotations(annotations)
-        self.update()
+        self.annotations = annotations
+
+        self.updateVisible()
+
+    def updateAudio(self, audio_file):
+        if audio_file is not None:
+            self.sr, self.signal = wavfile.read(audio_file)
+            if self.m_generator.isOpen():
+                self.m_generator.close()
+            self.m_generator.generateData(self.signal)
+            self.m_generator.start()
+            self.signal = self.signal / 32768
+            self.min_time = 0
+            self.max_time = len(self.signal) / self.sr
+            self.min_vis_time = 0
+            if self.max_time > 30:
+                self.max_vis_time = 30
+            else:
+                self.max_vis_time = self.max_time
+            self.spectrumWidget.update_sampling_rate(self.sr)
+            self.updateVisible()
+        else:
+            self.signal = None
+            self.sr = None
+            self.spectrumWidget.update_sampling_rate(self.sr)
+
+    def changeView(self, begin, end):
+        self.audioWidget['annotations'].set_camera_range(begin, end)
+        self.audioWidget['waveform'].set_camera_range(begin, end)
 
     def clearDiscourse(self):
-        self.audioWidget.clear_discourse()
+        self.audioWidget.update_hierarchy(self.hierarchy)
+        self.audioWidget.clear()
 
 class QueryForm(QtWidgets.QWidget):
     finishedRunning = QtCore.pyqtSignal(object)
@@ -170,6 +606,7 @@ class QueryResults(QtWidgets.QWidget):
         self.setLayout(layout)
 
 class QueryWidget(QtWidgets.QWidget):
+    viewRequested = QtCore.pyqtSignal(str, float, float)
     def __init__(self):
         super(QueryWidget, self).__init__()
         self.config = None
@@ -195,6 +632,7 @@ class QueryWidget(QtWidgets.QWidget):
         name = 'Query {}'.format(self.currentIndex)
         self.currentIndex += 1
         widget = QueryResults(results)
+        widget.tableWidget.viewRequested.connect(self.viewRequested.emit)
         self.tabs.addTab(widget, name)
 
 class HelpWidget(QtWidgets.QWidget):
@@ -208,6 +646,7 @@ class HelpWidget(QtWidgets.QWidget):
 
 class DiscourseWidget(QtWidgets.QWidget):
     discourseChanged = QtCore.pyqtSignal(str)
+    viewRequested = QtCore.pyqtSignal(float, float)
     def __init__(self):
         super(DiscourseWidget, self).__init__()
 
@@ -216,17 +655,31 @@ class DiscourseWidget(QtWidgets.QWidget):
         layout = QtWidgets.QHBoxLayout()
 
         self.discourseList = QtWidgets.QListWidget()
-        self.discourseList.currentItemChanged.connect(self.changeDiscourse)
+        self.discourseList.setSelectionMode(QtWidgets.QAbstractItemView.SingleSelection)
+        self.discourseList.itemSelectionChanged.connect(self.changeDiscourse)
 
         layout.addWidget(self.discourseList)
 
         self.setLayout(layout)
 
     def changeDiscourse(self):
-        item = self.discourseList.currentItem()
-        if item is not None:
-            discourse = item.text()
-            self.discourseChanged.emit(discourse)
+        items = self.discourseList.selectedItems()
+        if len(items) > 0:
+            discourse = items[0].text()
+        else:
+            discourse = None
+        self.discourseChanged.emit(discourse)
+
+    def changeView(self, discourse, begin, end):
+        for i in range(self.discourseList.count()):
+            item = self.discourseList.item(i)
+            if item.text() == discourse:
+                index = self.discourseList.model().index(i, 0)
+                self.discourseList.selectionModel().select(index,
+                                QtCore.QItemSelectionModel.ClearAndSelect|QtCore.QItemSelectionModel.Rows)
+                self.viewRequested.emit(begin, end)
+                break
+
 
     def updateConfig(self, config):
         self.config = config
@@ -277,22 +730,25 @@ class ViewWidget(QtWidgets.QWidget):
         self.changingDiscourse.connect(self.discourseWidget.clearDiscourse)
 
     def changeDiscourse(self, discourse):
-        self.changingDiscourse.emit()
-        with CorpusContext(self.config) as c:
-            phone_annotation = c.lowest_annotation
+        if discourse:
+            self.changingDiscourse.emit()
+            with CorpusContext(self.config) as c:
+                phone_annotation = c.lowest_annotation
 
-        kwargs = {}
-        if phone_annotation is not None:
-            kwargs['seg_type'] = phone_annotation.type
-        kwargs['word_type'] = 'word'
-        kwargs['config'] = self.config
-        kwargs['discourse'] = discourse
+            kwargs = {}
+            if phone_annotation is not None:
+                kwargs['seg_type'] = phone_annotation.type
+            kwargs['word_type'] = c.hierarchy.highest
+            kwargs['config'] = self.config
+            kwargs['discourse'] = discourse
 
-        self.worker.setParams(kwargs)
-        self.worker.run()
+            self.worker.setParams(kwargs)
+            self.worker.run()
 
     def updateConfig(self, config):
         self.config = config
+        with CorpusContext(self.config) as c:
+            self.discourseWidget.hierarchy = c.hierarchy
 
 
 class CollapsibleWidgetPair(QtWidgets.QSplitter):
