@@ -110,6 +110,11 @@ class AnnotationWidget(vp.Fig):
         pos = pos[0]
         return pos
 
+    def get_key(self, pos):
+        tr = self.scene.node_transform(self[0:2, 0].waveform)
+        pos = tr.map(pos)
+        return self[0:2, 0].pos_to_key(pos)
+
     def check_selection(self, event):
         if event.source != self:
             return

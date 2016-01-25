@@ -57,7 +57,7 @@ class SubannotationDialog(QtWidgets.QDialog):
         self.setWindowTitle('Add subannotation')
 
 class NoteDialog(QtWidgets.QDialog):
-    def __init__(self, parent = None):
+    def __init__(self, annotation, parent = None):
         super(NoteDialog, self).__init__(parent)
         layout = QtWidgets.QFormLayout()
 
@@ -65,6 +65,8 @@ class NoteDialog(QtWidgets.QDialog):
         self.typeEdit.setText('notes')
 
         self.notesEdit = QtWidgets.QLineEdit()
+        if annotation.notes is not None:
+            self.notesEdit.setText(annotation.notes)
 
         layout.addRow('Note type', self.typeEdit)
         layout.addRow('Note contents', self.notesEdit)
@@ -335,7 +337,8 @@ class SelectableAudioWidget(QtWidgets.QWidget):
             self.selected_time = None
             self.audioWidget.update_selection_time(self.selected_time)
         elif event.button == 2:
-            key = self.audioWidget.pos_to_key(event.pos)
+            key = self.audioWidget.get_key(event.pos)
+            print(key)
             if key is None:
                 return
             time = self.audioWidget.transform_pos_to_time(event.pos)
@@ -343,7 +346,7 @@ class SelectableAudioWidget(QtWidgets.QWidget):
             menu = QtWidgets.QMenu(self)
 
             subannotation_action = QtWidgets.QAction('Add subannotation...', self)
-            note_action = QtWidgets.QAction('Add note...', self)
+            note_action = QtWidgets.QAction('Add/edit note...', self)
             check_annotated_action = QtWidgets.QAction('Mark as annotated', self)
             mark_absent_action = QtWidgets.QAction('Mark as absent', self)
             if not isinstance(key, tuple):
@@ -360,9 +363,10 @@ class SelectableAudioWidget(QtWidgets.QWidget):
                 if dialog.exec_():
                     pass
             elif action == note_action:
-                dialog = NoteDialog()
+                dialog = NoteDialog(annotation)
                 if dialog.exec_():
                     annotation.update_properties(**dialog.value())
+
 
     def on_mouse_move(self, event):
         snap = True
