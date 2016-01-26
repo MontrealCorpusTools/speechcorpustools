@@ -28,6 +28,10 @@ def update_sound_files(corpus_context, new_directory):
     corpus_context.sql_session.expire_all()
     q = corpus_context.sql_session.query(SoundFile)
     q.delete()
+    q = corpus_context.sql_session.query(Discourse)
+    if q.first() is None:
+        for d in corpus_context.discourses:
+            discourse, _ = get_or_create(corpus_context.sql_session, Discourse, name = d)
     for root, subdirs, files in os.walk(new_directory, followlinks = True):
         for f in files:
             if not f.lower().endswith('.wav'):
@@ -47,3 +51,14 @@ def update_sound_files(corpus_context, new_directory):
             sf = get_or_create(corpus_context.sql_session, SoundFile, filepath = path,
                 duration = duration, sampling_rate = sample_rate,
                 n_channels = n_channels, discourse = discourse)
+
+
+gp_language_stops = {'gp_croatian': ['p','t','k', 'b', 'd', 'g'],
+                    'gp_french': ['P', 'T', 'K', 'B', 'D', 'G'],
+                    'gp_german': ['p','t','k', 'b', 'd', 'g'],
+                    'gp_korean': ['B','BB','p', 'Ph','D','DD','t','Th','Kh','k','G','GG'],
+                    'gp_polish': ['p','t','c','k', 'b', 'd', 'g'],
+                    'gp_swedish': ['p','t','tr','k', 'b', 'd','dr', 'g'],
+                    'gp_thai': ['p','ph','t','th','c','ch','k','kh','kw','khw','b','d'],
+                    'gp_turkish': ['p','t','k', 'b', 'd', 'g']}
+

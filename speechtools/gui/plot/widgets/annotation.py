@@ -40,6 +40,8 @@ class AnnotationPlotWidget(SelectablePlotWidget):
         for k,v in self.line_visuals.items():
             v.parent = None
         self.hierarchy = hierarchy
+        if self.hierarchy is None:
+            return
         self.num_types = len(self.hierarchy.keys())
         self.annotation_visuals = {}
         self.line_visuals = {}
@@ -64,13 +66,14 @@ class AnnotationPlotWidget(SelectablePlotWidget):
         #Assume that data is the highest level of the hierarchy
         self.annotations = data
         if data is None:
-            for k in self.hierarchy.keys():
-                self.line_visuals[k].set_data(None)
-                self.annotation_visuals[k].set_data(None, None)
-            for k,v in self.hierarchy.subannotations.items():
-                for s in v:
-                    self.line_visuals[k, s].set_data(None)
-                    self.annotation_visuals[k, s].set_data(None, None)
+            if self.hierarchy is not None:
+                for k in self.hierarchy.keys():
+                    self.line_visuals[k].set_data(None)
+                    self.annotation_visuals[k].set_data(None, None)
+                for k,v in self.hierarchy.subannotations.items():
+                    for s in v:
+                        self.line_visuals[k, s].set_data(None)
+                        self.annotation_visuals[k, s].set_data(None, None)
             return
         if self.hierarchy is not None:
             line_data, text_data = generate_boundaries(data, self.hierarchy)
@@ -81,6 +84,10 @@ class AnnotationPlotWidget(SelectablePlotWidget):
                 for s in v:
                     self.line_visuals[k, s].set_data(line_data[k, s])
                     self.annotation_visuals[k, s].set_data(text_data[k, s][0], pos = text_data[k, s][1])
+        if self.waveform._pos is None:
+            min_time = self.annotations[0].begin
+            max_time = self.annotations[-1].end
+            self.view.camera.rect = (min_time, -1, max_time - min_time, 2)
 
     def rank_key_by_relevance(self, key):
         ranking = []

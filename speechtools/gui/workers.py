@@ -41,7 +41,9 @@ class DiscourseQueryWorker(QueryWorker):
             config = self.kwargs['config']
             discourse = self.kwargs['discourse']
             with CorpusContext(config) as c:
-                audio_file = c.discourse_sound_file(discourse).filepath
+                audio_file = c.discourse_sound_file(discourse)
+                if audio_file is not None:
+                    audio_file = audio_file.filepath
                 self.audioReady.emit(audio_file)
                 word = getattr(c,a_type)
                 q = c.query_graph(word).filter(word.discourse.name == discourse)
@@ -59,6 +61,7 @@ class DiscourseQueryWorker(QueryWorker):
                 #annotations = c.query_acoustics(q).pitch('reaper').all()
                 annotations = q.all()
         except Exception as e:
+            raise
             self.errorEncountered.emit(e)
             print(e)
             return

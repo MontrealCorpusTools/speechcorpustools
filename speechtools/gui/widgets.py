@@ -158,7 +158,7 @@ class SelectableAudioWidget(QtWidgets.QWidget):
         self.selected_boundary = None
         self.selected_time = None
         self.rectselect = False
-        self.allowEdit = False
+        self.allowEdit = True
         layout = QtWidgets.QVBoxLayout()
 
         self.setFocusPolicy(QtCore.Qt.StrongFocus)
@@ -454,7 +454,6 @@ class SelectableAudioWidget(QtWidgets.QWidget):
         else:
             min_samp = np.floor(min_time * self.sr)
             max_samp = np.ceil(max_time * self.sr)
-            print(max_time - min_time)
             sig = self.signal[min_samp:max_samp]
 
             t = np.arange(sig.shape[0]) / self.sr + min_time
@@ -508,6 +507,14 @@ class SelectableAudioWidget(QtWidgets.QWidget):
 
     def updateAnnotations(self, annotations):
         self.annotations = annotations
+        if self.signal is None:
+            self.min_time = 0
+            self.max_time = self.annotations[-1].end
+            self.min_vis_time = 0
+            if self.max_time > 30:
+                self.max_vis_time = 30
+            else:
+                self.max_vis_time = self.max_time
 
         self.updateVisible()
 
@@ -527,11 +534,11 @@ class SelectableAudioWidget(QtWidgets.QWidget):
             else:
                 self.max_vis_time = self.max_time
             self.spectrumWidget.update_sampling_rate(self.sr)
-            self.updateVisible()
         else:
             self.signal = None
             self.sr = None
             self.spectrumWidget.update_sampling_rate(self.sr)
+        self.updateVisible()
 
     def changeView(self, begin, end):
         self.audioWidget['annotations'].set_camera_range(begin, end)
@@ -688,7 +695,7 @@ class DiscourseWidget(QtWidgets.QWidget):
     def updateConfig(self, config):
         self.config = config
         self.discourseList.clear()
-        if self.config.corpus_name == '':
+        if self.config is None or self.config.corpus_name == '':
             return
         with CorpusContext(self.config) as c:
             for d in sorted(c.discourses):
@@ -736,13 +743,11 @@ class ViewWidget(QtWidgets.QWidget):
     def changeDiscourse(self, discourse):
         if discourse:
             self.changingDiscourse.emit()
-            with CorpusContext(self.config) as c:
-                phone_annotation = c.lowest_annotation
-
             kwargs = {}
-            if phone_annotation is not None:
-                kwargs['seg_type'] = phone_annotation.type
-            kwargs['word_type'] = c.hierarchy.highest
+            with CorpusContext(self.config) as c:
+                kwargs['seg_type'] = c.hierarchy.lowest
+                kwargs['word_type'] = c.hierarchy.highest
+
             kwargs['config'] = self.config
             kwargs['discourse'] = discourse
 
@@ -751,6 +756,9 @@ class ViewWidget(QtWidgets.QWidget):
 
     def updateConfig(self, config):
         self.config = config
+        self.changingDiscourse.emit()
+        if self.config is None:
+            return
         with CorpusContext(self.config) as c:
             self.discourseWidget.hierarchy = c.hierarchy
 

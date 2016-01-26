@@ -1,10 +1,49 @@
-
+import os
+import pickle
 
 from PyQt5 import QtGui, QtCore, QtWidgets
 
-from .widgets import (ConnectWidget, ViewWidget, ImportWidget, ExportWidget,
+from polyglotdb.config import BASE_DIR
+
+from speechtools.corpus import CorpusContext
+
+from speechtools.utils import update_sound_files
+
+from .widgets import (ConnectWidget as PGConnectWidget, ViewWidget, ImportWidget, ExportWidget,
                         HelpWidget, DiscourseWidget, QueryWidget, CollapsibleWidgetPair)
 
+sct_config_pickle_path = os.path.join(BASE_DIR, 'config')
+
+class ConnectWidget(PGConnectWidget):
+    def __init__(self, *args, **kwargs):
+        super(ConnectWidget, self).__init__(*args, **kwargs)
+        self.audioLookupButton = QtWidgets.QPushButton('Find local audio files')
+        self.audioLookupButton.setEnabled(False)
+        self.formlayout.addRow(self.audioLookupButton)
+
+        self.audioLookupButton.clicked.connect(self.findAudio)
+
+        self.corporaList.selectionChanged.connect(self.enableFindAudio)
+
+    def enableFindAudio(self):
+        if self.corporaList.text() is not None:
+            self.audioLookupButton.setEnabled(True)
+        else:
+            self.audioLookupButton.setEnabled(False)
+
+    def findAudio(self):
+        if self.corporaList.text() is not None:
+            directory = QtWidgets.QFileDialog.getExistingDirectory(self, "Select Directory")
+            if directory is None:
+                return
+            name = self.corporaList.text()
+            host = self.hostEdit.text()
+            port = self.portEdit.text()
+            user = self.userEdit.text()
+            password = self.passwordEdit.text()
+            with CorpusContext(name, graph_host = host, graph_port = port,
+                            graph_user = user, graph_password = password) as c:
+                update_sound_files(c, directory)
 
 class LeftPane(QtWidgets.QWidget):
     def __init__(self):
@@ -33,7 +72,13 @@ class RightPane(QtWidgets.QWidget):
     def __init__(self):
         super(RightPane, self).__init__()
 
-        self.connectWidget = ConnectWidget()
+
+        if os.path.exists(sct_config_pickle_path):
+            with open(sct_config_pickle_path, 'rb') as f:
+                config = pickle.load(f)
+        else:
+            config = None
+        self.connectWidget = ConnectWidget(config = config)
         self.connectWidget.configChanged.connect(self.configUpdated.emit)
         self.discourseWidget = DiscourseWidget()
         self.configUpdated.connect(self.discourseWidget.updateConfig)
@@ -61,7 +106,6 @@ class MainWindow(QtWidgets.QMainWindow):
         super(MainWindow, self).__init__()
 
         self.corpusConfig = None
-
         #self.connectWidget = ConnectWidget(self)
         #self.connectWidget.configChanged.connect(self.updateConfig)
         #self.viewWidget = ViewWidget(self)
@@ -72,7 +116,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.configUpdated.connect(self.leftPane.updateConfig)
 
         self.rightPane = RightPane()
-        self.rightPane.configUpdated.connect(self.configUpdated.emit)
+        self.rightPane.configUpdated.connect(self.updateConfig)
         self.rightPane.discourseChanged.connect(self.leftPane.changeDiscourse)
 
         self.leftPane.queryWidget.viewRequested.connect(self.rightPane.discourseWidget.changeView)
@@ -96,6 +140,9 @@ class MainWindow(QtWidgets.QMainWindow):
 
         self.updateStatus()
 
+        if os.path.exists(sct_config_pickle_path):
+            self.rightPane.connectWidget.connectToServer()
+
     def updateConfig(self, config):
         self.corpusConfig = config
         self.updateStatus()
@@ -110,6 +157,11 @@ class MainWindow(QtWidgets.QMainWindow):
                 c_name = 'No corpus selected'
             self.status.setText('Connected to {} ({})'.format(self.corpusConfig.graph_hostname, c_name))
 
+    def closeEvent(self, event):
+        if self.corpusConfig is not None:
+            with open(sct_config_pickle_path, 'wb') as f:
+                pickle.dump(self.corpusConfig, f)
+        super(MainWindow, self).closeEvent(event)
 
     def createActions(self):
 
