@@ -15,6 +15,7 @@ from vispy.geometry import Rect
 from vispy.visuals.visual import Visual
 from vispy.visuals.shaders import Function
 from vispy.color import Color, ColorArray, get_colormap
+from numpy.lib.stride_tricks import as_strided
 
 #Reproduced from librosa to avoid lots of imports
 MAX_MEM_BLOCK = 2**8 * 2**10
@@ -306,7 +307,7 @@ def stft(y, n_fft=2048, hop_length=None, win_length=None, window=None,
                            order='F')
 
     # how many columns can we fit within MAX_MEM_BLOCK?
-    n_columns = int(util.MAX_MEM_BLOCK / (stft_matrix.shape[0] *
+    n_columns = int(MAX_MEM_BLOCK / (stft_matrix.shape[0] *
                                           stft_matrix.itemsize))
 
     for bl_s in range(0, stft_matrix.shape[1], n_columns):

@@ -92,7 +92,7 @@ class CorpusContext(BaseContext):
         MERGE (prec)-[:precedes]->(foll)'''.format(corpus = self.corpus_name)
 
         self.execute_cypher(statement)
-        self.annotation_types.add('pause')
+        self.hierarchy.annotation_types.add('pause')
 
     def reset_pauses(self):
         """
@@ -111,7 +111,7 @@ class CorpusContext(BaseContext):
         REMOVE n:pause'''.format(corpus=self.corpus_name)
         self.graph.cypher.execute(statement)
         try:
-            self.annotation_types.remove('pause')
+            self.hierarchy.annotation_types.remove('pause')
         except KeyError:
             pass
 
@@ -123,7 +123,7 @@ class CorpusContext(BaseContext):
         try:
             q = self.query_graph(self.utterance)
             q.delete()
-            self.annotation_types.remove('utterance')
+            self.hierarchy.annotation_types.remove('utterance')
         except GraphQueryError:
             pass
 
@@ -155,9 +155,8 @@ class CorpusContext(BaseContext):
             time_data_to_csvs('utterance', self.config.temporary_directory('csv'), d, utterances)
             import_utterance_csv(self, d)
 
-        self.hierarchy['word'] = 'utterance'
+        self.hierarchy[self.hierarchy.highest] = 'utterance'
         self.hierarchy['utterance'] = None
-        self.annotation_types.add('utterance')
 
     def get_utterances(self, discourse,
                 min_pause_length = 0.5, min_utterance_length = 0):
