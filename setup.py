@@ -47,6 +47,9 @@ setup(name='speechtools',
           'polyglotdb',
           'vispy'
       ],
+      entry_points = {
+        'console_scripts': ['sct=speechtools.command_line.sct:main',],
+    },
     cmdclass={'test': PyTest},
     extras_require={
         'testing': ['pytest'],
