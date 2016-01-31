@@ -9,6 +9,7 @@ def test_wav_info(acoustic_config):
         assert(sf.sampling_rate == 16000)
         assert(sf.n_channels == 1)
 
+@pytest.mark.xfail
 def test_query_pitch(acoustic_config):
     with CorpusContext(acoustic_config) as g:
         q = g.query_graph(g.phone).filter(g.phone.label == 'ow').order_by(g.phone.begin.column_name('begin'))

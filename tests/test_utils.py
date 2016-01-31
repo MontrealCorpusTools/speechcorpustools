@@ -4,6 +4,7 @@ import pytest
 from speechtools.corpus import CorpusContext
 from speechtools.utils import add_default_annotations, update_sound_files
 
+@pytest.mark.xfail
 def test_add_default_voicing_annotations(acoustic_config):
     with CorpusContext(acoustic_config) as c:
         stops = ('p', 't', 'k', 'b', 'd', 'g')

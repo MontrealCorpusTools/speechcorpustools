@@ -19,7 +19,6 @@ def add_default_annotations(corpus_context, linguistic_type,
         q = corpus_context.query_graph(atype).filter(atype.speaker.name == s)
         if subset is not None:
             q = q.filter(atype.label.in_(subset))
-            q = q.filter(atype.utterance.begin == atype.begin) # FIXME Phon4
         las = q.all()
         #tx = corpus_context.graph.cypher.begin()
         #try:
