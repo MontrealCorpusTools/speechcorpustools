@@ -37,6 +37,17 @@ class ResultsView(QtWidgets.QTableView):
     def setModel(self,model):
         super(ResultsView, self).setModel(model)
 
+    def mouseDoubleClickEvent(self, event):
+        print ('hello')
+        pos = event.pos()
+        index = self.indexAt(pos)
+        if index is None:
+            return
+        index = self.model().mapToSource(index)
+        times = self.model().sourceModel().times(index)
+        discourse = self.model().sourceModel().discourse(index)
+        self.viewRequested.emit(discourse, *times)
+
     def showMenu(self, pos):
         menu = QtWidgets.QMenu()
         index = self.indexAt(pos)

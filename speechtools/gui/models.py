@@ -23,13 +23,13 @@ class QueryResultsModel(QtCore.QAbstractTableModel):
         row = index.row()
         result = self.rows[row]
 
-        return result.begin, result.end
+        return result.Begin, result.End
 
     def discourse(self, index):
         row = index.row()
         result = self.rows[row]
 
-        return result.discourse
+        return result.Discourse
 
     def data(self, index, role = None):
         if not index.isValid():

@@ -13,10 +13,13 @@ class SelectablePlotWidget(PlotWidget):
         self.unfreeze()
         self.selection_time_line = SelectionLine()
         self.selection_time_line.visible = False
+        self.selection_rect = SelectionRect()
+        self.selection_rect.visible = False
         self.play_time_line = PlayLine()
         self.play_time_line.visible = False
         self.view.add(self.selection_time_line)
         self.view.add(self.play_time_line)
+        self.view.add(self.selection_rect)
         self.freeze()
 
     def _configure_2d(self, fg_color=None):

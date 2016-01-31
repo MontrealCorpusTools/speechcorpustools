@@ -57,6 +57,21 @@ def acoustic_analysis(corpus_context):
     log.info('Finished acoustic analysis for {} corpus!'.format(corpus_context.corpus_name))
     log.debug('Total time taken: {} seconds'.format(time.time() - initial_begin))
 
+def get_pitch(corpus_context, sound_file, algorithm = 'reaper'):
+    q = corpus_context.sql_session.query(Pitch).join(SoundFile)
+    q = q.filter(SoundFile.id == sound_file.id)
+    q = q.filter(Pitch.source == algorithm)
+    listing = q.all()
+    if len(listing) == 0:
+        sound_file = corpus_context.sql_session.query(SoundFile).filter(SoundFile.id == sound_file.id).first()
+
+        analyze_pitch(corpus_context, sound_file, sound_file.filepath)
+        q = corpus_context.sql_session.query(Pitch).join(SoundFile)
+        q = q.filter(SoundFile.id == sound_file.id)
+        q = q.filter(Pitch.source == algorithm)
+        listing = q.all()
+    return listing
+
 def analyze_pitch(corpus_context, sound_file, sound_file_path):
     if getattr(corpus_context.config, 'reaper_path', None) is not None:
         pitch_function = partial(ReaperPitch, reaper = corpus_context.config.reaper_path,
@@ -91,7 +106,6 @@ def analyze_pitch(corpus_context, sound_file, sound_file_path):
                 corpus_context.sql_session.add(p)
     else:
         pitch = pitch_function(sound_file_path)
-        pitch.process()
         for timepoint, value in pitch.items():
             try:
                 value = value[0]
@@ -99,6 +113,7 @@ def analyze_pitch(corpus_context, sound_file, sound_file_path):
                 pass
             p = Pitch(sound_file = sound_file, time = timepoint, F0 = value, source = algorithm)
             corpus_context.sql_session.add(p)
+    corpus_context.sql_session.flush()
 
 def analyze_formants(corpus_context, sound_file, sound_file_path):
     if getattr(corpus_context.config, 'praat_path', None) is not None:

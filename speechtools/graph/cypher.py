@@ -66,6 +66,10 @@ def generate_return(query):
     else:
         template = distinct_template
         kwargs['columns'] = generate_distinct(query)
+        if query._limit is not None:
+            kwargs['limit'] = '\nLIMIT {}'.format(query._limit)
+        else:
+            kwargs['limit'] = ''
 
     kwargs['order_by'] = generate_order_by(query)
 

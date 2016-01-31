@@ -3,47 +3,89 @@ import pickle
 
 from PyQt5 import QtGui, QtCore, QtWidgets
 
-from polyglotdb.config import BASE_DIR
+from polyglotdb.config import BASE_DIR, CorpusConfig
 
 from speechtools.corpus import CorpusContext
 
-from speechtools.utils import update_sound_files
-
 from .widgets import (ConnectWidget as PGConnectWidget, ViewWidget, ImportWidget, ExportWidget,
                         HelpWidget, DiscourseWidget, QueryWidget, CollapsibleWidgetPair)
+
+from .workers import AudioFinderWorker, AudioCheckerWorker
 
 sct_config_pickle_path = os.path.join(BASE_DIR, 'config')
 
 class ConnectWidget(PGConnectWidget):
     def __init__(self, *args, **kwargs):
+        self.audioLookupButton = QtWidgets.QPushButton('Find audio')
+        self.audioLookupButton.setEnabled(True)
         super(ConnectWidget, self).__init__(*args, **kwargs)
-        self.audioLookupButton = QtWidgets.QPushButton('Find local audio files')
-        self.audioLookupButton.setEnabled(False)
         self.formlayout.addRow(self.audioLookupButton)
 
         self.audioLookupButton.clicked.connect(self.findAudio)
 
-        self.corporaList.selectionChanged.connect(self.enableFindAudio)
+        #self.corporaList.selectionChanged.connect(self.checkAudio)
 
-    def enableFindAudio(self):
-        if self.corporaList.text() is not None:
-            self.audioLookupButton.setEnabled(True)
-        else:
+        self.checkerWorker = AudioCheckerWorker()
+        self.checkerWorker.dataReady.connect(self.enableFindAudio)
+
+        self.finderWorker = AudioFinderWorker()
+        self.finderWorker.dataReady.connect(self.doneFinding)
+
+    def connectToServer(self, ignore = False):
+        super(ConnectWidget, self).connectToServer(ignore)
+        self.checkAudio()
+
+    def enableFindAudio(self, all_found):
+        if all_found:
             self.audioLookupButton.setEnabled(False)
+            self.audioLookupButton.setText('Audio available')
+        else:
+            self.audioLookupButton.setText('Find local audio files')
+            self.audioLookupButton.setEnabled(True)
+
+    def createConfig(self):
+        name = self.corporaList.text()
+        if name is None:
+            return None
+        host = self.hostEdit.text()
+        port = self.portEdit.text()
+        user = self.userEdit.text()
+        password = self.passwordEdit.text()
+        return CorpusConfig(name, graph_host = host, graph_port = port,
+                        graph_user = user, graph_password = password)
+
+    def checkAudio(self):
+        config = self.createConfig()
+        if config is None:
+            self.audioLookupButton.setEnabled(False)
+            self.audioLookupButton.setText('Select a corpus')
+        else:
+            kwargs = {}
+            kwargs['config'] = config
+            self.checkerWorker.setParams(kwargs)
+            self.checkerWorker.start()
 
     def findAudio(self):
         if self.corporaList.text() is not None:
             directory = QtWidgets.QFileDialog.getExistingDirectory(self, "Select Directory")
             if directory is None:
                 return
-            name = self.corporaList.text()
-            host = self.hostEdit.text()
-            port = self.portEdit.text()
-            user = self.userEdit.text()
-            password = self.passwordEdit.text()
-            with CorpusContext(name, graph_host = host, graph_port = port,
-                            graph_user = user, graph_password = password) as c:
-                update_sound_files(c, directory)
+            kwargs = {}
+            kwargs['config'] = self.createConfig()
+            kwargs['directory'] = directory
+            self.audioLookupButton.setText('Searching...')
+            self.audioLookupButton.setEnabled(False)
+            self.finderWorker.setParams(kwargs)
+            self.finderWorker.start()
+
+    def doneFinding(self, success):
+        if success:
+            self.audioLookupButton.setText('Audio found')
+            self.audioLookupButton.setEnabled(False)
+        else:
+            self.audioLookupButton.setText('Find local audio files')
+            self.setEnabled(True)
+
 
 class LeftPane(QtWidgets.QWidget):
     def __init__(self):
@@ -141,7 +183,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.updateStatus()
 
         if os.path.exists(sct_config_pickle_path):
-            self.rightPane.connectWidget.connectToServer()
+            self.rightPane.connectWidget.connectToServer(ignore=True)
 
     def updateConfig(self, config):
         self.corpusConfig = config

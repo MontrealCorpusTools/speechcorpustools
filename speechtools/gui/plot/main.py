@@ -65,6 +65,9 @@ class SpectralWidget(vp.Fig):
     def update_signal(self, data):
         self[0:2, 0].set_signal(data)
 
+    def update_pitch(self, pitch):
+        self[0:2, 0].set_pitch(pitch)
+
     def update_selection_time(self, pos):
         tr = self.scene.node_transform(self[0:2, 0].spec)
         pos = tr.map([pos, 0])
@@ -72,9 +75,10 @@ class SpectralWidget(vp.Fig):
         self[0:2, 0].set_selection_time(pos)
 
     def update_play_time(self, pos):
-        tr = self.scene.node_transform(self[0:2, 0].spec)
-        pos = tr.map([pos, 0])
-        pos = pos[0]
+        if pos is not None:
+            tr = self.scene.node_transform(self[0:2, 0].spec)
+            pos = tr.map([pos, 0])
+            pos = pos[0]
         self[0:2, 0].set_play_time(pos)
 
 class AnnotationWidget(vp.Fig):
@@ -85,6 +89,9 @@ class AnnotationWidget(vp.Fig):
     def clear(self):
         self.update_signal(None)
         self.update_annotations(None)
+
+    def update_selection(self, min_time, max_time):
+        self[0:2, 0].set_selection(min_time, max_time)
 
     def update_hierarchy(self, hierarchy):
         self[0:2, 0].set_hierarchy(hierarchy)

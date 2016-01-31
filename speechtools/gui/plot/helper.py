@@ -30,6 +30,9 @@ def generate_boundaries(annotations, hierarchy):
     max_sig = 1
     min_sig = -1
     num_types = len(hierarchy.keys())
+    print(hierarchy._data)
+    print(hierarchy.highest)
+    print(annotations)
     lowest = hierarchy.lowest
     size = max_sig / (num_types)
     line_outputs = {x: [] for x in hierarchy.keys()}

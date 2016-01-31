@@ -29,6 +29,9 @@ class CorpusContext(BaseContext):
     def __init__(self, *args, **kwargs):
         super(CorpusContext, self).__init__(*args, **kwargs)
         self._has_sound_files = None
+        self._has_all_sound_files = None
+
+        self.config.reaper_path = 'reaper'
 
     def init_sql(self):
         self.engine = create_engine(self.config.sql_connection_string)
@@ -46,6 +49,21 @@ class CorpusContext(BaseContext):
         q = q.filter(Discourse.name == discourse)
         sound_file = q.first()
         return sound_file
+
+    def has_all_sound_files(self):
+        if self._has_all_sound_files is not None:
+            return self._has_all_sound_files
+        discourses = self.discourses
+        for d in discourses:
+            sf = self.discourse_sound_file(d)
+            if sf is None:
+                break
+            if not os.path.exists(sf.filepath):
+                break
+        else:
+            self._has_all_sound_files = True
+        self._has_all_sound_files = False
+        return self._has_all_sound_files
 
     @property
     def has_sound_files(self):
@@ -74,22 +92,24 @@ class CorpusContext(BaseContext):
             a regular expression that specifies pause words
         """
         self.reset_pauses()
-        q = self.query_graph(self.word)
+        word = getattr(self, 'word') #FIXME make word more general
+        word_type = word.type
+        q = self.query_graph(word)
         if isinstance(pause_words, (list, tuple, set)):
-            q = q.filter(self.word.label.in_(pause_words))
+            q = q.filter(word.label.in_(pause_words))
         elif isinstance(pause_words, str):
-            q = q.filter(self.word.label.regex(pause_words))
+            q = q.filter(word.label.regex(pause_words))
         else:
             raise(NotImplementedError)
         q.set_pause()
-
-        statement = '''MATCH (prec:{corpus}:word:speech)
+        statement = '''MATCH (prec:{corpus}:{word_type}:speech)
         WHERE not (prec)-[:precedes]->()
         WITH prec
-        MATCH p = (prec)-[:precedes_pause*]->(foll:{corpus}:word:speech)
+        MATCH p = (prec)-[:precedes_pause*]->(foll:{corpus}:{word_type}:speech)
         WITH prec, foll, p
         WHERE NONE (x in nodes(p)[1..-1] where x:speech)
-        MERGE (prec)-[:precedes]->(foll)'''.format(corpus = self.corpus_name)
+        MERGE (prec)-[:precedes]->(foll)'''.format(corpus = self.corpus_name,
+                                                    word_type = word_type)
 
         self.execute_cypher(statement)
         self.hierarchy.annotation_types.add('pause')
@@ -98,13 +118,15 @@ class CorpusContext(BaseContext):
         """
         Revert all words marked as pauses to regular words marked as speech
         """
-        statement = '''MATCH (n:{corpus}:word:speech)-[r:precedes]->(m:{corpus}:word:speech)
+        word = getattr(self, 'word') #FIXME make word more general
+        word_type = word.type
+        statement = '''MATCH (n:{corpus}:{word_type}:speech)-[r:precedes]->(m:{corpus}:{word_type}:speech)
         WHERE (n)-[:precedes_pause]->()
-        DELETE r'''.format(corpus=self.corpus_name)
+        DELETE r'''.format(corpus=self.corpus_name, word_type = word_type)
         self.graph.cypher.execute(statement)
-        statement = '''MATCH (n:{corpus}:word)-[r:precedes_pause]->(m:{corpus}:word)
+        statement = '''MATCH (n:{corpus}:{word_type})-[r:precedes_pause]->(m:{corpus}:{word_type})
         MERGE (n)-[:precedes]->(m)
-        DELETE r'''.format(corpus=self.corpus_name)
+        DELETE r'''.format(corpus=self.corpus_name, word_type = word_type)
         self.graph.cypher.execute(statement)
         statement = '''MATCH (n:pause:{corpus})
         SET n :speech
@@ -124,6 +146,7 @@ class CorpusContext(BaseContext):
             q = self.query_graph(self.utterance)
             q.delete()
             self.hierarchy.annotation_types.remove('utterance')
+            del self.hierarchy['utterance']
         except GraphQueryError:
             pass
 
@@ -150,12 +173,23 @@ class CorpusContext(BaseContext):
         self.graph.cypher.execute('CREATE INDEX ON :utterance(begin)')
         self.graph.cypher.execute('CREATE INDEX ON :utterance(end)')
         self.reset_utterances()
-        for d in self.discourses:
+        #tx = self.graph.cypher.begin()
+        #try:
+        for i, d in enumerate(self.discourses):
             utterances = self.get_utterances(d, min_pause_length, min_utterance_length)
             time_data_to_csvs('utterance', self.config.temporary_directory('csv'), d, utterances)
-            import_utterance_csv(self, d)
+            import_utterance_csv(self, d)#, transaction = tx)
+                #if i % 100 == 0:
+                #    tx.process()
+        #except Exception:
+        #    tx.rollback()
+        #    raise
+        #tx.commit()
 
-        self.hierarchy[self.hierarchy.highest] = 'utterance'
+        word = getattr(self, 'word') #FIXME make word more general
+        word_type = word.type
+
+        self.hierarchy[word_type] = 'utterance'
         self.hierarchy['utterance'] = None
 
     def get_utterances(self, discourse,
@@ -181,14 +215,14 @@ class CorpusContext(BaseContext):
             Time in seconds that is the minimum duration of a stretch of
             speech to count as an utterance
         """
-        statement = '''MATCH p = (prev_node_word:word:speech:{corpus}:{discourse})-[:precedes_pause*1..]->(foll_node_word:word:speech:{corpus}:{discourse})
-
+        word_type = self.hierarchy.highest
+        statement = '''MATCH p = (prev_node_word:{word_type}:speech:{corpus}:{discourse})-[:precedes_pause*1..]->(foll_node_word:{word_type}:speech:{corpus}:{discourse})
 WITH nodes(p)[1..-1] as ns,foll_node_word, prev_node_word
 WHERE foll_node_word.begin - prev_node_word.end >= {{node_pause_duration}}
 AND NONE (x in ns where x:speech)
 WITH foll_node_word, prev_node_word
 RETURN prev_node_word.end AS begin, foll_node_word.begin AS end, foll_node_word.begin - prev_node_word.end AS duration
-ORDER BY begin'''.format(corpus = self.corpus_name, discourse = discourse)
+ORDER BY begin'''.format(corpus = self.corpus_name, discourse = discourse, word_type = word_type)
         results = self.execute_cypher(statement, node_pause_duration = min_pause_length)
 
         collapsed_results = []
@@ -201,8 +235,9 @@ ORDER BY begin'''.format(corpus = self.corpus_name, discourse = discourse)
             else:
                 collapsed_results.append(r)
         utterances = []
-        q = self.query_graph(self.word).filter(self.word.discourse.name == discourse)
-        times = q.aggregate(Min(self.word.begin), Max(self.word.end))
+        word = getattr(self, word_type)
+        q = self.query_graph(word).filter(word.discourse.name == discourse)
+        times = q.aggregate(Min(word.begin), Max(word.end))
         if len(results) < 2:
             begin = times.min_begin
             if len(results) == 0:
