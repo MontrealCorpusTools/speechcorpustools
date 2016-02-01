@@ -1,5 +1,6 @@
 from struct import pack
 import numpy as np
+from librosa.core import resample
 from scipy.io import wavfile
 from PyQt5 import QtGui, QtCore, QtWidgets, QtMultimedia
 
@@ -631,11 +632,19 @@ class SelectableAudioWidget(QtWidgets.QWidget):
             self.audioWidget.update_signal(None)
             self.spectrumWidget.update_signal(None)
         else:
-            min_samp = np.floor(min_time * self.sr)
-            max_samp = np.ceil(max_time * self.sr)
-            sig = self.signal[min_samp:max_samp]
+            self.audioWidget.update_time_bounds(min_time, max_time)
+            if max_time - min_time > 5:
+                min_samp = np.floor(min_time * self.downsampled_sr)
+                max_samp = np.ceil(max_time * self.downsampled_sr)
+                sig = self.downsampled_signal[min_samp:max_samp]
 
-            t = np.arange(sig.shape[0]) / self.sr + min_time
+                t = np.arange(sig.shape[0]) / self.downsampled_sr + min_time
+            else:
+                min_samp = np.floor(min_time * self.sr)
+                max_samp = np.ceil(max_time * self.sr)
+                sig = self.signal[min_samp:max_samp]
+
+                t = np.arange(sig.shape[0]) / self.sr + min_time
             data = np.array((t, sig)).T
             self.audioWidget.update_signal(data)
             max_samp = np.ceil((max_time + 0.005) * self.sr)
@@ -738,6 +747,9 @@ class SelectableAudioWidget(QtWidgets.QWidget):
             self.pitchWorker.start()
             self.sr, self.signal = wavfile.read(audio_file.filepath)
             self.signal = self.signal / 32768
+            self.downsampled_sr = 2500
+            self.downsampled_signal = resample(self.signal,self.sr, self.downsampled_sr)
+
             if self.m_generator.isOpen():
                 self.m_generator.close()
             self.m_generator.set_signal(self.signal)

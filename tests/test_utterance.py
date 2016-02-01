@@ -27,6 +27,20 @@ def test_utterance_nosilence(graph_db, textgrid_test_dir):
         assert(len(results) == 1)
         assert(results[0].following_word is None)
 
+        q = g.query_graph(g.word).filter(g.word.begin == g.word.utterance.begin)
+
+        results = q.all()
+
+        assert(len(results) == 1)
+        assert(results[0].label == 'a')
+
+        q = g.query_graph(g.phone).filter(g.phone.begin == g.phone.utterance.begin)
+
+        results = q.all()
+
+        assert(len(results) == 1)
+        assert(results[0].label == 'a')
+
         #Things like g.phone.word.following are currently broken in PolyglotDB
         return
 
@@ -140,6 +154,17 @@ def test_encode_utterances(acoustic_config):
             assert(round(r.begin,3) == round(expected_utterances[i][0], 3))
             assert(round(r.end,3) == round(expected_utterances[i][1],3))
             assert(r.label is None)
+
+        q = g.query_graph(g.phone).filter(g.phone.begin == g.phone.utterance.begin)
+        q = q.order_by(g.phone.begin)
+        results = q.all()
+
+        assert(len(results) == len(expected_utterances))
+
+        expected = ['dh', 'ah', 'l', 'ah', 'ae', 'hh', 'w', 'ah', 'ae', 'th']
+
+        for i, r in enumerate(results):
+            assert(r.label == expected[i])
 
 def test_speech_rate(acoustic_config):
     with CorpusContext(acoustic_config) as g:

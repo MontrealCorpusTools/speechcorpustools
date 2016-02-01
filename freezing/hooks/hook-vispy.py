@@ -12,7 +12,11 @@ hiddenimports = ['vispy', 'six', 'vispy.app.backends._pyqt5',
 
 if sys.platform == 'win32':
     hiddenimports += ['tkinter.filedialog']
-    binaries = [(r"C:\Miniconda3\envs\sct\Lib\site-packages\numpy\core\mkl_intel_thread.dll", '.')]
+    binaries = [
+    (r"C:\Miniconda3\envs\sct\Lib\site-packages\numpy\core\mkl_intel_thread.dll", '.'),
+    (r"C:\Miniconda3\envs\sct\Lib\site-packages\numpy\core\mkl_avx2.dll", '.'),
+    (r"C:\Miniconda3\envs\sct\Lib\site-packages\numpy\core\mkl_def.dll", '.'),
+    ]
 
 datas = collect_data_files('vispy')
 

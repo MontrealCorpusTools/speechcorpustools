@@ -6,7 +6,7 @@ from vispy import scene
 
 from .base import SelectablePlotWidget, PlotWidget
 
-from ..visuals import SCTLinePlot, ScalingText, PhoneScalingText, SCTAnnotation, SelectionLine
+from ..visuals import SCTLinePlot, ScalingText, SCTAnnotation, SelectionLine
 
 from ..helper import generate_boundaries
 
@@ -21,6 +21,8 @@ class AnnotationPlotWidget(SelectablePlotWidget):
         self.waveform = SCTLinePlot(None, connect='strip', color = 'k')
         self.annotation_visuals = {}
         self.annotations = None
+        self.min_time = None
+        self.max_time = None
         self.line_visuals = {}
         self.view.add(self.breakline)
         self.view.add(self.waveform)
@@ -28,6 +30,12 @@ class AnnotationPlotWidget(SelectablePlotWidget):
         self.visuals.append(self.waveform)
         self.freeze()
         self.play_time_line.visible = True
+
+    def set_time_bounds(self, min_time, max_time):
+        self.min_time = min_time
+        self.max_time = max_time
+        self.view.camera.rect = (min_time, -1, max_time - min_time, 2)
+        self.set_play_time(min_time)
 
     def set_selection(self, min_time, max_time):
         self.selection_rect.update_selection(min_time, max_time)
@@ -52,7 +60,9 @@ class AnnotationPlotWidget(SelectablePlotWidget):
         cycle = ['b', 'r']
         for i, k in enumerate(self.hierarchy.highest_to_lowest):
             c = cycle[i % len(cycle)]
-            self.annotation_visuals[k] = ScalingText(face = 'OpenSans') #FIXME Need to get a better font that covers more scripts, i.e. Thai
+            self.annotation_visuals[k] = ScalingText(face = 'OpenSans') #FIXME Need to get a better font that covers more scripts, i.e. Thai (**Only applies to windows)
+            if k == self.hierarchy.lowest:
+                self.annotation_visuals[k].set_lowest()
             self.line_visuals[k] = SCTLinePlot(connect = 'segments', color = c)
             self.view.add(self.annotation_visuals[k])
             self.view.add(self.line_visuals[k])
@@ -64,6 +74,7 @@ class AnnotationPlotWidget(SelectablePlotWidget):
         for k in sorted(keys):
             c = cycle[ind % len(cycle)]
             self.annotation_visuals[k] = ScalingText(face = 'OpenSans')
+            self.annotation_visuals[k].set_lowest()
             self.line_visuals[k] = SCTLinePlot(connect = 'segments', color = c)
             self.view.add(self.annotation_visuals[k])
             self.view.add(self.line_visuals[k])
@@ -83,27 +94,34 @@ class AnnotationPlotWidget(SelectablePlotWidget):
                         self.annotation_visuals[k, s].set_data(None, None)
             return
         if self.hierarchy is not None:
-            line_data, text_data = generate_boundaries(data, self.hierarchy)
+            line_data, text_data = generate_boundaries(data, self.hierarchy, self.min_time, self.max_time)
             for k in self.hierarchy.keys():
                 if text_data[k][0]:
-                    self.line_visuals[k].set_data(line_data[k])
-                    self.annotation_visuals[k].set_data(text_data[k][0], pos = text_data[k][1])
+                    if self.max_time - self.min_time > 10:
+                        if k == self.hierarchy.highest:
+                            if len(text_data[k][0]) > 40:
+                                step_size = int(len(text_data[k][0]) / 40)
+                                inds = np.arange(0, len(text_data[k][0]),step_size)
+                                self.line_visuals[k].set_data(line_data[k][inds])
+                            else:
+                                self.line_visuals[k].set_data(line_data[k])
+                                self.annotation_visuals[k].set_data(text_data[k][0], pos = text_data[k][1])
+
+                    else:
+                        self.line_visuals[k].set_data(line_data[k])
+                        self.annotation_visuals[k].set_data(text_data[k][0], pos = text_data[k][1])
                 else:
                     self.line_visuals[k].set_data(None)
                     self.annotation_visuals[k].set_data(None, None)
             for k, v in self.hierarchy.subannotations.items():
                 for s in v:
-                    if text_data[k, s][0]:
+                    if text_data[k, s][0] and self.max_time - self.min_time < 10:
                         self.line_visuals[k, s].set_data(line_data[k, s])
                         self.annotation_visuals[k, s].set_data(text_data[k, s][0], pos = text_data[k, s][1])
                         self.annotation_visuals[k, s].visible = True
                     else:
                         self.line_visuals[k, s].set_data(None)
                         self.annotation_visuals[k, s].set_data(None, None)
-        if self.waveform._pos is None and len(self.annotations) > 0:
-            min_time = self.annotations[0].begin
-            max_time = self.annotations[-1].end
-            self.view.camera.rect = (min_time, -1, max_time - min_time, 2)
 
     def rank_key_by_relevance(self, key):
         ranking = []
@@ -130,10 +148,6 @@ class AnnotationPlotWidget(SelectablePlotWidget):
             new_data[:,1] *=  ratio
 
         self.waveform.set_data(new_data)
-        max_time = new_data[:,0].max()
-        min_time = new_data[:,0].min()
-        self.view.camera.rect = (min_time, -1, max_time - min_time, 2)
-        self.set_play_time(min_time)
 
     def set_play_time(self, time):
         if time is None:

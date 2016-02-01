@@ -90,6 +90,9 @@ class AnnotationWidget(vp.Fig):
         self.update_signal(None)
         self.update_annotations(None)
 
+    def update_time_bounds(self, min_time, max_time):
+        self[0:2, 0].set_time_bounds(min_time, max_time)
+
     def update_selection(self, min_time, max_time):
         self[0:2, 0].set_selection(min_time, max_time)
 

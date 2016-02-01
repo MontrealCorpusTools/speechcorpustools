@@ -286,10 +286,17 @@ class SelectionRect(scene.Rectangle):
         self.visible = True
 
 class ScalingText(scene.visuals.Text):
-    minpps = 10
-    maxpps = 3000
-    min_font_size = 1
-    max_font_size = 30
+
+    def __init__(self, *args, **kwargs):
+        self.minpps = 10
+        self.maxpps = 3000
+        self.min_font_size = 1
+        self.max_font_size = 20
+        super(ScalingText, self).__init__(*args, **kwargs)
+
+    def set_lowest(self):
+        self.maxpps = 5000
+        self.max_font_size = 18
 
     def _prepare_draw(self, view):
         if len(self.text) == 0:
@@ -317,12 +324,6 @@ class ScalingText(scene.visuals.Text):
         self.text = text
 
 #ScalingText = scene.visuals.create_visual_node(ScalingTextVisual)
-
-class PhoneScalingText(ScalingText):
-    minpps = 10
-    maxpps = 5000
-    min_font_size = 1
-    max_font_size = 30
 
 class SCTAnnotationVisual(visuals.CompoundVisual):
     def __init__(self, data = None, hierarchy = None):
