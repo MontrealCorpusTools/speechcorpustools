@@ -69,9 +69,10 @@ class SpectralWidget(vp.Fig):
         self[0:2, 0].set_pitch(pitch)
 
     def update_selection_time(self, pos):
-        tr = self.scene.node_transform(self[0:2, 0].spec)
-        pos = tr.map([pos, 0])
-        pos = pos[0]
+        if pos is not None:
+            tr = self.scene.node_transform(self[0:2, 0].spec)
+            pos = tr.map([pos, 0])
+            pos = pos[0]
         self[0:2, 0].set_selection_time(pos)
 
     def update_play_time(self, pos):

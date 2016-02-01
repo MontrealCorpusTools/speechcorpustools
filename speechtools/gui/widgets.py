@@ -478,6 +478,7 @@ class SelectableAudioWidget(QtWidgets.QWidget):
             self.selected_boundary = None
             self.selected_time = None
             self.audioWidget.update_selection_time(self.selected_time)
+            self.spectrumWidget.update_selection_time(self.selected_time)
         elif event.button == 2:
             key = self.audioWidget.get_key(event.pos)
 
@@ -569,6 +570,7 @@ class SelectableAudioWidget(QtWidgets.QWidget):
                         if ind != -1:
                             self.selected_time = p[0]
                             break
+                self.updatePlayTime(self.min_vis_time)
                 self.audioWidget.update_selected_boundary(self.selected_time, *self.selected_boundary)
 
                 self.audioWidget.update_selection_time(self.selected_time)
@@ -582,6 +584,8 @@ class SelectableAudioWidget(QtWidgets.QWidget):
             #Figure out how much time it's panned since the last event
             #Update visible bounds
         elif event.button is None:
+            self.audioWidget.update_selection_time(None)
+            self.spectrumWidget.update_selection_time(None)
             self.audioWidget.check_selection(event)
 
     def on_mouse_wheel(self, event):

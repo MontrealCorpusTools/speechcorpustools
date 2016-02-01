@@ -59,6 +59,8 @@ class SCTLinePlot(scene.visuals.Line):
         return False
 
     def select_line(self, event, radius=5):
+        if self.pos is None:
+            return None, -1
         radius_time = event.source.transform_pos_to_time([radius]) - \
                     event.source.transform_pos_to_time([0])
         pos_scene = event.source.transform_pos_to_time(event.pos)
