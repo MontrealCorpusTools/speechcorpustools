@@ -6,7 +6,7 @@ from PyInstaller.utils.hooks import (
 
 
 
-hiddenimports = ['vispy', 'six', 'vispy.app.backends._pyqt5']
+hiddenimports = ['vispy', 'six', 'vispy.app.backends._pyqt5', 'matplotlib','tkinter', 'sklearn', 'sklearn.neighbors.typedefs']
 
 datas = collect_data_files('vispy')
 

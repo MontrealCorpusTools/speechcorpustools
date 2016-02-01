@@ -23,7 +23,7 @@ class ConnectWidget(PGConnectWidget):
 
         self.audioLookupButton.clicked.connect(self.findAudio)
 
-        #self.corporaList.selectionChanged.connect(self.checkAudio)
+        self.corporaList.selectionChanged.connect(self.enableFindAudio)
 
         self.checkerWorker = AudioCheckerWorker()
         self.checkerWorker.dataReady.connect(self.enableFindAudio)
@@ -36,7 +36,7 @@ class ConnectWidget(PGConnectWidget):
         self.checkAudio()
 
     def enableFindAudio(self, all_found):
-        if all_found:
+        if not isinstance(all_found, str):
             self.audioLookupButton.setEnabled(False)
             self.audioLookupButton.setText('Audio available')
         else:

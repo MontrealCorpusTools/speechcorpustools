@@ -251,14 +251,13 @@ class SelectableAudioWidget(QtWidgets.QWidget):
 
         self.m_audioOutput = QtMultimedia.QAudioOutput(self.m_device, self.m_format)
         self.m_audioOutput.setNotifyInterval(1)
+        self.m_audioOutput.setBufferSize(0.05)
         self.m_audioOutput.startTime = 0
         self.m_audioOutput.notify.connect(self.notified)
 
         self.m_generator = Generator(self.m_format, self)
 
     def updatePlayTime(self, time):
-
-        print('Updating play time!')
         if time is None:
             pos = None
         else:
@@ -269,10 +268,12 @@ class SelectableAudioWidget(QtWidgets.QWidget):
     def notified(self):
         #sample = int(self.m_generator.pos() / self.m_format.bytesPerFrame())
         #time = sample / self.m_format.sampleRate()
-        time = self.m_audioOutput.processedUSecs() / 1000000
+        if self.m_audioOutput.state() != QtMultimedia.QAudio.ActiveState:
+            return
         buffer_length = (self.m_audioOutput.bufferSize() / self.m_format.bytesPerFrame()) / self.m_format.sampleRate()
-        time -= buffer_length
+        time = self.m_audioOutput.processedUSecs() / 1000000
         time += self.m_audioOutput.startTime
+
         self.updatePlayTime(time)
         if self.min_selected_time is None:
             if time > self.max_vis_time:
@@ -302,7 +303,6 @@ class SelectableAudioWidget(QtWidgets.QWidget):
                 else:
                     if time >= self.max_selected_time or time <= self.min_selected_time:
                         time = self.min_selected_time
-                    print(time)
                 self.m_generator.seek(int((time) * self.sr) * self.m_format.bytesPerFrame())
                 self.m_audioOutput.startTime = time
                 self.m_audioOutput.start(self.m_generator)
@@ -346,6 +346,7 @@ class SelectableAudioWidget(QtWidgets.QWidget):
                 return
 
             self.selected_annotation.update_properties(label = new)
+            self.selected_annotation.save()
             self.updateVisible()
         else:
             print(event.key())
@@ -389,6 +390,8 @@ class SelectableAudioWidget(QtWidgets.QWidget):
         Mouse button press event
         """
         self.setFocus(True)
+        self.selected_annotation = None
+
         if event.handled:
             return
         if event.button == 1 and self.rectselect == False:
@@ -412,7 +415,6 @@ class SelectableAudioWidget(QtWidgets.QWidget):
         self.selected_annotation = None
         if event.button == 1:
             key = self.audioWidget.get_key(event.pos)
-            print(key)
             if key is None:
                 return
             time = self.audioWidget.transform_pos_to_time(event.pos)
@@ -431,11 +433,9 @@ class SelectableAudioWidget(QtWidgets.QWidget):
     def on_mouse_release(self, event):
         if event.handled:
             return
-        self.selected_annotation = None
         is_single_click = not event.is_dragging or abs(np.sum(event.press_event.pos - event.pos)) < 10
         if event.button == 1 and is_single_click and self.rectselect == True:
             key = self.audioWidget.get_key(event.pos)
-            print(key)
             if key is None:
                 return
             time = self.audioWidget.transform_pos_to_time(event.pos)
@@ -465,7 +465,7 @@ class SelectableAudioWidget(QtWidgets.QWidget):
             self.audioWidget.update_selection_time(self.selected_time)
         elif event.button == 2:
             key = self.audioWidget.get_key(event.pos)
-            print(key)
+
             if key is None:
                 return
             update = False
@@ -613,7 +613,6 @@ class SelectableAudioWidget(QtWidgets.QWidget):
         self.updateVisible()
 
     def updateVisible(self):
-        print('Updating visible!')
         if self.annotations is None:
             self.audioWidget.update_annotations(None)
         else:
@@ -625,7 +624,6 @@ class SelectableAudioWidget(QtWidgets.QWidget):
             self.audioWidget.update_signal(None)
             self.spectrumWidget.update_signal(None)
         else:
-            print(max_time - min_time)
             min_samp = np.floor(min_time * self.sr)
             max_samp = np.ceil(max_time * self.sr)
             sig = self.signal[min_samp:max_samp]
@@ -681,7 +679,6 @@ class SelectableAudioWidget(QtWidgets.QWidget):
         selected_annotation.save()
 
     def updateHierachy(self, hierarchy):
-        print('Updating hierarchy!')
         if self.hierarchy is not None:
             while self.hierarchyLayout.count():
                 item = self.hierarchyLayout.takeAt(0)
@@ -692,17 +689,19 @@ class SelectableAudioWidget(QtWidgets.QWidget):
                 w = QtWidgets.QLabel(at)
                 #w.clicked.connect(self.updateHierarchyVisibility)
                 self.hierarchyLayout.addWidget(w)
-            for k, v in self.hierarchy.subannotations.items():
-                for s in v:
-                    w = QtWidgets.QLabel('{} - {}'.format(k, s))
-                    #w.clicked.connect(self.updateHierarchyVisibility)
-                    self.hierarchyLayout.addWidget(w)
+        keys = []
+        for k, v in sorted(self.hierarchy.subannotations.items()):
+            for s in v:
+                keys.append((k,s))
+        for k in sorted(keys):
+            w = QtWidgets.QLabel('{} - {}'.format(*k))
+            #w.clicked.connect(self.updateHierarchyVisibility)
+            self.hierarchyLayout.addWidget(w)
 
     def updateHierarchyVisibility(self):
         pass
 
     def updateAnnotations(self, annotations):
-        print('Updating annotations!')
         self.annotations = annotations
         if self.signal is None:
             self.min_time = 0
@@ -719,12 +718,10 @@ class SelectableAudioWidget(QtWidgets.QWidget):
         self.updateVisible()
 
     def updatePitch(self, pitch):
-        print('Updating pitch!')
         self.pitch = pitch
         self.updateVisible()
 
     def updateAudio(self, audio_file):
-        print('Updating audio file!')
         if audio_file is not None:
             kwargs = {'config':self.config, 'sound_file': audio_file, 'algorithm':'reaper'}
             self.pitchWorker.setParams(kwargs)
@@ -762,6 +759,9 @@ class SelectableAudioWidget(QtWidgets.QWidget):
         self.max_time = None
         self.min_vis_time = None
         self.max_vis_time = None
+        self.min_selected_time = None
+        self.max_selected_time = None
+        self.audioWidget.update_selection(self.min_selected_time, self.max_selected_time)
         self.audioWidget.clear()
 
 class QueryForm(QtWidgets.QWidget):
@@ -787,8 +787,10 @@ class QueryForm(QtWidgets.QWidget):
         phon4Layout = QtWidgets.QHBoxLayout()
 
         self.lab1Button = QtWidgets.QPushButton('Search for Lab 1 stops')
+        self.lab1Button.setDisabled(True)
         self.lab1Button.clicked.connect(self.lab1Query)
         self.exportButton = QtWidgets.QPushButton('Export Lab 1 stops')
+        self.exportButton.setDisabled(True)
 
         phon4Layout.addWidget(self.lab1Button)
         phon4Layout.addWidget(self.exportButton)
@@ -833,7 +835,7 @@ class QueryForm(QtWidgets.QWidget):
     def updateConfig(self, config):
         self.config = config
         self.linguisticSelect.clear()
-        if self.config is None:
+        if self.config is None or self.config.corpus_name == '':
             self.executeButton.setDisabled(True)
             self.lab1Button.setDisabled(True)
             self.exportButton.setDisabled(True)
@@ -934,6 +936,7 @@ class DiscourseWidget(QtWidgets.QWidget):
         self.discourseChanged.emit(discourse)
 
     def changeView(self, discourse, begin, end):
+        self.discourseList.selectionModel().clear()
         for i in range(self.discourseList.count()):
             item = self.discourseList.item(i)
             if item.text() == discourse:
@@ -1023,6 +1026,8 @@ class CollapsibleWidgetPair(QtWidgets.QSplitter):
         self.collapsible = collapsible
         self.addWidget(widgetOne)
         self.addWidget(widgetTwo)
+        self.setCollapsible(0, False)
+        self.setCollapsible(1, False)
 
         if self.orientation() == QtCore.Qt.Horizontal:
             if self.collapsible == 1:
@@ -1039,38 +1044,38 @@ class CollapsibleWidgetPair(QtWidgets.QSplitter):
                 self.uncollapsed_arrow = QtCore.Qt.UpArrow
                 self.collapsed_arrow = QtCore.Qt.DownArrow
 
-        size_unit = get_system_font_height()
-        handle = self.handle(1)
-        self.button = QtWidgets.QToolButton(handle)
-        if self.orientation() == QtCore.Qt.Horizontal:
-            self.button.setMinimumHeight(8 * size_unit)
-            layout = QtWidgets.QVBoxLayout()
-            self.button.setSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Fixed)
-        else:
-            self.button.setMinimumWidth(8 * size_unit)
-            layout = QtWidgets.QHBoxLayout()
-            self.button.setSizePolicy(QtWidgets.QSizePolicy.Fixed, QtWidgets.QSizePolicy.Expanding)
+        #size_unit = get_system_font_height()
+        #handle = self.handle(1)
+        #self.button = QtWidgets.QToolButton(handle)
+        #if self.orientation() == QtCore.Qt.Horizontal:
+        #    self.button.setMinimumHeight(8 * size_unit)
+        #    layout = QtWidgets.QVBoxLayout()
+        #    self.button.setSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Fixed)
+        #else:
+        #    self.button.setMinimumWidth(8 * size_unit)
+        #    layout = QtWidgets.QHBoxLayout()
+        #    self.button.setSizePolicy(QtWidgets.QSizePolicy.Fixed, QtWidgets.QSizePolicy.Expanding)
 
-        self.button.setArrowType(self.uncollapsed_arrow)
-        layout.setContentsMargins(0, 0, 0, 0)
-        self.button.clicked.connect(self.onCollapse)
-        layout.addWidget(self.button)
-        handle.setLayout(layout)
-        self.setHandleWidth(size_unit)
+        #self.button.setArrowType(self.uncollapsed_arrow)
+        #layout.setContentsMargins(0, 0, 0, 0)
+        #self.button.clicked.connect(self.onCollapse)
+        #layout.addWidget(self.button)
+        #handle.setLayout(layout)
+        #self.setHandleWidth(size_unit)
 
-    def onCollapse(self):
-        if self.collapsible == 1:
-            collapsed_size = [1, 0]
-            uncollapsed_size = [1000,1]
-        else:
-            collapsed_size = [0, 1]
-            uncollapsed_size = [1, 1000]
-        if self.sizes()[self.collapsible]:
-            self.setSizes(collapsed_size)
-            self.button.setArrowType(self.collapsed_arrow)
-        else:
-            self.setSizes(uncollapsed_size)
-            self.button.setArrowType(self.uncollapsed_arrow)
+    #def onCollapse(self):
+    #    if self.collapsible == 1:
+    #        collapsed_size = [1, 0]
+    #        uncollapsed_size = [1000,1]
+    #    else:
+    #        collapsed_size = [0, 1]
+    #        uncollapsed_size = [1, 1000]
+    #    if self.sizes()[self.collapsible]:
+    #        self.setSizes(collapsed_size)
+    #        self.button.setArrowType(self.collapsed_arrow)
+    #    else:
+    #        self.setSizes(uncollapsed_size)
+    #        self.button.setArrowType(self.uncollapsed_arrow)
 
 
 class DataListWidget(QtWidgets.QListWidget):

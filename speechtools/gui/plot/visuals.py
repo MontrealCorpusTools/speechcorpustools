@@ -50,7 +50,7 @@ class SCTLinePlot(scene.visuals.Line):
                 vert = pos[0]
         except AttributeError:
             vert = pos
-        if self._pos.shape == (0,):
+        if self._pos is None:
             return False
         min_vert = self._pos[:, 1].min()
         max_vert = self._pos[:, 1].max()

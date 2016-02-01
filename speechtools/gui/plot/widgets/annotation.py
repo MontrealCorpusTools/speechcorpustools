@@ -56,14 +56,18 @@ class AnnotationPlotWidget(SelectablePlotWidget):
             self.view.add(self.annotation_visuals[k])
             self.view.add(self.line_visuals[k])
         ind = 0
+        keys = []
         for k, v in sorted(self.hierarchy.subannotations.items()):
             for s in v:
-                c = cycle[ind % len(cycle)]
-                self.annotation_visuals[k, s] = ScalingText(face = 'OpenSans')
-                self.line_visuals[k, s] = SCTLinePlot(connect = 'segments', color = c)
-                self.view.add(self.annotation_visuals[k, s])
-                self.view.add(self.line_visuals[k, s])
-                ind += 1
+                keys.append((k,s))
+        for k in sorted(keys):
+            print('annotation', k)
+            c = cycle[ind % len(cycle)]
+            self.annotation_visuals[k] = ScalingText(face = 'OpenSans')
+            self.line_visuals[k] = SCTLinePlot(connect = 'segments', color = c)
+            self.view.add(self.annotation_visuals[k])
+            self.view.add(self.line_visuals[k])
+            ind += 1
 
     def set_annotations(self, data):
         #Assume that data is the highest level of the hierarchy
@@ -98,7 +102,7 @@ class AnnotationPlotWidget(SelectablePlotWidget):
                     else:
                         self.line_visuals[k, s].set_data(None)
                         self.annotation_visuals[k, s].set_data(None, None)
-        if self.waveform._pos is None:
+        if self.waveform._pos is None and len(self.annotations) > 0:
             min_time = self.annotations[0].begin
             max_time = self.annotations[-1].end
             self.view.camera.rect = (min_time, -1, max_time - min_time, 2)
