@@ -96,18 +96,7 @@ class AnnotationPlotWidget(SelectablePlotWidget):
         if self.hierarchy is not None:
             line_data, text_data = generate_boundaries(data, self.hierarchy, self.min_time, self.max_time)
             for k in self.hierarchy.keys():
-                if text_data[k][0]:
-                    if self.max_time - self.min_time > 10:
-                        if k == self.hierarchy.highest:
-                            if len(text_data[k][0]) > 40:
-                                step_size = int(len(text_data[k][0]) / 40)
-                                inds = np.arange(0, len(text_data[k][0]),step_size)
-                                self.line_visuals[k].set_data(line_data[k][inds])
-                            else:
-                                self.line_visuals[k].set_data(line_data[k])
-                                self.annotation_visuals[k].set_data(text_data[k][0], pos = text_data[k][1])
-
-                    else:
+                if text_data[k][0] and (self.max_time - self.min_time < 10 or k != self.hierarchy.lowest):
                         self.line_visuals[k].set_data(line_data[k])
                         self.annotation_visuals[k].set_data(text_data[k][0], pos = text_data[k][1])
                 else:
