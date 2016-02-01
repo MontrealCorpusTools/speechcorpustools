@@ -203,10 +203,10 @@ class SelectableAudioWidget(QtWidgets.QWidget):
         v.setSizePolicy(QtWidgets.QSizePolicy.Minimum,QtWidgets.QSizePolicy.Minimum)
         i.setSizePolicy(QtWidgets.QSizePolicy.Minimum,QtWidgets.QSizePolicy.Minimum)
         self.spectrumLayout.addWidget(s)
-        self.spectrumLayout.addWidget(f)
-        self.spectrumLayout.addWidget(p)
-        self.spectrumLayout.addWidget(v)
-        self.spectrumLayout.addWidget(i)
+        #self.spectrumLayout.addWidget(f)
+        #self.spectrumLayout.addWidget(p)
+        #self.spectrumLayout.addWidget(v)
+        #self.spectrumLayout.addWidget(i)
 
 
         toplayout = QtWidgets.QHBoxLayout()
@@ -927,7 +927,7 @@ class HelpWidget(QtWidgets.QWidget):
 
         layout = QtWidgets.QHBoxLayout()
 
-        layout.addWidget(QtWidgets.QLabel('Placeholder help, kind useless, oh well'))
+        layout.addWidget(QtWidgets.QLabel('Placeholder help, kinda useless, oh well'))
         self.setLayout(layout)
 
 class DiscourseWidget(QtWidgets.QWidget):
