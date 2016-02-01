@@ -153,10 +153,6 @@ class Generator(QtCore.QBuffer):
         min_samp = int(min_time * self.format.sampleRate())
         max_samp = int(max_time * self.format.sampleRate())
         data = self.signal[min_samp:max_samp]
-        max_sig = np.abs(data).max()
-        if max_sig < 0.3:
-            ratio = 0.3 / max_sig
-            data *= ratio
         for i in range(data.shape[0]):
             packed = pack(pack_format, int(scaler(data[i])))
             for _ in range(self.format.channelCount()):
@@ -307,6 +303,7 @@ class SelectableAudioWidget(QtWidgets.QWidget):
                         time = self.min_selected_time
                 self.m_generator.start()
                 self.m_generator.reset()
+                self.m_audioOutput.reset()
                 self.m_audioOutput.start(self.m_generator)
             elif self.m_audioOutput.state() == QtMultimedia.QAudio.ActiveState:
                 self.m_audioOutput.suspend()

@@ -1,5 +1,6 @@
 
 import numpy as np
+import copy
 
 from vispy import scene
 
@@ -122,13 +123,15 @@ class AnnotationPlotWidget(SelectablePlotWidget):
         if data is None:
             self.waveform.set_data(None)
             return
-        self.waveform.set_data(data)
-        max_time = data[:,0].max()
-        min_time = data[:,0].min()
-        max_sig = np.abs(data[:,1]).max()
+        new_data = copy.deepcopy(data)
+        max_sig = np.abs(new_data[:,1]).max()
         if max_sig < 0.5:
             ratio = 0.5 / max_sig
-            data[:,1] *= ratio
+            new_data[:,1] *=  ratio
+
+        self.waveform.set_data(new_data)
+        max_time = new_data[:,0].max()
+        min_time = new_data[:,0].min()
         self.view.camera.rect = (min_time, -1, max_time - min_time, 2)
         self.set_play_time(min_time)
 
