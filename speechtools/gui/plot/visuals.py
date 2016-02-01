@@ -100,7 +100,6 @@ class DashedAgg(visuals.line.line._AggLineVisual):
 
         self._da = visuals.line.dash_atlas.DashAtlas()
         dash_index, dash_period = self._da['dashed']
-        print(dash_index, dash_period)
         joins = visuals.line.line.joins
         caps = visuals.line.line.caps
         self._U = dict(dash_index=dash_index, dash_period=dash_period,
@@ -212,8 +211,6 @@ class SCTSpectrogramVisual(visuals.ImageVisual):
         #    step_samp = 28
         #    step = step_samp / self._sr
         #self._n_fft = 512
-        print(len(self._signal) / self._sr)
-        print(len(self._signal))
         #window = partial(gaussian, std = 250/12)
         #import matplotlib.pyplot as plt
         #plt.plot(window(250))

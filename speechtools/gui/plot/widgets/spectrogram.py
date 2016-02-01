@@ -31,13 +31,8 @@ class SpectralPlotWidget(SelectablePlotWidget):
             self.pitchplot.visible = False
         else:
             self.pitchplot.visible = True
-            print(self.spec.ymax())
             factor = 250 / 600
             data = []
-            print('hello')
-            print(pitch[0][0], pitch[-1][0])
-            print(pitch[-1][0] - pitch[0][0])
-            print(len(self.spec._signal) /self.spec._sr)
             for i,(t, p) in enumerate(pitch):
                 if p <= 0:
                     continue
@@ -53,7 +48,6 @@ class SpectralPlotWidget(SelectablePlotWidget):
                 data.append([t, p])
             data = np.array(data)
             self.pitchplot.set_data(pos = data)
-            print(data.shape)
 
     def set_sampling_rate(self, sr):
         self.spec.set_sampling_rate(sr)

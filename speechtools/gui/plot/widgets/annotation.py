@@ -61,7 +61,6 @@ class AnnotationPlotWidget(SelectablePlotWidget):
             for s in v:
                 keys.append((k,s))
         for k in sorted(keys):
-            print('annotation', k)
             c = cycle[ind % len(cycle)]
             self.annotation_visuals[k] = ScalingText(face = 'OpenSans')
             self.line_visuals[k] = SCTLinePlot(connect = 'segments', color = c)
@@ -72,7 +71,6 @@ class AnnotationPlotWidget(SelectablePlotWidget):
     def set_annotations(self, data):
         #Assume that data is the highest level of the hierarchy
         self.annotations = data
-        print('got annotations!')
         if data is None:
             if self.hierarchy is not None:
                 for k in self.hierarchy.keys():
@@ -94,7 +92,6 @@ class AnnotationPlotWidget(SelectablePlotWidget):
                     self.annotation_visuals[k].set_data(None, None)
             for k, v in self.hierarchy.subannotations.items():
                 for s in v:
-                    print(k,s)
                     if text_data[k, s][0]:
                         self.line_visuals[k, s].set_data(line_data[k, s])
                         self.annotation_visuals[k, s].set_data(text_data[k, s][0], pos = text_data[k, s][1])
@@ -106,7 +103,6 @@ class AnnotationPlotWidget(SelectablePlotWidget):
             min_time = self.annotations[0].begin
             max_time = self.annotations[-1].end
             self.view.camera.rect = (min_time, -1, max_time - min_time, 2)
-        print('set annotations!')
 
     def rank_key_by_relevance(self, key):
         ranking = []
@@ -129,6 +125,10 @@ class AnnotationPlotWidget(SelectablePlotWidget):
         self.waveform.set_data(data)
         max_time = data[:,0].max()
         min_time = data[:,0].min()
+        max_sig = np.abs(data[:,1]).max()
+        if max_sig < 0.5:
+            ratio = 0.5 / max_sig
+            data[:,1] *= ratio
         self.view.camera.rect = (min_time, -1, max_time - min_time, 2)
         self.set_play_time(min_time)
 
