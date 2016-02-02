@@ -161,6 +161,63 @@ class Generator(QtCore.QBuffer):
 
         self.setData(m_buffer)
 
+class HierarchyWidget(QtWidgets.QWidget):
+    def __init__(self, parent = None):
+        super(HierarchyWidget, self).__init__(parent)
+        layout = QtWidgets.QVBoxLayout()
+        self.hierarchy = None
+        self.hierarchyLayout = QtWidgets.QVBoxLayout()
+        self.hierarchyLayout.setSpacing(0)
+        self.hierarchyLayout.setContentsMargins(0,0,0,0)
+        self.spectrumLayout = QtWidgets.QVBoxLayout()
+        self.spectrumLayout.setSpacing(0)
+        self.spectrumLayout.setContentsMargins(0,0,0,0)
+        s = QtWidgets.QLabel('Spectrogram')
+        self.setFixedWidth(s.fontMetrics().width(s.text())*2)
+        f = QtWidgets.QLabel('Formants')
+        p = QtWidgets.QLabel('Pitch')
+        v = QtWidgets.QLabel('Voicing')
+        i = QtWidgets.QLabel('Intensity')
+        s.setSizePolicy(QtWidgets.QSizePolicy.Minimum,QtWidgets.QSizePolicy.Minimum)
+        f.setSizePolicy(QtWidgets.QSizePolicy.Minimum,QtWidgets.QSizePolicy.Minimum)
+        p.setSizePolicy(QtWidgets.QSizePolicy.Minimum,QtWidgets.QSizePolicy.Minimum)
+        v.setSizePolicy(QtWidgets.QSizePolicy.Minimum,QtWidgets.QSizePolicy.Minimum)
+        i.setSizePolicy(QtWidgets.QSizePolicy.Minimum,QtWidgets.QSizePolicy.Minimum)
+        self.spectrumLayout.addWidget(s)
+        #self.spectrumLayout.addWidget(f)
+        #self.spectrumLayout.addWidget(p)
+        #self.spectrumLayout.addWidget(v)
+        #self.spectrumLayout.addWidget(i)
+
+        layout.addLayout(self.hierarchyLayout)
+
+        layout.addLayout(self.spectrumLayout)
+
+        self.setLayout(layout)
+
+    def updateHierachy(self, hierarchy):
+        if self.hierarchy is not None:
+            while self.hierarchyLayout.count():
+                item = self.hierarchyLayout.takeAt(0)
+                item.widget().deleteLater()
+        self.hierarchy = hierarchy
+        if self.hierarchy is not None:
+            for at in self.hierarchy.highest_to_lowest:
+                w = QtWidgets.QLabel(at)
+                w.setFixedWidth(w.fontMetrics().width(w.text()))
+                #w.clicked.connect(self.updateHierarchyVisibility)
+                self.hierarchyLayout.addWidget(w)
+        keys = []
+        for k, v in sorted(self.hierarchy.subannotations.items()):
+            for s in v:
+                print(k,s)
+                keys.append((k,s))
+        for k in sorted(keys):
+            w = QtWidgets.QLabel('{} - {}'.format(*k))
+            w.setFixedWidth(w.fontMetrics().width(w.text()))
+            #w.clicked.connect(self.updateHierarchyVisibility)
+            self.hierarchyLayout.addWidget(w)
+
 class SelectableAudioWidget(QtWidgets.QWidget):
     def __init__(self, parent = None):
         super(SelectableAudioWidget, self).__init__(parent)
@@ -186,28 +243,6 @@ class SelectableAudioWidget(QtWidgets.QWidget):
 
         layout = QtWidgets.QVBoxLayout()
 
-        self.hierarchyLayout = QtWidgets.QVBoxLayout()
-        self.hierarchyLayout.setSpacing(0)
-        self.hierarchyLayout.setContentsMargins(0,0,0,0)
-        self.spectrumLayout = QtWidgets.QVBoxLayout()
-        self.spectrumLayout.setSpacing(0)
-        self.spectrumLayout.setContentsMargins(0,0,0,0)
-        s = QtWidgets.QLabel('Spectrogram')
-        f = QtWidgets.QLabel('Formants')
-        p = QtWidgets.QLabel('Pitch')
-        v = QtWidgets.QLabel('Voicing')
-        i = QtWidgets.QLabel('Intensity')
-        s.setSizePolicy(QtWidgets.QSizePolicy.Minimum,QtWidgets.QSizePolicy.Minimum)
-        f.setSizePolicy(QtWidgets.QSizePolicy.Minimum,QtWidgets.QSizePolicy.Minimum)
-        p.setSizePolicy(QtWidgets.QSizePolicy.Minimum,QtWidgets.QSizePolicy.Minimum)
-        v.setSizePolicy(QtWidgets.QSizePolicy.Minimum,QtWidgets.QSizePolicy.Minimum)
-        i.setSizePolicy(QtWidgets.QSizePolicy.Minimum,QtWidgets.QSizePolicy.Minimum)
-        self.spectrumLayout.addWidget(s)
-        #self.spectrumLayout.addWidget(f)
-        #self.spectrumLayout.addWidget(p)
-        #self.spectrumLayout.addWidget(v)
-        #self.spectrumLayout.addWidget(i)
-
 
         toplayout = QtWidgets.QHBoxLayout()
         bottomlayout = QtWidgets.QHBoxLayout()
@@ -224,8 +259,6 @@ class SelectableAudioWidget(QtWidgets.QWidget):
         w.setFocusPolicy(QtCore.Qt.NoFocus)
         toplayout.addWidget(w)
 
-        toplayout.addLayout(self.hierarchyLayout)
-
         layout.addLayout(toplayout)
 
         self.spectrumWidget = SpectralWidget()
@@ -237,12 +270,16 @@ class SelectableAudioWidget(QtWidgets.QWidget):
         w.setFocusPolicy(QtCore.Qt.NoFocus)
         bottomlayout.addWidget(w)
 
-        bottomlayout.addLayout(self.spectrumLayout)
         layout.addLayout(bottomlayout)
 
+        mainlayout = QtWidgets.QHBoxLayout()
+        mainlayout.addLayout(layout)
 
+        self.hierarchyWidget = HierarchyWidget()
 
-        self.setLayout(layout)
+        mainlayout.addWidget(self.hierarchyWidget)
+
+        self.setLayout(mainlayout)
 
         self.pitchWorker = PitchGeneratorWorker()
         self.pitchWorker.dataReady.connect(self.updatePitch)
@@ -706,25 +743,8 @@ class SelectableAudioWidget(QtWidgets.QWidget):
         selected_annotation.save()
 
     def updateHierachy(self, hierarchy):
-        if self.hierarchy is not None:
-            while self.hierarchyLayout.count():
-                item = self.hierarchyLayout.takeAt(0)
-                item.widget().deleteLater()
         self.hierarchy = hierarchy
-        if self.hierarchy is not None:
-            for at in self.hierarchy.highest_to_lowest:
-                w = QtWidgets.QLabel(at)
-                #w.clicked.connect(self.updateHierarchyVisibility)
-                self.hierarchyLayout.addWidget(w)
-        keys = []
-        for k, v in sorted(self.hierarchy.subannotations.items()):
-            for s in v:
-                print(k,s)
-                keys.append((k,s))
-        for k in sorted(keys):
-            w = QtWidgets.QLabel('{} - {}'.format(*k))
-            #w.clicked.connect(self.updateHierarchyVisibility)
-            self.hierarchyLayout.addWidget(w)
+        self.hierarchyWidget.updateHierachy(hierarchy)
 
     def updateHierarchyVisibility(self):
         pass
