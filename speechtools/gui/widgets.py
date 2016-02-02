@@ -686,7 +686,7 @@ class SelectableAudioWidget(QtWidgets.QWidget):
                 t = np.arange(sig.shape[0]) / self.sr + min_time
             data = np.array((t, sig)).T
             self.audioWidget.update_signal(data)
-            max_samp = np.ceil((max_time + 0.005) * self.sr)
+            max_samp = np.ceil((max_time) * self.sr)
             self.spectrumWidget.update_signal(self.signal[min_samp:max_samp])
             self.updatePlayTime(self.min_vis_time)
             if self.pitch is not None:
@@ -708,15 +708,19 @@ class SelectableAudioWidget(QtWidgets.QWidget):
         key, ind = self.selected_boundary
         actual_index = int(ind / 4)
         index = 0
+        print(key, ind, actual_index, index)
         selected_annotation = None
         for a in self.annotations:
             if a.end < self.min_vis_time:
                 continue
             if isinstance(key, tuple):
                 elements = getattr(a, key[0])
+                print(len(elements))
                 for e in elements:
                     subs = getattr(e, key[1])
+                    print(len(subs))
                     for s in subs:
+                        print(index, index == actual_index)
                         if index == actual_index:
                             selected_annotation = s
                             break
@@ -735,12 +739,16 @@ class SelectableAudioWidget(QtWidgets.QWidget):
             if selected_annotation is not None:
                 break
         mod = ind % 4
-
+        print(selected_annotation)
+        print(selected_annotation.begin)
+        print(selected_annotation._node.properties['begin'])
         if mod == 0:
             selected_annotation.update_properties(begin = self.selected_time)
         else:
             selected_annotation.update_properties(end = self.selected_time)
         selected_annotation.save()
+        print(selected_annotation.begin)
+        print(selected_annotation._node.properties['begin'])
 
     def updateHierachy(self, hierarchy):
         self.hierarchy = hierarchy
@@ -841,6 +849,7 @@ class QueryForm(QtWidgets.QWidget):
         self.lab1Button.setDisabled(True)
         self.lab1Button.clicked.connect(self.lab1Query)
         self.exportButton = QtWidgets.QPushButton('Export Lab 1 stops')
+        self.exportButton.clicked.connect(self.runExportQuery)
         self.exportButton.setDisabled(True)
 
         phon4Layout.addWidget(self.lab1Button)
@@ -869,8 +878,13 @@ class QueryForm(QtWidgets.QWidget):
     def runExportQuery(self):
         if self.config is None:
             return
+        path, _ = QtWidgets.QFileDialog.getSaveFileName(self, "Export data", filter = "CSV (*.txt  *.csv)")
+
+        if not path:
+            return
         kwargs = {}
         kwargs['config'] = self.config
+        kwargs['path'] = path
         self.exportWorker.setParams(kwargs)
         self.exportWorker.start()
 

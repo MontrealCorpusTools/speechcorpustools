@@ -78,7 +78,70 @@ class AnnotatedQueryWorker(QueryWorker):
     pass
 
 class ExportQueryWorker(QueryWorker):
-    pass
+    def run(self):
+        time.sleep(0.1)
+        print('beginning export')
+        try:
+            config = self.kwargs['config']
+            export_path = self.kwargs['path']
+            try:
+                stops = gp_language_stops[config.corpus_name]
+            except KeyError:
+                print('Couldn\'t find corpus name in stops, defaulting to p, t, k, b, d, g')
+                stops = ['p','t','k','b','d','g']
+            with CorpusContext(config) as c:
+                a_type = c.hierarchy.lowest
+                w_type = c.hierarchy[a_type]
+                utt_type = c.hierarchy.highest
+                a_type = getattr(c, a_type)
+                w_type = getattr(a_type, w_type)
+                utt_type = getattr(a_type, utt_type)
+                q = c.query_graph(a_type)
+                q = q.filter(a_type.phon4lab1 == True)
+                #print('Number found: {}'.format(q.count()))
+                q = q.columns(a_type.label.column_name('Stop'),
+                            a_type.begin.column_name('Begin'),
+                            a_type.end.column_name('End'),
+                            a_type.duration.column_name('Duration'))
+                if 'burst' in c.hierarchy.subannotations[c.hierarchy.lowest]:
+                    q = q.columns(a_type.burst.begin.column_name('Burst_begin'),
+                            a_type.burst.end.column_name('Burst_end'),
+                            a_type.burst.duration.column_name('Burst_duration'))
+                if 'voicing' in c.hierarchy.subannotations[c.hierarchy.lowest]:
+                    q = q.columns(a_type.voicing.begin.column_name('Voicing_begin'),
+                                a_type.voicing.end.column_name('Voicing_end'),
+                                a_type.voicing.duration.column_name('Voicing_duration'))
+
+                q = q.columns(w_type.label.column_name('Word'),
+                            w_type.begin.column_name('Word_begin'),
+                            w_type.end.column_name('Word_end'),
+                            w_type.duration.column_name('Word_duration'),
+                            w_type.transcription.column_name('Word_transcription'),
+                            #a_type.following.label.column_name('Following_segment'),
+                            #a_type.following.begin.column_name('Following_segment_begin'),
+                            #a_type.following.end.column_name('Following_segment_end'),
+                            #a_type.following.duration.column_name('Following_segment_duration'),
+                            a_type.following.following.label.column_name('Following_following_segment'),
+                            a_type.following.following.begin.column_name('Following_following_segment_begin'),
+                            a_type.following.following.end.column_name('Following_following_segment_end'),
+                            a_type.following.following.duration.column_name('Following_following_segment_duration'),
+                            a_type.checked.column_name('Annotated'),
+                            a_type.speaker.name.column_name('Speaker'),
+                            a_type.discourse.name.column_name('Discourse'))
+                #q = q.limit(100)
+                print(q.cypher())
+                results = q.to_csv(export_path)
+        except Exception as e:
+            raise
+            self.errorEncountered.emit(e)
+            return
+        print('finished')
+        if self.stopped:
+            time.sleep(0.1)
+            self.finishedCancelling.emit()
+            return
+
+        self.dataReady.emit((q, results))
 
 class DiscourseQueryWorker(QueryWorker):
     audioReady = QtCore.pyqtSignal(object)

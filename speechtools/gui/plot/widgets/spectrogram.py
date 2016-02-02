@@ -62,7 +62,7 @@ class SpectralPlotWidget(SelectablePlotWidget):
         #max_ind = max_time / self.spec.step
         self.view.camera.rect = (0, 0, self.spec.xmax(), self.spec.ymax())
         self.yaxis.axis.ticker.scale = self.spec.yscale
-        self.xaxis.axis.ticker.scale = 1/ self.spec.xscale
+        #self.xaxis.axis.ticker.scale = 1/ self.spec.xscale
 
     def set_selection_time(self, pos):
         if pos is None:

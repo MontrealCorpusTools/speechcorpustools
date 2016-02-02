@@ -22,17 +22,18 @@ class ResultsView(QtWidgets.QTableView):
         self.horizontalHeader().setSectionResizeMode(QtWidgets.QHeaderView.Interactive)
 
     def keyPressEvent(self, e):
-        if (e.modifiers() & QtCore.Qt.ControlModifier):
+        if (e.modifiers() & QtCore.Qt.ControlModifier) and e.key() == QtCore.Qt.Key_C:
             selected = self.selectionModel().selectedRows()
-            if e.key() == QtCore.Qt.Key_C: #copy
-                s = ''
+            s = ''
 
-                for r in selected:
-                    for c in range(self.model().columnCount()):
-                        ind = self.model().index(r.row(),c)
-                        s += self.model().data(ind, QtCore.Qt.DisplayRole) + "\t"
-                    s = s[:-1] + "\n" #eliminate last '\t'
-                self.clip.setText(s)
+            for r in selected:
+                for c in range(self.model().columnCount()):
+                    ind = self.model().index(r.row(),c)
+                    s += self.model().data(ind, QtCore.Qt.DisplayRole) + "\t"
+                s = s[:-1] + "\n" #eliminate last '\t'
+            self.clip.setText(s)
+        else:
+            super(ResultsView, self).keyPressEvent(e)
 
     def setModel(self,model):
         super(ResultsView, self).setModel(model)
