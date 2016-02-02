@@ -2,6 +2,8 @@ import os
 import pickle
 
 from PyQt5 import QtGui, QtCore, QtWidgets
+import PyQt5
+import vispy
 
 from polyglotdb.config import BASE_DIR, CorpusConfig
 
@@ -146,7 +148,7 @@ class MainWindow(QtWidgets.QMainWindow):
     configUpdated = QtCore.pyqtSignal(object)
     def __init__(self, app):
         super(MainWindow, self).__init__()
-
+        vispy.sys_info(os.path.join(BASE_DIR, 'vispy.info'), overwrite = True)
         self.corpusConfig = None
         #self.connectWidget = ConnectWidget(self)
         #self.connectWidget.configChanged.connect(self.updateConfig)

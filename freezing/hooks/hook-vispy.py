@@ -8,6 +8,11 @@ from PyInstaller.utils.hooks import (
 
 
 hiddenimports = ['vispy', 'six', 'vispy.app.backends._pyqt5',
+'vispy.app.backends._pyqt4', 'vispy.app.backends._pyside',
+'vispy.app.backends._pyglet','vispy.app.backends._glfw',
+'vispy.app.backends._sdl2','vispy.app.backends._wx',
+'vispy.app.backends._egl','vispy.app.backends._osmesa',
+'vispy.app.backends._test',
 'matplotlib','tkinter', 'sklearn', 'sklearn.neighbors.typedefs']
 
 if sys.platform == 'win32':
