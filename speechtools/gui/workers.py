@@ -117,10 +117,10 @@ class ExportQueryWorker(QueryWorker):
                             w_type.end.column_name('Word_end'),
                             w_type.duration.column_name('Word_duration'),
                             w_type.transcription.column_name('Word_transcription'),
-                            #a_type.following.label.column_name('Following_segment'),
-                            #a_type.following.begin.column_name('Following_segment_begin'),
-                            #a_type.following.end.column_name('Following_segment_end'),
-                            #a_type.following.duration.column_name('Following_segment_duration'),
+                            a_type.following.label.column_name('Following_segment'),
+                            a_type.following.begin.column_name('Following_segment_begin'),
+                            a_type.following.end.column_name('Following_segment_end'),
+                            a_type.following.duration.column_name('Following_segment_duration'),
                             a_type.following.following.label.column_name('Following_following_segment'),
                             a_type.following.following.begin.column_name('Following_following_segment_begin'),
                             a_type.following.following.end.column_name('Following_following_segment_end'),
@@ -129,7 +129,6 @@ class ExportQueryWorker(QueryWorker):
                             a_type.speaker.name.column_name('Speaker'),
                             a_type.discourse.name.column_name('Discourse'))
                 #q = q.limit(100)
-                print(q.cypher())
                 results = q.to_csv(export_path)
         except Exception as e:
             raise

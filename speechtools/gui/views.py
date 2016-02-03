@@ -44,6 +44,9 @@ class ResultsView(QtWidgets.QTableView):
         index = self.indexAt(pos)
         if index is None:
             return
+        self.requestView(index)
+
+    def requestView(self, index):
         index = self.model().mapToSource(index)
         times = self.model().sourceModel().times(index)
         discourse = self.model().sourceModel().discourse(index)
@@ -52,10 +55,34 @@ class ResultsView(QtWidgets.QTableView):
     def showMenu(self, pos):
         menu = QtWidgets.QMenu()
         index = self.indexAt(pos)
-        index = self.model().mapToSource(index)
-        times = self.model().sourceModel().times(index)
-        discourse = self.model().sourceModel().discourse(index)
         viewAction = QtWidgets.QAction('View annotation', self)
-        viewAction.triggered.connect(lambda : self.viewRequested.emit(discourse, *times))
+        viewAction.triggered.connect(lambda : self.requestView(index))
         menu.addAction(viewAction)
         action = menu.exec_(self.viewport().mapToGlobal(pos))
+
+    def selectNext(self):
+        selected = self.selectionModel().selectedRows()
+        if len(selected):
+            current = selected[-1].row()
+        else:
+            current = 0
+
+        if current + 1 == self.model().sourceModel().rowCount():
+            return
+        index = self.model().index(current + 1,0)
+        self.selectionModel().select(index,
+                QtCore.QItemSelectionModel.ClearAndSelect | QtCore.QItemSelectionModel.Rows)
+        self.requestView(index)
+
+    def selectPrevious(self):
+        selected = self.selectionModel().selectedRows()
+        if len(selected):
+            current = selected[0].row()
+        else:
+            current = 0
+        if current == 0:
+            return
+        index = self.model().index(current - 1,0)
+        self.selectionModel().select(index,
+                QtCore.QItemSelectionModel.ClearAndSelect | QtCore.QItemSelectionModel.Rows)
+        self.requestView(index)

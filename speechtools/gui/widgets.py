@@ -219,6 +219,8 @@ class HierarchyWidget(QtWidgets.QWidget):
             self.hierarchyLayout.addWidget(w)
 
 class SelectableAudioWidget(QtWidgets.QWidget):
+    previousRequested = QtCore.pyqtSignal()
+    nextRequested = QtCore.pyqtSignal()
     def __init__(self, parent = None):
         super(SelectableAudioWidget, self).__init__(parent)
         self.signal = None
@@ -373,6 +375,10 @@ class SelectableAudioWidget(QtWidgets.QWidget):
             center_time = self.min_vis_time + vis / 2
             factor = (1 + 0.007) ** (30)
             self.zoom(factor, center_time)
+        elif event.key() == QtCore.Qt.Key_Comma:
+            self.previousRequested.emit()
+        elif event.key() == QtCore.Qt.Key_Period:
+            self.nextRequested.emit()
         elif self.selected_annotation is not None:
             existing_label = self.selected_annotation.label
             if existing_label is None:
@@ -964,6 +970,18 @@ class QueryWidget(QtWidgets.QWidget):
         widget = QueryResults(results)
         widget.tableWidget.viewRequested.connect(self.viewRequested.emit)
         self.tabs.addTab(widget, name)
+
+    def requestNext(self):
+        w = self.tabs.currentWidget()
+        if not isinstance(w, QueryResults):
+            return
+        w.tableWidget.selectNext()
+
+    def requestPrevious(self):
+        w = self.tabs.currentWidget()
+        if not isinstance(w, QueryResults):
+            return
+        w.tableWidget.selectPrevious()
 
 class HelpWidget(QtWidgets.QWidget):
     def __init__(self):

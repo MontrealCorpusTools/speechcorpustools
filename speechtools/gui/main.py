@@ -165,6 +165,8 @@ class MainWindow(QtWidgets.QMainWindow):
 
         self.leftPane.queryWidget.viewRequested.connect(self.rightPane.discourseWidget.changeView)
         self.rightPane.discourseWidget.viewRequested.connect(self.leftPane.viewWidget.discourseWidget.changeView)
+        self.leftPane.viewWidget.discourseWidget.nextRequested.connect(self.leftPane.queryWidget.requestNext)
+        self.leftPane.viewWidget.discourseWidget.previousRequested.connect(self.leftPane.queryWidget.requestPrevious)
         self.mainWidget = CollapsibleWidgetPair(QtCore.Qt.Horizontal, self.leftPane,self.rightPane)
 
         #self.mainWidget.setStretchFactor(0, 1)
