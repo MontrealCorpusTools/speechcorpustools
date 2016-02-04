@@ -76,6 +76,8 @@ class Lab1QueryWorker(QueryWorker):
             w_type = getattr(a_type, w_type)
             utt_type = getattr(a_type, utt_type)
             q = c.query_graph(a_type)
+            q = q.order_by(a_type.discourse.name)
+            q = q.order_by(a_type.begin)
             q = q.filter(a_type.phon4lab1 == True)
             #print('Number found: {}'.format(q.count()))
             q = q.columns(a_type.label.column_name('Stop'),
@@ -114,6 +116,8 @@ class ExportQueryWorker(QueryWorker):
                 w_type = getattr(a_type, w_type)
                 utt_type = getattr(a_type, utt_type)
                 q = c.query_graph(a_type)
+                q = q.order_by(a_type.discourse.name)
+                q = q.order_by(a_type.begin)
                 q = q.filter(a_type.phon4lab1 == True)
                 #print('Number found: {}'.format(q.count()))
                 q = q.columns(a_type.label.column_name('Stop'),
