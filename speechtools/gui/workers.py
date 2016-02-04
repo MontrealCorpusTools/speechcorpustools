@@ -1,8 +1,13 @@
+
+import sys
+import traceback
 import time
 import numpy as np
 from PyQt5 import QtGui, QtCore, QtWidgets
 
 from polyglotdb.gui.workers import FunctionWorker
+
+from polyglotdb.exceptions import ConnectionError, NetworkAddressError, TemporaryConnectionError, PGError
 
 from speechtools.corpus import CorpusContext
 
@@ -11,59 +16,29 @@ from speechtools.utils import update_sound_files, gp_language_stops
 from speechtools.acoustics.analysis import get_pitch
 
 class QueryWorker(FunctionWorker):
-    def run(self):
-        time.sleep(0.1)
-        try:
-            a_type = self.kwargs['annotation_type']
-            config = self.kwargs['config']
-
-            with CorpusContext(config) as c:
-                a_type = getattr(c, a_type)
-                query = c.query_graph(a_type)
-                query = query.times().columns(a_type.discourse.column_name('discourse'))
-                results = query.all()
-        except Exception as e:
-            self.errorEncountered.emit(e)
-            return
-
-        if self.stopped:
-            time.sleep(0.1)
-            self.finishedCancelling.emit()
-            return
-        self.dataReady.emit((query, results))
-
-class Lab1QueryWorker(QueryWorker):
+    connectionIssues = QtCore.pyqtSignal()
     def run(self):
         time.sleep(0.1)
         print('beginning')
         try:
-            config = self.kwargs['config']
-            try:
-                stops = gp_language_stops[config.corpus_name]
-            except KeyError:
-                print('Couldn\'t find corpus name in stops, defaulting to p, t, k, b, d, g')
-                stops = ['p','t','k','b','d','g']
-            with CorpusContext(config) as c:
-                a_type = c.hierarchy.lowest
-                w_type = c.hierarchy[a_type]
-                utt_type = c.hierarchy.highest
-                a_type = getattr(c, a_type)
-                w_type = getattr(a_type, w_type)
-                utt_type = getattr(a_type, utt_type)
-                q = c.query_graph(a_type)
-                q = q.filter(a_type.phon4lab1 == True)
-                #print('Number found: {}'.format(q.count()))
-                q = q.columns(a_type.label.column_name('Stop'),
-                            a_type.begin.column_name('Begin'),
-                            a_type.end.column_name('End'),
-                            w_type.label.column_name('Word'),
-                            a_type.checked.column_name('Annotated'),
-                            a_type.speaker.name.column_name('Speaker'),
-                            a_type.discourse.name.column_name('Discourse'))
-                #q = q.limit(100)
-                results = q.all()
+            success = False
+            tries = 0
+            max_tries = 5
+            while not success and tries < max_tries:
+                try:
+                    results = self.run_query()
+                    success = True
+                except (ConnectionError, NetworkAddressError, TemporaryConnectionError):
+                    tries += 1
+                    if tries == 2:
+                        self.connectionIssues.emit()
+            if not success:
+                raise(ConnectionError('The query could not be completed.  Please check your internet connectivity.'))
         except Exception as e:
-            raise
+            if not isinstance(e, PGError):
+                exc_type, exc_value, exc_traceback = sys.exc_info()
+                e = ''.join(traceback.format_exception(exc_type, exc_value,
+                                          exc_traceback))
             self.errorEncountered.emit(e)
             return
         print('finished')
@@ -72,7 +47,49 @@ class Lab1QueryWorker(QueryWorker):
             self.finishedCancelling.emit()
             return
 
-        self.dataReady.emit((q, results))
+        self.dataReady.emit(results)
+
+    def run_query(self):
+        a_type = self.kwargs['annotation_type']
+        config = self.kwargs['config']
+
+        with CorpusContext(config) as c:
+            a_type = getattr(c, a_type)
+            query = c.query_graph(a_type)
+            query = query.times().columns(a_type.discourse.column_name('discourse'))
+            results = query.all()
+        return query, results
+
+class Lab1QueryWorker(QueryWorker):
+    def run_query(self):
+        config = self.kwargs['config']
+        try:
+            stops = gp_language_stops[config.corpus_name]
+        except KeyError:
+            print('Couldn\'t find corpus name in stops, defaulting to p, t, k, b, d, g')
+            stops = ['p','t','k','b','d','g']
+        with CorpusContext(config) as c:
+            a_type = c.hierarchy.lowest
+            w_type = c.hierarchy[a_type]
+            utt_type = c.hierarchy.highest
+            a_type = getattr(c, a_type)
+            w_type = getattr(a_type, w_type)
+            utt_type = getattr(a_type, utt_type)
+            q = c.query_graph(a_type)
+            q = q.filter(a_type.phon4lab1 == True)
+            #print('Number found: {}'.format(q.count()))
+            q = q.columns(a_type.label.column_name('Stop'),
+                        a_type.begin.column_name('Begin'),
+                        a_type.end.column_name('End'),
+                        w_type.label.column_name('Word'),
+                        a_type.checked.column_name('Annotated'),
+                        a_type.speaker.name.column_name('Speaker'),
+                        a_type.discourse.name.column_name('Discourse'))
+            #q = q.limit(100)
+            results = q.all()
+        return q, results
+
+
 
 class AnnotatedQueryWorker(QueryWorker):
     pass
@@ -142,45 +159,36 @@ class ExportQueryWorker(QueryWorker):
 
         self.dataReady.emit((q, results))
 
-class DiscourseQueryWorker(QueryWorker):
-    audioReady = QtCore.pyqtSignal(object)
-    annotationsReady = QtCore.pyqtSignal(object)
-    def run(self):
-        print('beginning discourse query')
-        time.sleep(0.1)
-        try:
-            a_type = self.kwargs['word_type']
-            s_type = self.kwargs['seg_type']
-            config = self.kwargs['config']
-            discourse = self.kwargs['discourse']
-            with CorpusContext(config) as c:
-                audio_file = c.discourse_sound_file(discourse)
-                self.audioReady.emit(audio_file)
-                word = getattr(c,a_type)
-                q = c.query_graph(word).filter(word.discourse.name == discourse)
-                preloads = []
-                if a_type in c.hierarchy.subannotations:
-                    for s in c.hierarchy.subannotations[t]:
-                        preloads.append(getattr(word, s))
-                for t in c.hierarchy.get_lower_types(a_type):
-                    preloads.append(getattr(word, t))
-                q = q.preload(*preloads)
-                q = q.order_by(word.begin)
-                #annotations = c.query_acoustics(q).pitch('reaper').all()
-                annotations = q.all()
-        except Exception as e:
-            raise
-            self.errorEncountered.emit(e)
-            print(e)
-            return
+class DiscourseAudioWorker(QueryWorker):
+    def run_query(self):
+        config = self.kwargs['config']
+        discourse = self.kwargs['discourse']
+        with CorpusContext(config) as c:
+            audio_file = c.discourse_sound_file(discourse)
+            if audio_file is not None:
+                c.sql_session.expunge(audio_file)
+        return audio_file
 
-        if self.stopped:
-            time.sleep(0.1)
-            self.finishedCancelling.emit()
-            return
-        self.annotationsReady.emit(annotations)
-        print('done!')
-        print('finished discourse query')
+class DiscourseQueryWorker(QueryWorker):
+    def run_query(self):
+        a_type = self.kwargs['word_type']
+        s_type = self.kwargs['seg_type']
+        config = self.kwargs['config']
+        discourse = self.kwargs['discourse']
+        with CorpusContext(config) as c:
+            word = getattr(c,a_type)
+            q = c.query_graph(word).filter(word.discourse.name == discourse)
+            preloads = []
+            if a_type in c.hierarchy.subannotations:
+                for s in c.hierarchy.subannotations[t]:
+                    preloads.append(getattr(word, s))
+            for t in c.hierarchy.get_lower_types(a_type):
+                preloads.append(getattr(word, t))
+            q = q.preload(*preloads)
+            q = q.order_by(word.begin)
+            #annotations = c.query_acoustics(q).pitch('reaper').all()
+            annotations = q.all()
+        return annotations
 
 class BoundaryGeneratorWorker(QueryWorker):
     pass
@@ -193,6 +201,7 @@ class FormantGeneratorWorker(QueryWorker):
 
 class PitchGeneratorWorker(QueryWorker):
     def run(self):
+        return
         print('beginning pitch work')
         config = self.kwargs['config']
         algorithm = self.kwargs['algorithm']
@@ -205,21 +214,17 @@ class PitchGeneratorWorker(QueryWorker):
 
 class AudioFinderWorker(QueryWorker):
     def run(self):
-        print('beginning audio finding')
         config = self.kwargs['config']
         directory = self.kwargs['directory']
         with CorpusContext(config) as c:
             update_sound_files(c, directory)
             all_found = c.has_all_sound_files()
         self.dataReady.emit(all_found)
-        print('finished audio finding')
 
 class AudioCheckerWorker(QueryWorker):
     def run(self):
-        print('beginning audio checking')
         config = self.kwargs['config']
         with CorpusContext(config) as c:
             all_found = c.has_all_sound_files()
         self.dataReady.emit(all_found)
-        print('finished audio checking')
 

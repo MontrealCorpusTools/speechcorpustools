@@ -8,7 +8,7 @@ from polyglotdb.gui.widgets import ConnectWidget, ImportWidget, ExportWidget
 
 from .plot import AnnotationWidget, SpectralWidget, SCTSummaryWidget
 
-from .workers import (QueryWorker, DiscourseQueryWorker,
+from .workers import (QueryWorker, DiscourseQueryWorker, DiscourseAudioWorker,
                         Lab1QueryWorker,
                         ExportQueryWorker, PitchGeneratorWorker)
 
@@ -210,7 +210,6 @@ class HierarchyWidget(QtWidgets.QWidget):
         keys = []
         for k, v in sorted(self.hierarchy.subannotations.items()):
             for s in v:
-                print(k,s)
                 keys.append((k,s))
         for k in sorted(keys):
             w = QtWidgets.QLabel('{} - {}'.format(*k))
@@ -678,18 +677,11 @@ class SelectableAudioWidget(QtWidgets.QWidget):
             self.audioWidget.update_signal(None)
             self.spectrumWidget.update_signal(None)
         else:
-            if max_time - min_time > 5:
-                min_samp = np.floor(min_time * self.downsampled_sr)
-                max_samp = np.ceil(max_time * self.downsampled_sr)
-                sig = self.downsampled_signal[min_samp:max_samp]
+            min_samp = np.floor(min_time * self.sr)
+            max_samp = np.ceil(max_time * self.sr)
+            sig = self.signal[min_samp:max_samp]
 
-                t = np.arange(sig.shape[0]) / self.downsampled_sr + min_time
-            else:
-                min_samp = np.floor(min_time * self.sr)
-                max_samp = np.ceil(max_time * self.sr)
-                sig = self.signal[min_samp:max_samp]
-
-                t = np.arange(sig.shape[0]) / self.sr + min_time
+            t = np.arange(sig.shape[0]) / self.sr + min_time
             data = np.array((t, sig)).T
             self.audioWidget.update_signal(data)
             max_samp = np.ceil((max_time) * self.sr)
@@ -714,19 +706,15 @@ class SelectableAudioWidget(QtWidgets.QWidget):
         key, ind = self.selected_boundary
         actual_index = int(ind / 4)
         index = 0
-        print(key, ind, actual_index, index)
         selected_annotation = None
         for a in self.annotations:
             if a.end < self.min_vis_time:
                 continue
             if isinstance(key, tuple):
                 elements = getattr(a, key[0])
-                print(len(elements))
                 for e in elements:
                     subs = getattr(e, key[1])
-                    print(len(subs))
                     for s in subs:
-                        print(index, index == actual_index)
                         if index == actual_index:
                             selected_annotation = s
                             break
@@ -745,16 +733,11 @@ class SelectableAudioWidget(QtWidgets.QWidget):
             if selected_annotation is not None:
                 break
         mod = ind % 4
-        print(selected_annotation)
-        print(selected_annotation.begin)
-        print(selected_annotation._node.properties['begin'])
         if mod == 0:
             selected_annotation.update_properties(begin = self.selected_time)
         else:
             selected_annotation.update_properties(end = self.selected_time)
         selected_annotation.save()
-        print(selected_annotation.begin)
-        print(selected_annotation._node.properties['begin'])
 
     def updateHierachy(self, hierarchy):
         self.hierarchy = hierarchy
@@ -771,12 +754,9 @@ class SelectableAudioWidget(QtWidgets.QWidget):
                 self.max_time = self.annotations[-1].end
             else:
                 self.max_time = 30
-            self.min_vis_time = 0
-            if self.max_time > 30:
-                self.max_vis_time = 30
-            else:
+            if self.min_vis_time is None:
+                self.min_vis_time = 0
                 self.max_vis_time = self.max_time
-
 
         self.updateVisible()
 
@@ -786,13 +766,11 @@ class SelectableAudioWidget(QtWidgets.QWidget):
 
     def updateAudio(self, audio_file):
         if audio_file is not None:
-            kwargs = {'config':self.config, 'sound_file': audio_file, 'algorithm':'reaper'}
-            self.pitchWorker.setParams(kwargs)
-            self.pitchWorker.start()
+            #kwargs = {'config':self.config, 'sound_file': audio_file, 'algorithm':'reaper'}
+            #self.pitchWorker.setParams(kwargs)
+            #self.pitchWorker.start()
             self.sr, self.signal = wavfile.read(audio_file.filepath)
             self.signal = self.signal / 32768
-            self.downsampled_sr = 2500
-            self.downsampled_signal = resample(self.signal,self.sr, self.downsampled_sr)
 
             if self.m_generator.isOpen():
                 self.m_generator.close()
@@ -802,10 +780,7 @@ class SelectableAudioWidget(QtWidgets.QWidget):
                 self.max_time = len(self.signal) / self.sr
             if self.min_vis_time is None:
                 self.min_vis_time = 0
-                if self.max_time > 30:
-                    self.max_vis_time = 30
-                else:
-                    self.max_vis_time = self.max_time
+                self.max_vis_time = self.max_time
             self.spectrumWidget.update_sampling_rate(self.sr)
             self.updateVisible()
         else:
@@ -822,12 +797,10 @@ class SelectableAudioWidget(QtWidgets.QWidget):
         self.audioWidget.update_hierarchy(self.hierarchy)
         self.min_time = None
         self.max_time = None
-        self.min_vis_time = None
-        self.max_vis_time = None
         self.min_selected_time = None
         self.max_selected_time = None
         self.audioWidget.update_selection(self.min_selected_time, self.max_selected_time)
-        self.audioWidget.clear()
+        #self.audioWidget.clear()
 
 class QueryForm(QtWidgets.QWidget):
     finishedRunning = QtCore.pyqtSignal(object)
@@ -870,8 +843,20 @@ class QueryForm(QtWidgets.QWidget):
 
         self.lab1Worker = Lab1QueryWorker()
         self.lab1Worker.dataReady.connect(self.setResults)
+        self.lab1Worker.errorEncountered.connect(self.showError)
 
         self.exportWorker = ExportQueryWorker()
+        self.exportWorker.errorEncountered.connect(self.showError)
+
+    def showError(self, e):
+        reply = QMessageBox()
+        reply.setWindowTitle('Error encountered')
+        reply.setIcon(QMessageBox.Critical)
+        reply.setText("Something went wrong!")
+        reply.setInformativeText("Please copy the text below and send to Michael.")
+        reply.setDetailedText(str(e))
+        reply.setStandardButtons(QMessageBox.Close)
+        ret = reply.exec_()
 
     def lab1Query(self):
         if self.config is None:
@@ -994,7 +979,7 @@ class HelpWidget(QtWidgets.QWidget):
 
 class DiscourseWidget(QtWidgets.QWidget):
     discourseChanged = QtCore.pyqtSignal(str)
-    viewRequested = QtCore.pyqtSignal(float, float)
+    viewRequested = QtCore.pyqtSignal(object, object)
     def __init__(self):
         super(DiscourseWidget, self).__init__()
 
@@ -1004,30 +989,32 @@ class DiscourseWidget(QtWidgets.QWidget):
 
         self.discourseList = QtWidgets.QListWidget()
         self.discourseList.setSelectionMode(QtWidgets.QAbstractItemView.SingleSelection)
-        self.discourseList.itemSelectionChanged.connect(self.changeDiscourse)
+        self.discourseList.currentItemChanged.connect(self.changeDiscourse)
 
         layout.addWidget(self.discourseList)
 
         self.setLayout(layout)
 
     def changeDiscourse(self):
-        items = self.discourseList.selectedItems()
-        if len(items) > 0:
-            discourse = items[0].text()
-        else:
+        item = self.discourseList.currentItem()
+        if item is None:
             discourse = None
+        else:
+            discourse = item.text()
         self.discourseChanged.emit(discourse)
+        self.viewRequested.emit(None, None)
 
     def changeView(self, discourse, begin, end):
-        self.discourseList.selectionModel().clear()
+        self.viewRequested.emit(begin, end)
         for i in range(self.discourseList.count()):
             item = self.discourseList.item(i)
             if item.text() == discourse:
                 index = self.discourseList.model().index(i, 0)
                 self.discourseList.selectionModel().select(index,
                                 QtCore.QItemSelectionModel.ClearAndSelect|QtCore.QItemSelectionModel.Rows)
-                self.viewRequested.emit(begin, end)
+
                 break
+        self.discourseChanged.emit(discourse)
 
 
     def updateConfig(self, config):
@@ -1039,8 +1026,28 @@ class DiscourseWidget(QtWidgets.QWidget):
             for d in sorted(c.discourses):
                 self.discourseList.addItem(d)
 
+class DetailedMessageBox(QtWidgets.QMessageBox):
+    # Adapted from http://stackoverflow.com/questions/2655354/how-to-allow-resizing-of-qmessagebox-in-pyqt4
+    def __init__(self, *args, **kwargs):
+        super(DetailedMessageBox, self).__init__(*args, **kwargs)
+        self.setWindowTitle('Error encountered')
+        self.setIcon(QtWidgets.QMessageBox.Critical)
+        self.setStandardButtons(QtWidgets.QMessageBox.Close)
+        self.setText("Something went wrong!")
+        self.setInformativeText("Please copy the text below and send to Michael.")
+
+        self.setFixedWidth(200)
+
+    def resizeEvent(self, event):
+        result = super(DetailedMessageBox, self).resizeEvent(event)
+        details_box = self.findChild(QtWidgets.QTextEdit)
+        if details_box is not None:
+            details_box.setFixedHeight(details_box.sizeHint().height())
+        return result
+
 class ViewWidget(QtWidgets.QWidget):
     changingDiscourse = QtCore.pyqtSignal()
+    connectionIssues = QtCore.pyqtSignal()
     def __init__(self, parent = None):
         super(ViewWidget, self).__init__(parent)
 
@@ -1072,15 +1079,32 @@ class ViewWidget(QtWidgets.QWidget):
 
         self.setLayout(layout)
 
+        self.audioWorker = DiscourseAudioWorker()
+        self.audioWorker.dataReady.connect(self.discourseWidget.updateAudio)
+        self.audioWorker.errorEncountered.connect(self.showError)
+
         self.worker = DiscourseQueryWorker()
-        self.worker.audioReady.connect(self.discourseWidget.updateAudio)
-        self.worker.annotationsReady.connect(self.discourseWidget.updateAnnotations)
+        self.worker.dataReady.connect(self.discourseWidget.updateAnnotations)
         self.changingDiscourse.connect(self.worker.stop)
         self.changingDiscourse.connect(self.discourseWidget.clearDiscourse)
+        self.worker.errorEncountered.connect(self.showError)
+        self.worker.connectionIssues.connect(self.connectionIssues.emit)
+
+    def showError(self, e):
+        reply = DetailedMessageBox()
+        reply.setDetailedText(str(e))
+        ret = reply.exec_()
 
     def changeDiscourse(self, discourse):
         if discourse:
             self.changingDiscourse.emit()
+            kwargs = {}
+
+            kwargs['config'] = self.config
+            kwargs['discourse'] = discourse
+
+            self.audioWorker.setParams(kwargs)
+            self.audioWorker.start()
             kwargs = {}
             with CorpusContext(self.config) as c:
                 self.discourseWidget.updateHierachy(c.hierarchy)

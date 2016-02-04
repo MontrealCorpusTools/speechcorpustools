@@ -10,7 +10,8 @@ from polyglotdb.config import BASE_DIR, CorpusConfig
 from speechtools.corpus import CorpusContext
 
 from .widgets import (ConnectWidget as PGConnectWidget, ViewWidget, ImportWidget, ExportWidget,
-                        HelpWidget, DiscourseWidget, QueryWidget, CollapsibleWidgetPair)
+                        HelpWidget, DiscourseWidget, QueryWidget, CollapsibleWidgetPair,
+                        get_system_font_height)
 
 from .workers import AudioFinderWorker, AudioCheckerWorker
 
@@ -158,6 +159,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
         self.leftPane = LeftPane()
         self.configUpdated.connect(self.leftPane.updateConfig)
+        self.leftPane.viewWidget.connectionIssues.connect(self.havingConnectionIssues)
 
         self.rightPane = RightPane()
         self.rightPane.configUpdated.connect(self.updateConfig)
@@ -180,6 +182,8 @@ class MainWindow(QtWidgets.QMainWindow):
 
         self.status = QtWidgets.QLabel()
         self.statusBar().addWidget(self.status, stretch=1)
+        self.connectionStatus = QtWidgets.QLabel()
+        self.statusBar().addWidget(self.connectionStatus)
         self.setWindowTitle("Speech Corpus Tools")
         self.createActions()
         self.createMenus()
@@ -189,6 +193,11 @@ class MainWindow(QtWidgets.QMainWindow):
         if os.path.exists(sct_config_pickle_path):
             self.rightPane.connectWidget.connectToServer(ignore=True)
 
+    def havingConnectionIssues(self):
+        size = get_system_font_height()
+        self.connectionStatus.setPixmap(QtWidgets.qApp.style().standardIcon(QtWidgets.QStyle.SP_MessageBoxWarning).pixmap(size, size))
+        self.connectionStatus.setToolTip('Having connection issues...')
+
     def updateConfig(self, config):
         self.corpusConfig = config
         self.updateStatus()
@@ -197,11 +206,18 @@ class MainWindow(QtWidgets.QMainWindow):
     def updateStatus(self):
         if self.corpusConfig is None:
             self.status.setText('No connection')
+            size = get_system_font_height()
+            self.connectionStatus.setPixmap(QtWidgets.qApp.style().standardIcon(QtWidgets.QStyle.SP_MessageBoxCritical).pixmap(size, size))
+            self.connectionStatus.setToolTip('No connection')
+
         else:
             c_name = self.corpusConfig.corpus_name
             if not c_name:
                 c_name = 'No corpus selected'
             self.status.setText('Connected to {} ({})'.format(self.corpusConfig.graph_hostname, c_name))
+            size = get_system_font_height()
+            self.connectionStatus.setPixmap(QtWidgets.qApp.style().standardIcon(QtWidgets.QStyle.SP_DialogApplyButton).pixmap(size, size))
+            self.connectionStatus.setToolTip('Connected!')
 
     def closeEvent(self, event):
         if self.corpusConfig is not None:
