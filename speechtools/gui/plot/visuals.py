@@ -206,7 +206,6 @@ class SCTSpectrogramVisual(visuals.ImageVisual):
         num_steps = 1000
         if len(self._signal) < num_steps:
             num_steps = len(self._signal)
-
         step_samp = int(len(self._signal)/ num_steps)
 
         #if step_samp < 28:
@@ -217,11 +216,10 @@ class SCTSpectrogramVisual(visuals.ImageVisual):
         #import matplotlib.pyplot as plt
         #plt.plot(window(250))
         #plt.show()
-        data = stft(self._signal, self._n_fft, step_samp, center = False, win_length = self._win_len)#, window = window)
+        data = stft(self._signal, self._n_fft, step_samp, center = True, win_length = self._win_len)#, window = window)
 
         data = np.abs(data)
         data = 20 * np.log10(data) if self._color_scale == 'log' else data
-
         self.set_data(data)
 
     def set_data(self, image):
