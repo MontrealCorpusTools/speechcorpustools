@@ -144,7 +144,8 @@ class ExportQueryWorker(QueryWorker):
                             a_type.following.following.duration.column_name('Following_following_segment_duration'),
                             a_type.checked.column_name('Annotated'),
                             a_type.speaker.name.column_name('Speaker'),
-                            a_type.discourse.name.column_name('Discourse'))
+                            a_type.discourse.name.column_name('Discourse'),
+                            w_type.utterance.phones.rate.column_name('Speaking_rate'))
                 #q = q.limit(100)
                 results = q.to_csv(export_path)
         except Exception as e:
