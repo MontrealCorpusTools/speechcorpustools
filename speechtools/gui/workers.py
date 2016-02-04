@@ -87,7 +87,7 @@ class Lab1QueryWorker(QueryWorker):
                         a_type.checked.column_name('Annotated'),
                         a_type.speaker.name.column_name('Speaker'),
                         a_type.discourse.name.column_name('Discourse'),
-                        a_type.id.column_name('Unique id'),
+                        a_type.id.column_name('Unique_id'),
                         a_type.notes.column_name('Notes'))
             #q = q.limit(100)
             results = q.all()
