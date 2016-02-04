@@ -853,13 +853,8 @@ class QueryForm(QtWidgets.QWidget):
         self.exportWorker.errorEncountered.connect(self.showError)
 
     def showError(self, e):
-        reply = QMessageBox()
-        reply.setWindowTitle('Error encountered')
-        reply.setIcon(QMessageBox.Critical)
-        reply.setText("Something went wrong!")
-        reply.setInformativeText("Please copy the text below and send to Michael.")
+        reply = DetailedMessageBox()
         reply.setDetailedText(str(e))
-        reply.setStandardButtons(QMessageBox.Close)
         ret = reply.exec_()
 
     def lab1Query(self):
