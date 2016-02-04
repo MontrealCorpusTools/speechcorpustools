@@ -86,7 +86,9 @@ class Lab1QueryWorker(QueryWorker):
                         w_type.label.column_name('Word'),
                         a_type.checked.column_name('Annotated'),
                         a_type.speaker.name.column_name('Speaker'),
-                        a_type.discourse.name.column_name('Discourse'))
+                        a_type.discourse.name.column_name('Discourse'),
+                        a_type.id.column_name('Unique id'),
+                        a_type.notes.column_name('Notes'))
             #q = q.limit(100)
             results = q.all()
         return q, results
@@ -149,7 +151,8 @@ class ExportQueryWorker(QueryWorker):
                             a_type.checked.column_name('Annotated'),
                             a_type.speaker.name.column_name('Speaker'),
                             a_type.discourse.name.column_name('Discourse'),
-                            w_type.utterance.phones.rate.column_name('Speaking_rate'))
+                            w_type.utterance.phones.rate.column_name('Speaking_rate'),
+                            a_type.notes.column_name('Notes'))
                 #q = q.limit(100)
                 results = q.to_csv(export_path)
         except Exception as e:
