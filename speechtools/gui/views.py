@@ -9,7 +9,6 @@ class ResultsView(QtWidgets.QTableView):
         self.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
         self.customContextMenuRequested.connect(self.showMenu)
 
-        self.verticalHeader().hide()
         self.setSortingEnabled(True)
 
         self.setSelectionBehavior(QtWidgets.QAbstractItemView.SelectRows)
@@ -45,6 +44,13 @@ class ResultsView(QtWidgets.QTableView):
         if index is None:
             return
         self.requestView(index)
+
+    def markAnnotated(self, value):
+        selected = self.selectionModel().selectedRows()
+        for s in selected:
+            index = self.model().index(s.row(),0)
+            index = self.model().mapToSource(index)
+            self.model().sourceModel().markRowAsAnnotated(index.row(), value)
 
     def requestView(self, index):
         index = self.model().mapToSource(index)

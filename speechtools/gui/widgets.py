@@ -1,4 +1,5 @@
 from struct import pack
+import time
 import numpy as np
 from librosa.core import resample
 from scipy.io import wavfile
@@ -12,7 +13,7 @@ from .workers import (QueryWorker, DiscourseQueryWorker, DiscourseAudioWorker,
                         Lab1QueryWorker,
                         ExportQueryWorker, PitchGeneratorWorker)
 
-from .models import QueryResultsModel
+from .models import QueryResultsModel, ProxyModel
 
 from .views import ResultsView
 
@@ -220,6 +221,7 @@ class HierarchyWidget(QtWidgets.QWidget):
 class SelectableAudioWidget(QtWidgets.QWidget):
     previousRequested = QtCore.pyqtSignal()
     nextRequested = QtCore.pyqtSignal()
+    markedAsAnnotated = QtCore.pyqtSignal(bool)
     def __init__(self, parent = None):
         super(SelectableAudioWidget, self).__init__(parent)
         self.signal = None
@@ -330,6 +332,21 @@ class SelectableAudioWidget(QtWidgets.QWidget):
         """
         if event.key() == QtCore.Qt.Key_Shift:
             self.rectselect = True
+        elif event.key() == QtCore.Qt.Key_Delete:
+            if self.selected_annotation is not None:
+                if self.selected_annotation._type not in self.hierarchy:
+                    self.selected_annotation._annotation.delete_subannotation(self.selected_annotation)
+                    self.updateVisible()
+        elif event.key() == QtCore.Qt.Key_Return:
+            if self.selected_annotation is not None:
+                if self.selected_annotation._type in self.hierarchy:
+                    if self.selected_annotation.checked:
+                        annotated_value = False
+                    else:
+                        annotated_value = True
+                    self.selected_annotation.update_properties(checked = annotated_value)
+                    self.selected_annotation.save()
+                    self.markedAsAnnotated.emit(annotated_value)
         elif event.key() == QtCore.Qt.Key_Tab:
             if self.signal is None:
                 return
@@ -551,8 +568,7 @@ class SelectableAudioWidget(QtWidgets.QWidget):
                     menu.addAction(check_annotated_action)
             else:
                 menu.addAction(mark_absent_action)
-
-            menu.addAction(note_action)
+                menu.addAction(note_action)
 
             action = menu.exec_(event.native.globalPos())
             if action == subannotation_action:
@@ -675,6 +691,9 @@ class SelectableAudioWidget(QtWidgets.QWidget):
         self.updateVisible()
 
     def updateVisible(self):
+        if self.annotations is None:
+            return
+        begin = time.time()
         min_time, max_time = self.min_vis_time, self.max_vis_time
         self.audioWidget.update_time_bounds(min_time, max_time)
         if self.signal is None or self.sr is None:
@@ -683,28 +702,46 @@ class SelectableAudioWidget(QtWidgets.QWidget):
         else:
             min_samp = np.floor(min_time * self.sr)
             max_samp = np.ceil(max_time * self.sr)
-            sig = self.signal[min_samp:max_samp]
+            print(max_time - min_time)
+            if max_time - min_time > 5:
+                factor = 100
+            elif max_time - min_time > 1:
+                factor = 50
+            else:
+                factor = 1
 
-            t = np.arange(sig.shape[0]) / self.sr + min_time
+            sig = self.signal[min_samp:max_samp:factor]
+
+            t = np.arange(sig.shape[0]) / (self.sr/factor) + min_time
             data = np.array((t, sig)).T
+            #sp_begin = time.time()
             self.audioWidget.update_signal(data)
+            #print('wave_time', time.time() - sp_begin)
             max_samp = np.ceil((max_time) * self.sr)
+            #sp_begin = time.time()
             self.spectrumWidget.update_signal(self.signal[min_samp:max_samp])
+            #print('spec_time', time.time() - sp_begin)
             self.updatePlayTime(self.min_vis_time)
-            if self.pitch is not None:
-                self.spectrumWidget.update_pitch([[x[0] - min_time, x[1]] for x in self.pitch if x[0] > min_time - 1 and x[0] < max_time + 1])
+            #if self.pitch is not None:
+            #    self.spectrumWidget.update_pitch([[x[0] - min_time, x[1]] for x in self.pitch if x[0] > min_time - 1 and x[0] < max_time + 1])
+
+            #sp_begin = time.time()
             if self.m_audioOutput.state() == QtMultimedia.QAudio.SuspendedState:
                 self.m_audioOutput.stop()
                 self.m_audioOutput.reset()
             if self.min_selected_time is None:
                 self.m_generator.close()
                 self.m_generator.generateData(min_time, max_time)
+            #print('aud_time', time.time() - sp_begin)
         if self.annotations is None:
             self.audioWidget.update_annotations(None)
         else:
+            #sp_begin = time.time()
             annos = [x for x in self.annotations if x.end > self.min_vis_time
                 and x.begin < self.max_vis_time]
             self.audioWidget.update_annotations(annos)
+            #print('anno_time', time.time() - sp_begin)
+        #print(self.signal is None, self.annotations is None, time.time() - begin)
 
     def save_selected_boundary(self):
         key, ind = self.selected_boundary
@@ -915,7 +952,7 @@ class QueryResults(QtWidgets.QWidget):
 
         self.tableWidget = ResultsView()
 
-        self.proxyModel = QtCore.QSortFilterProxyModel()
+        self.proxyModel = ProxyModel()
         self.proxyModel.setSourceModel(self.resultsModel)
         self.tableWidget.setModel(self.proxyModel)
 
@@ -954,6 +991,12 @@ class QueryWidget(QtWidgets.QWidget):
         widget = QueryResults(results)
         widget.tableWidget.viewRequested.connect(self.viewRequested.emit)
         self.tabs.addTab(widget, name)
+
+    def markAnnotated(self, value):
+        w = self.tabs.currentWidget()
+        if not isinstance(w, QueryResults):
+            return
+        w.tableWidget.markAnnotated(value)
 
     def requestNext(self):
         w = self.tabs.currentWidget()
