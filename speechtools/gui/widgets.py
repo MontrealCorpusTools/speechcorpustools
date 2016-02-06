@@ -129,6 +129,7 @@ class Generator(QtCore.QBuffer):
         if min_time == self.min_time and max_time == self.max_time:
             self.reset()
             return
+        self.close()
         self.min_time = min_time
         self.max_time = max_time
         m_buffer = QtCore.QByteArray()
@@ -152,15 +153,20 @@ class Generator(QtCore.QBuffer):
         assert(pack_format != '')
 
         sampleIndex = 0
+        #print('begin generate')
+        #print(min_time, max_time, max_time - min_time)
         min_samp = int(min_time * self.format.sampleRate())
         max_samp = int(max_time * self.format.sampleRate())
+        #print(min_samp, max_samp, max_samp - min_samp)
         data = self.signal[min_samp:max_samp]
         for i in range(data.shape[0]):
             packed = pack(pack_format, int(scaler(data[i])))
             for _ in range(self.format.channelCount()):
                 m_buffer.append(packed)
-
+        #print(len(m_buffer), len(m_buffer) / self.format.bytesPerFrame())
+        #print('end generate')
         self.setData(m_buffer)
+        self.start()
 
 class HierarchyWidget(QtWidgets.QWidget):
     def __init__(self, parent = None):
@@ -305,7 +311,7 @@ class SelectableAudioWidget(QtWidgets.QWidget):
 
         self.m_audioOutput = QtMultimedia.QAudioOutput(self.m_device, self.m_format)
         self.m_audioOutput.setNotifyInterval(1)
-        #self.m_audioOutput.setBufferSize(1)
+        self.m_audioOutput.setBufferSize(3200)
         self.m_audioOutput.notify.connect(self.notified)
 
         self.m_generator = Generator(self.m_format, self)
@@ -320,6 +326,8 @@ class SelectableAudioWidget(QtWidgets.QWidget):
 
     def notified(self):
         time = self.m_audioOutput.processedUSecs() / 1000000
+        #print(time, self.m_audioOutput.state(),
+        #self.m_audioOutput.bytesFree(), self.m_audioOutput.bufferSize(), self.m_audioOutput.periodSize())
         time += self.m_generator.min_time
         self.updatePlayTime(time)
 
@@ -352,17 +360,25 @@ class SelectableAudioWidget(QtWidgets.QWidget):
                 return
             if self.m_audioOutput.state() == QtMultimedia.QAudio.StoppedState or \
                 self.m_audioOutput.state() == QtMultimedia.QAudio.IdleState:
-                time = self.audioWidget.get_play_time()
+                min_time = self.audioWidget.get_play_time()
                 if self.min_selected_time is None:
-                    if time >= self.max_vis_time or time <= self.min_vis_time:
-                        time = self.min_vis_time
+                    if self.max_vis_time - min_time < 0.01 or min_time <= self.min_vis_time:
+                        min_time = self.min_vis_time
                 else:
-                    if time >= self.max_selected_time or time <= self.min_selected_time:
-                        time = self.min_selected_time
-                self.m_generator.start()
-                self.m_generator.reset()
-                self.m_audioOutput.reset()
+                    #print(min_time, self.max_selected_time)
+                    if self.max_selected_time - min_time < 0.01 or min_time <= self.min_selected_time:
+                        min_time = self.min_selected_time
+                if self.max_selected_time is not None:
+                    max_time = self.max_selected_time
+                else:
+                    max_time = self.max_vis_time
+                #print(min_time, max_time, max_time - min_time)
+                self.m_generator.generateData(min_time, max_time)
+                #print(self.m_generator.pos())
+                #print(self.m_audioOutput.periodSize())
                 self.m_audioOutput.start(self.m_generator)
+                #print(self.m_audioOutput.error())
+                #print(self.m_generator.pos())
             elif self.m_audioOutput.state() == QtMultimedia.QAudio.ActiveState:
                 self.m_audioOutput.suspend()
             elif self.m_audioOutput.state() == QtMultimedia.QAudio.SuspendedState:
@@ -480,6 +496,8 @@ class SelectableAudioWidget(QtWidgets.QWidget):
                 return
             time = self.audioWidget.transform_pos_to_time(event.pos)
             annotation = self.find_annotation(key, time)
+            if annotation is None:
+                return
             self.selected_annotation = annotation
             self.min_selected_time = annotation.begin
             self.max_selected_time = annotation.end
@@ -487,11 +505,6 @@ class SelectableAudioWidget(QtWidgets.QWidget):
 
             if self.signal is None:
                 return
-            if self.m_audioOutput.state() == QtMultimedia.QAudio.SuspendedState:
-                self.m_audioOutput.stop()
-                self.m_audioOutput.reset()
-            self.m_generator.close()
-            self.m_generator.generateData(self.min_selected_time, self.max_selected_time)
             self.updatePlayTime(self.min_selected_time)
             event.handled = True
 
@@ -511,12 +524,6 @@ class SelectableAudioWidget(QtWidgets.QWidget):
             self.audioWidget.update_selection(self.min_selected_time, self.max_selected_time)
             if self.signal is None:
                 return
-            if self.m_audioOutput.state() == QtMultimedia.QAudio.SuspendedState:
-                self.m_audioOutput.stop()
-                self.m_audioOutput.reset()
-            self.m_generator.close()
-            self.m_generator.generateData(self.min_selected_time, self.max_selected_time)
-
             self.updatePlayTime(self.min_selected_time)
         elif event.button == 1 and is_single_click and self.rectselect == False and \
                 self.selected_annotation is None:
@@ -524,11 +531,6 @@ class SelectableAudioWidget(QtWidgets.QWidget):
             if self.signal is None:
                 return
             self.updatePlayTime(time)
-            if self.m_audioOutput.state() == QtMultimedia.QAudio.SuspendedState:
-                self.m_audioOutput.stop()
-                self.m_audioOutput.reset()
-            self.m_generator.close()
-            self.m_generator.generateData(time, self.max_vis_time)
 
         elif event.button == 1 and self.selected_boundary is not None and \
             ((isinstance(self.selected_boundary[0], tuple) and self.allowSubEdit)
@@ -566,17 +568,18 @@ class SelectableAudioWidget(QtWidgets.QWidget):
                         check_annotated_action.setText('Mark as unannotated')
                     menu.addAction(subannotation_action)
                     menu.addAction(check_annotated_action)
+                menu.addAction(note_action)
             else:
                 menu.addAction(mark_absent_action)
-                menu.addAction(note_action)
 
             action = menu.exec_(event.native.globalPos())
             if action == subannotation_action:
                 dialog = SubannotationDialog()
                 if dialog.exec_():
                     type = dialog.value()
-                    annotation.add_subannotation(type,
-                            begin = annotation.begin, end = annotation.end)
+                    if type not in annotation._subannotations or len(annotation._subannotations[type]) == 0:
+                        annotation.add_subannotation(type,
+                                begin = annotation.begin, end = annotation.end)
                     update = True
             elif action == note_action:
                 dialog = NoteDialog(annotation)
@@ -702,7 +705,7 @@ class SelectableAudioWidget(QtWidgets.QWidget):
         else:
             min_samp = np.floor(min_time * self.sr)
             max_samp = np.ceil(max_time * self.sr)
-            print(max_time - min_time)
+            #print(max_time - min_time)
             if max_time - min_time > 5:
                 factor = 100
             elif max_time - min_time > 1:
@@ -726,12 +729,6 @@ class SelectableAudioWidget(QtWidgets.QWidget):
             #    self.spectrumWidget.update_pitch([[x[0] - min_time, x[1]] for x in self.pitch if x[0] > min_time - 1 and x[0] < max_time + 1])
 
             #sp_begin = time.time()
-            if self.m_audioOutput.state() == QtMultimedia.QAudio.SuspendedState:
-                self.m_audioOutput.stop()
-                self.m_audioOutput.reset()
-            if self.min_selected_time is None:
-                self.m_generator.close()
-                self.m_generator.generateData(min_time, max_time)
             #print('aud_time', time.time() - sp_begin)
         if self.annotations is None:
             self.audioWidget.update_annotations(None)
