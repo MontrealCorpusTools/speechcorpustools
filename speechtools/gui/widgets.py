@@ -126,9 +126,9 @@ class Generator(QtCore.QBuffer):
         self.signal = data
 
     def generateData(self, min_time, max_time):
-        if min_time == self.min_time and max_time == self.max_time:
-            self.reset()
-            return
+        #if min_time == self.min_time and max_time == self.max_time:
+        #    self.reset()
+        #    return
         self.close()
         self.min_time = min_time
         self.max_time = max_time
