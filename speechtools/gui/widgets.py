@@ -585,12 +585,13 @@ class SelectableAudioWidget(QtWidgets.QWidget):
                 dialog = NoteDialog(annotation)
                 if dialog.exec_():
                     annotation.update_properties(**dialog.value())
+                annotation.save()
             elif action == check_annotated_action:
                 if annotation.checked:
                     annotation.update_properties(checked = False)
                 else:
                     annotation.update_properties(checked = True)
-                    annotation.save()
+                annotation.save()
             elif action == mark_absent_action:
                 annotation._annotation.delete_subannotation(annotation)
                 update = True
