@@ -126,9 +126,9 @@ class Generator(QtCore.QBuffer):
         self.signal = data
 
     def generateData(self, min_time, max_time):
-        #if min_time == self.min_time and max_time == self.max_time:
-        #    self.reset()
-        #    return
+        if min_time == self.min_time and max_time == self.max_time:
+            self.reset()
+            return
         self.close()
         self.min_time = min_time
         self.max_time = max_time
@@ -311,7 +311,7 @@ class SelectableAudioWidget(QtWidgets.QWidget):
 
         self.m_audioOutput = QtMultimedia.QAudioOutput(self.m_device, self.m_format)
         self.m_audioOutput.setNotifyInterval(1)
-        self.m_audioOutput.setBufferSize(3200)
+        self.m_audioOutput.setBufferSize(6400)
         self.m_audioOutput.notify.connect(self.notified)
 
         self.m_generator = Generator(self.m_format, self)
@@ -376,8 +376,9 @@ class SelectableAudioWidget(QtWidgets.QWidget):
                 self.m_generator.generateData(min_time, max_time)
                 #print(self.m_generator.pos())
                 #print(self.m_audioOutput.periodSize())
+                self.m_audioOutput.reset() # Needed to prevent OpenError on Macs
                 self.m_audioOutput.start(self.m_generator)
-                #print(self.m_audioOutput.error())
+                #print(self.m_audioOutput.error(), self.m_audioOutput.state())
                 #print(self.m_generator.pos())
             elif self.m_audioOutput.state() == QtMultimedia.QAudio.ActiveState:
                 self.m_audioOutput.suspend()
