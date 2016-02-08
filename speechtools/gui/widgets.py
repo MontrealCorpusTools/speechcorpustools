@@ -191,6 +191,8 @@ class DetailsWidget(QtWidgets.QWidget):
         for k,v in annotation.node.properties.items():
             if k in ['label', 'begin', 'end']:
                 continue
+            if k == 'checked':
+                k = 'annotated'
             self.detailLayout.addRow(k.title(), QtWidgets.QLabel(str(v)))
         self.update()
 
