@@ -168,6 +168,32 @@ class Generator(QtCore.QBuffer):
         self.setData(m_buffer)
         self.start()
 
+class DetailsWidget(QtWidgets.QWidget):
+    def __init__(self, parent = None):
+        super(DetailsWidget, self).__init__(parent)
+
+        self.detailLayout = QtWidgets.QFormLayout()
+
+        self.detailLayout.addRow(QtWidgets.QLabel('Please select an annotation'))
+
+        self.setLayout(self.detailLayout)
+
+    def showDetails(self, annotation):
+        while self.detailLayout.count():
+            item = self.detailLayout.takeAt(0)
+            item.widget().deleteLater()
+        if annotation is None:
+            self.detailLayout.addRow(QtWidgets.QLabel('Please select an annotation'))
+            return
+        self.detailLayout.addRow('Label', QtWidgets.QLabel(annotation.label))
+        self.detailLayout.addRow('Begin', QtWidgets.QLabel(str(annotation.begin)))
+        self.detailLayout.addRow('End', QtWidgets.QLabel(str(annotation.end)))
+        for k,v in annotation.node.properties.items():
+            if k in ['label', 'begin', 'end']:
+                continue
+            self.detailLayout.addRow(k.title(), QtWidgets.QLabel(str(v)))
+        self.update()
+
 class HierarchyWidget(QtWidgets.QWidget):
     def __init__(self, parent = None):
         super(HierarchyWidget, self).__init__(parent)
@@ -228,6 +254,7 @@ class SelectableAudioWidget(QtWidgets.QWidget):
     previousRequested = QtCore.pyqtSignal()
     nextRequested = QtCore.pyqtSignal()
     markedAsAnnotated = QtCore.pyqtSignal(bool)
+    selectionChanged = QtCore.pyqtSignal(object)
     def __init__(self, parent = None):
         super(SelectableAudioWidget, self).__init__(parent)
         self.signal = None
@@ -344,6 +371,9 @@ class SelectableAudioWidget(QtWidgets.QWidget):
             if self.selected_annotation is not None:
                 if self.selected_annotation._type not in self.hierarchy:
                     self.selected_annotation._annotation.delete_subannotation(self.selected_annotation)
+
+                    self.selected_annotation = None
+                    self.selectionChanged.emit(None)
                     self.updateVisible()
         elif event.key() == QtCore.Qt.Key_Return:
             if self.selected_annotation is not None:
@@ -355,6 +385,7 @@ class SelectableAudioWidget(QtWidgets.QWidget):
                     self.selected_annotation.update_properties(checked = annotated_value)
                     self.selected_annotation.save()
                     self.markedAsAnnotated.emit(annotated_value)
+                    self.selectionChanged.emit(self.selected_annotation)
         elif event.key() == QtCore.Qt.Key_Tab:
             if self.signal is None:
                 return
@@ -425,6 +456,7 @@ class SelectableAudioWidget(QtWidgets.QWidget):
 
             self.selected_annotation.update_properties(label = new)
             self.selected_annotation.save()
+            self.selectionChanged.emit(self.selected_annotation)
             self.updateVisible()
         else:
             print(event.key())
@@ -469,6 +501,7 @@ class SelectableAudioWidget(QtWidgets.QWidget):
         """
         self.setFocus(True)
         self.selected_annotation = None
+        #self.selectionChanged.emit(None)
 
         if event.handled:
             return
@@ -498,8 +531,10 @@ class SelectableAudioWidget(QtWidgets.QWidget):
             time = self.audioWidget.transform_pos_to_time(event.pos)
             annotation = self.find_annotation(key, time)
             if annotation is None:
+                self.selectionChanged.emit(None)
                 return
             self.selected_annotation = annotation
+            self.selectionChanged.emit(annotation)
             self.min_selected_time = annotation.begin
             self.max_selected_time = annotation.end
             self.audioWidget.update_selection(self.min_selected_time, self.max_selected_time)
@@ -520,6 +555,7 @@ class SelectableAudioWidget(QtWidgets.QWidget):
             time = self.audioWidget.transform_pos_to_time(event.pos)
             annotation = self.find_annotation(key, time)
             self.selected_annotation = annotation
+            self.selectionChanged.emit(annotation)
             self.min_selected_time = annotation.begin
             self.max_selected_time = annotation.end
             self.audioWidget.update_selection(self.min_selected_time, self.max_selected_time)
@@ -550,6 +586,7 @@ class SelectableAudioWidget(QtWidgets.QWidget):
             time = self.audioWidget.transform_pos_to_time(event.pos)
             annotation = self.find_annotation(key, time)
             self.selected_annotation = annotation
+            self.selectionChanged.emit(annotation)
             self.min_selected_time = annotation.begin
             self.max_selected_time = annotation.end
             self.audioWidget.update_selection(self.min_selected_time, self.max_selected_time)
@@ -586,18 +623,21 @@ class SelectableAudioWidget(QtWidgets.QWidget):
                 dialog = NoteDialog(annotation)
                 if dialog.exec_():
                     annotation.update_properties(**dialog.value())
-                annotation.save()
+                    update = True
             elif action == check_annotated_action:
                 if annotation.checked:
                     annotation.update_properties(checked = False)
                 else:
                     annotation.update_properties(checked = True)
-                annotation.save()
+                update = True
             elif action == mark_absent_action:
                 annotation._annotation.delete_subannotation(annotation)
                 update = True
             if update:
+                annotation.save()
                 self.updateVisible()
+                self.selectionChanged.emit(annotation)
+            menu.deleteLater()
 
     def on_mouse_move(self, event):
         snap = True
@@ -777,6 +817,7 @@ class SelectableAudioWidget(QtWidgets.QWidget):
             selected_annotation.update_properties(begin = self.selected_time)
         else:
             selected_annotation.update_properties(end = self.selected_time)
+        self.selectionChanged.emit(selected_annotation)
         selected_annotation.save()
 
     def updateHierachy(self, hierarchy):
@@ -831,6 +872,7 @@ class SelectableAudioWidget(QtWidgets.QWidget):
     def changeView(self, begin, end):
         self.min_vis_time = begin
         self.max_vis_time = end
+        self.selectionChanged.emit(None)
         #self.updateVisible()
 
     def clearDiscourse(self):
