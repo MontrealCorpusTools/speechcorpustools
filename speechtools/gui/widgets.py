@@ -202,9 +202,12 @@ class HierarchyWidget(QtWidgets.QWidget):
         super(HierarchyWidget, self).__init__(parent)
         layout = QtWidgets.QVBoxLayout()
         self.hierarchy = None
+        base_size =  get_system_font_height()
         self.hierarchyLayout = QtWidgets.QVBoxLayout()
         self.hierarchyLayout.setSpacing(0)
+        self.hierarchyLayout.setStretch(0, 0)
         self.hierarchyLayout.setContentsMargins(0,0,0,0)
+        self.hierarchyLayout.setAlignment(QtCore.Qt.AlignTop)
         self.spectrumLayout = QtWidgets.QVBoxLayout()
         self.spectrumLayout.setSpacing(0)
         self.spectrumLayout.setContentsMargins(0,0,0,0)
@@ -224,34 +227,58 @@ class HierarchyWidget(QtWidgets.QWidget):
         #self.spectrumLayout.addWidget(p)
         #self.spectrumLayout.addWidget(v)
         #self.spectrumLayout.addWidget(i)
+        self.hWidget = QtWidgets.QWidget()
+        self.hWidget.setLayout(self.hierarchyLayout)
 
-        layout.addLayout(self.hierarchyLayout)
+        layout.addWidget(self.hWidget)
 
         layout.addLayout(self.spectrumLayout)
 
         self.setLayout(layout)
 
+    def resizeEvent(self, event):
+        super(HierarchyWidget, self).resizeEvent(event)
+        self.updateHierachy(self.hierarchy)
+
     def updateHierachy(self, hierarchy):
         if self.hierarchy is not None:
             while self.hierarchyLayout.count():
                 item = self.hierarchyLayout.takeAt(0)
+                if item.widget() is None:
+                    continue
                 item.widget().deleteLater()
         self.hierarchy = hierarchy
         if self.hierarchy is not None:
+            space = (self.height() / 2) * 0.75
+            half_space = space / 2
+            per_type = half_space / len(self.hierarchy.keys())
+            base_size =  get_system_font_height()
+            spacing = (per_type - base_size) / 2
+            self.hierarchyLayout.addSpacing(spacing * 2)
             for at in self.hierarchy.highest_to_lowest:
                 w = QtWidgets.QLabel(at)
                 w.setFixedWidth(w.fontMetrics().width(w.text()))
+                w.setFixedHeight(base_size)
+                w.setSizePolicy(QtWidgets.QSizePolicy.Minimum,QtWidgets.QSizePolicy.Minimum)
                 #w.clicked.connect(self.updateHierarchyVisibility)
+                self.hierarchyLayout.addSpacing(spacing)
                 self.hierarchyLayout.addWidget(w)
-        keys = []
-        for k, v in sorted(self.hierarchy.subannotations.items()):
-            for s in v:
-                keys.append((k,s))
-        for k in sorted(keys):
-            w = QtWidgets.QLabel('{} - {}'.format(*k))
-            w.setFixedWidth(w.fontMetrics().width(w.text()))
-            #w.clicked.connect(self.updateHierarchyVisibility)
-            self.hierarchyLayout.addWidget(w)
+                self.hierarchyLayout.addSpacing(spacing)
+            keys = []
+            for k, v in sorted(self.hierarchy.subannotations.items()):
+                for s in v:
+                    keys.append((k,s))
+            per_sub_type = half_space / len(keys)
+            spacing = (per_sub_type - base_size) / 2
+            for k in sorted(keys):
+                w = QtWidgets.QLabel('{} - {}'.format(*k))
+                w.setSizePolicy(QtWidgets.QSizePolicy.Minimum,QtWidgets.QSizePolicy.Minimum)
+                w.setFixedWidth(w.fontMetrics().width(w.text()))
+                w.setFixedHeight(base_size)
+                #w.clicked.connect(self.updateHierarchyVisibility)
+                self.hierarchyLayout.addSpacing(spacing)
+                self.hierarchyLayout.addWidget(w)
+                self.hierarchyLayout.addSpacing(spacing)
 
 class SelectableAudioWidget(QtWidgets.QWidget):
     previousRequested = QtCore.pyqtSignal()
@@ -294,9 +321,9 @@ class SelectableAudioWidget(QtWidgets.QWidget):
         self.audioWidget.events.mouse_release.connect(self.on_mouse_release)
         self.audioWidget.events.mouse_move.connect(self.on_mouse_move)
         self.audioWidget.events.mouse_wheel.connect(self.on_mouse_wheel)
-        w = self.audioWidget.native
-        w.setFocusPolicy(QtCore.Qt.NoFocus)
-        toplayout.addWidget(w)
+        self.audioQtWidget = self.audioWidget.native
+        self.audioQtWidget.setFocusPolicy(QtCore.Qt.NoFocus)
+        toplayout.addWidget(self.audioQtWidget)
 
         layout.addLayout(toplayout)
 
@@ -504,6 +531,7 @@ class SelectableAudioWidget(QtWidgets.QWidget):
         """
         self.setFocus(True)
         self.selected_annotation = None
+        self.selected_boundary = None
         #self.selectionChanged.emit(None)
 
         if event.handled:
@@ -676,7 +704,7 @@ class SelectableAudioWidget(QtWidgets.QWidget):
                         if ind != -1:
                             self.selected_time = p[0]
                             break
-                self.updatePlayTime(self.min_vis_time)
+                #self.updatePlayTime(self.min_vis_time)
                 self.audioWidget.update_selected_boundary(self.selected_time, *self.selected_boundary)
 
                 self.audioWidget.update_selection_time(self.selected_time)
@@ -750,12 +778,10 @@ class SelectableAudioWidget(QtWidgets.QWidget):
         else:
             min_samp = np.floor(min_time * self.sr)
             max_samp = np.ceil(max_time * self.sr)
-            #print(max_time - min_time)
-            if max_time - min_time > 5:
-                factor = 100
-            elif max_time - min_time > 1:
-                factor = 50
-            else:
+            desired = self.audioQtWidget.width() * 3
+            actual = max_samp - min_samp
+            factor = int(actual/desired)
+            if factor == 0:
                 factor = 1
 
             sig = self.signal[min_samp:max_samp:factor]
@@ -770,8 +796,8 @@ class SelectableAudioWidget(QtWidgets.QWidget):
             self.spectrumWidget.update_signal(self.signal[min_samp:max_samp])
             #print('spec_time', time.time() - sp_begin)
             self.updatePlayTime(self.min_vis_time)
-            #if self.pitch is not None:
-            #    self.spectrumWidget.update_pitch([[x[0] - min_time, x[1]] for x in self.pitch if x[0] > min_time - 1 and x[0] < max_time + 1])
+            if self.pitch is not None:
+                self.spectrumWidget.update_pitch([[x[0] - min_time, x[1]] for x in self.pitch if x[0] > min_time - 1 and x[0] < max_time + 1])
 
             #sp_begin = time.time()
             #print('aud_time', time.time() - sp_begin)
@@ -796,6 +822,8 @@ class SelectableAudioWidget(QtWidgets.QWidget):
             if isinstance(key, tuple):
                 elements = getattr(a, key[0])
                 for e in elements:
+                    if e.end < self.min_vis_time:
+                        continue
                     subs = getattr(e, key[1])
                     for s in subs:
                         if index == actual_index:
@@ -816,6 +844,10 @@ class SelectableAudioWidget(QtWidgets.QWidget):
             if selected_annotation is not None:
                 break
         mod = ind % 4
+        if self.selected_time > self.max_vis_time:
+            self.selected_time = self.max_vis_time
+        elif self.selected_time < self.min_vis_time:
+            self.selected_time = self.min_vis_time
         if mod == 0:
             selected_annotation.update_properties(begin = self.selected_time)
         else:
@@ -850,9 +882,9 @@ class SelectableAudioWidget(QtWidgets.QWidget):
 
     def updateAudio(self, audio_file):
         if audio_file is not None:
-            #kwargs = {'config':self.config, 'sound_file': audio_file, 'algorithm':'reaper'}
-            #self.pitchWorker.setParams(kwargs)
-            #self.pitchWorker.start()
+            kwargs = {'config':self.config, 'sound_file': audio_file, 'algorithm':'reaper'}
+            self.pitchWorker.setParams(kwargs)
+            self.pitchWorker.start()
             self.sr, self.signal = wavfile.read(audio_file.filepath)
             self.signal = self.signal / 32768
 
@@ -998,6 +1030,7 @@ class QueryResults(QtWidgets.QWidget):
 
         self.proxyModel = ProxyModel()
         self.proxyModel.setSourceModel(self.resultsModel)
+        self.proxyModel.setSortRole( QueryResultsModel.SortRole )
         self.tableWidget.setModel(self.proxyModel)
 
         layout = QtWidgets.QVBoxLayout()

@@ -20,6 +20,7 @@ from vispy.color import Color, ColorArray, get_colormap
 
 class SCTLinePlot(scene.visuals.Line):
     def __init__(self, *args, **kwargs):
+        kwargs.update(width = 40)
         scene.visuals.Line.__init__(self, *args, **kwargs)
         self.unfreeze()
         try:
@@ -177,9 +178,7 @@ class SCTSpectrogramVisual(visuals.ImageVisual):
     def xscale(self):
         if self._signal is None:
             return 1
-        num_steps = 1000
-        if len(self._signal) < num_steps:
-            num_steps = len(self._signal)
+        num_steps = self._data.shape[1]
         return num_steps /(len(self._signal) /self._sr)
 
     def ymax(self):
@@ -244,6 +243,44 @@ PlayLine = scene.visuals.create_visual_node(PlayLineVisual)
 
 Spectrogram = scene.visuals.create_visual_node(SCTSpectrogramVisual)
 
+class TierRectangle(scene.Rectangle):
+    def __init__(self, tier_index, num_types, num_sub_types):
+        self.min_time = None
+        self.max_time = None
+        self.tier_index = tier_index
+        self.num_types = num_types
+        self.num_sub_types = num_sub_types
+
+        super(TierRectangle, self).__init__()
+        self._color.alpha = 0.1
+        if self.tier_index % 2 == 0:
+            self.visible = True
+        else:
+            self.visible = False
+
+    def update_times(self, min_time, max_time):
+        if self.tier_index  < self.num_types:
+            if self.num_types == 0:
+                return
+            height = 1 / self.num_types
+            vert_min = 1 - height * (self.tier_index+1)
+            vert_mid = height/2 + vert_min
+        else:
+            if self.num_sub_types == 0:
+                return
+            height = 1 / self.num_sub_types
+            vert_min = 0 - height * ((self.tier_index - self.num_types)+1)
+            vert_mid = height/2 + vert_min
+
+        self.min_time = min_time
+        self.max_time = max_time
+        width = self.max_time - self.min_time
+        center = self.min_time + width / 2
+
+        self.center = [center, vert_mid]
+        self.width = width
+        self.height = height
+
 class SelectionRect(scene.Rectangle):
     def __init__(self):
         self.min_time = None
@@ -291,12 +328,12 @@ class ScalingText(scene.visuals.Text):
         self.minpps = 10
         self.maxpps = 3000
         self.min_font_size = 1
-        self.max_font_size = 20
+        self.max_font_size = 18
         super(ScalingText, self).__init__(*args, **kwargs)
 
     def set_lowest(self):
         self.maxpps = 5000
-        self.max_font_size = 18
+        self.max_font_size = 16
 
     def _prepare_draw(self, view):
         if len(self.text) == 0:

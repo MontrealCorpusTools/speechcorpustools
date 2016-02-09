@@ -15,16 +15,14 @@ class SpectralPlotWidget(SelectablePlotWidget):
         self.pitchplot = scene.visuals.Line(connect = 'segments', color = 'b')
         self.yaxis.axis.ticker = ScaledTicker(self.yaxis.axis)
         self.xaxis.axis.ticker = ScaledTicker(self.xaxis.axis)
+        self.view.add(self.pitchplot)
         self.freeze()
         self.view.add(self.spec)
         self.selection_time_line.parent = None
         self.play_time_line.parent = None
-        self.pitchplot.parent = None
         self.view.add(self.selection_time_line)
         self.view.add(self.play_time_line)
-        self.view.add(self.pitchplot)
         self.play_time_line.visible = True
-        self.pitchplot.visible = True
 
     def set_pitch(self, pitch):
         if not pitch:
@@ -63,6 +61,7 @@ class SpectralPlotWidget(SelectablePlotWidget):
         self.view.camera.rect = (0, 0, self.spec.xmax(), self.spec.ymax())
         self.yaxis.axis.ticker.scale = self.spec.yscale
         #self.xaxis.axis.ticker.scale = 1/ self.spec.xscale
+        self.pitchplot.visible = True
 
     def set_selection_time(self, pos):
         if pos is None:

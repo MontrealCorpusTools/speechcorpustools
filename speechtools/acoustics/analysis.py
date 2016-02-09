@@ -77,7 +77,7 @@ def analyze_pitch(corpus_context, sound_file, sound_file_path):
         pitch_function = partial(ReaperPitch, reaper = corpus_context.config.reaper_path,
                                 time_step = 0.01, freq_lims = (75,500))
         algorithm = 'reaper'
-        if not os.path.exists(corpus_context.config.reaper_path):
+        if corpus_context.config.reaper_path is None:
             return
     elif getattr(corpus_context.config, 'praat_path', None) is not None:
         pitch_function = partial(PraatPitch, praatpath = corpus_context.config.praat_path,

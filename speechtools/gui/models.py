@@ -1,8 +1,22 @@
 
 from PyQt5 import QtGui, QtCore, QtWidgets
 
+def make_safe(data):
+    if isinstance(data,float):
+        data = str(round(data, 3))
+    elif isinstance(data,bool):
+        if data:
+            data = 'Yes'
+        else:
+            data = 'No'
+    elif isinstance(data,(list, tuple)):
+        data = ', '.join(make_safe(x) for x in data)
+    else:
+        data = str(data)
+    return data
 
 class QueryResultsModel(QtCore.QAbstractTableModel):
+    SortRole = 999
     def __init__(self, results, parent = None):
         self.columns = results.columns
         self.rows = results
@@ -34,10 +48,7 @@ class QueryResultsModel(QtCore.QAbstractTableModel):
         setattr(self.rows[row], 'Annotated', value)
         beg = self.index(row, 0)
         end = self.index(row, len(self.columns) - 1)
-        print(row, value)
         self.dataChanged.emit(beg, end)
-        print(self.rows[row].Annotated)
-        print(self.data(self.index(row, 4), QtCore.Qt.DisplayRole))
 
     def discourse(self, index):
         row = index.row()
@@ -48,28 +59,27 @@ class QueryResultsModel(QtCore.QAbstractTableModel):
     def data(self, index, role = None):
         if not index.isValid():
             return None
-        elif role != QtCore.Qt.DisplayRole:
-            return None
         row = index.row()
         col = index.column()
         col = self.columns[col]
-        try:
-            data = self.rows[row][col]
-            if isinstance(data,float):
-                data = str(round(data, 3))
-            elif isinstance(data,bool):
-                if data:
-                    data = 'Yes'
-                else:
-                    data = 'No'
-            elif isinstance(data,(list, tuple)):
-                data = ', '.join(data)
-            else:
-                data = str(data)
-        except IndexError:
-            data = ''
 
-        return data
+        if role == QtCore.Qt.DisplayRole:
+            try:
+                data = self.rows[row][col]
+                data = make_safe(data)
+            except IndexError:
+                data = ''
+
+            return data
+        elif role == self.SortRole:
+            data = self.rows[row][col]
+            if isinstance(data, (tuple,list)):
+                if len(data):
+                    data = data[0]
+                else:
+                    return None
+            return data
+        return None
 
 class ProxyModel(QtCore.QSortFilterProxyModel):
     # Adapted from http://stackoverflow.com/questions/15111965/qsortfilterproxymodel-and-row-numbers

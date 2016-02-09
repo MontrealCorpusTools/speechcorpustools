@@ -1,4 +1,5 @@
 import os
+import sys
 import re
 import logging
 import time
@@ -30,8 +31,10 @@ class CorpusContext(BaseContext):
         super(CorpusContext, self).__init__(*args, **kwargs)
         self._has_sound_files = None
         self._has_all_sound_files = None
-
-        self.config.reaper_path = 'reaper'
+        if getattr(sys, 'frozen', False):
+            self.config.reaper_path = None
+        else:
+            self.config.reaper_path = 'reaper'
 
     def init_sql(self):
         self.engine = create_engine(self.config.sql_connection_string)

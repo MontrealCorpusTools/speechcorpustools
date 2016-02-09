@@ -89,6 +89,15 @@ class Lab1QueryWorker(QueryWorker):
                         a_type.discourse.name.column_name('Discourse'),
                         a_type.id.column_name('Unique_id'),
                         a_type.notes.column_name('Notes'))
+
+            if 'burst' in c.hierarchy.subannotations[c.hierarchy.lowest]:
+                q = q.columns(a_type.burst.begin.column_name('Burst_begin'),
+                        a_type.burst.end.column_name('Burst_end'),
+                        a_type.burst.duration.column_name('Burst_duration'))
+            if 'voicing' in c.hierarchy.subannotations[c.hierarchy.lowest]:
+                q = q.columns(a_type.voicing.begin.column_name('Voicing_begin'),
+                            a_type.voicing.end.column_name('Voicing_end'),
+                            a_type.voicing.duration.column_name('Voicing_duration'))
             #q = q.limit(100)
             results = q.all()
         return q, results
@@ -153,6 +162,7 @@ class ExportQueryWorker(QueryWorker):
                             a_type.discourse.name.column_name('Discourse'),
                             w_type.utterance.phones.rate.column_name('Speaking_rate'),
                             a_type.notes.column_name('Notes'))
+                print(q.cypher())
                 #q = q.limit(100)
                 results = q.to_csv(export_path)
         except Exception as e:
@@ -209,7 +219,6 @@ class FormantGeneratorWorker(QueryWorker):
 
 class PitchGeneratorWorker(QueryWorker):
     def run(self):
-        return
         print('beginning pitch work')
         config = self.kwargs['config']
         algorithm = self.kwargs['algorithm']

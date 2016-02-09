@@ -6,7 +6,7 @@ from vispy import scene
 
 from .base import SelectablePlotWidget, PlotWidget
 
-from ..visuals import SCTLinePlot, ScalingText, SCTAnnotation, SelectionLine
+from ..visuals import SCTLinePlot, ScalingText, SCTAnnotation, SelectionLine, TierRectangle
 
 from ..helper import generate_boundaries
 
@@ -24,6 +24,7 @@ class AnnotationPlotWidget(SelectablePlotWidget):
         self.min_time = None
         self.max_time = None
         self.line_visuals = {}
+        self.box_visuals = {}
         self.view.add(self.breakline)
         self.view.add(self.waveform)
         self.visuals.append(self.breakline)
@@ -36,6 +37,8 @@ class AnnotationPlotWidget(SelectablePlotWidget):
         self.max_time = max_time
         self.view.camera.rect = (min_time, -1, max_time - min_time, 2)
         self.set_play_time(min_time)
+        for v in self.box_visuals.values():
+            v.update_times(min_time, max_time)
 
     def set_selection(self, min_time, max_time):
         self.selection_rect.update_selection(min_time, max_time)
@@ -55,6 +58,10 @@ class AnnotationPlotWidget(SelectablePlotWidget):
         if self.hierarchy is None:
             return
         self.num_types = len(self.hierarchy.keys())
+        keys = []
+        for k, v in sorted(self.hierarchy.subannotations.items()):
+            for s in v:
+                keys.append((k,s))
         self.annotation_visuals = {}
         self.line_visuals = {}
         cycle = ['b', 'r']
@@ -64,18 +71,18 @@ class AnnotationPlotWidget(SelectablePlotWidget):
             if k == self.hierarchy.lowest:
                 self.annotation_visuals[k].set_lowest()
             self.line_visuals[k] = SCTLinePlot(connect = 'segments', color = c)
+            self.box_visuals[k] = TierRectangle(i, self.num_types, len(keys))
+            self.view.add(self.box_visuals[k])
             self.view.add(self.annotation_visuals[k])
             self.view.add(self.line_visuals[k])
-        ind = 0
-        keys = []
-        for k, v in sorted(self.hierarchy.subannotations.items()):
-            for s in v:
-                keys.append((k,s))
+        ind = len(self.hierarchy.highest_to_lowest)
         for k in sorted(keys):
             c = cycle[ind % len(cycle)]
             self.annotation_visuals[k] = ScalingText(face = 'OpenSans')
             self.annotation_visuals[k].set_lowest()
             self.line_visuals[k] = SCTLinePlot(connect = 'segments', color = c)
+            self.box_visuals[k] = TierRectangle(ind, self.num_types, len(keys))
+            self.view.add(self.box_visuals[k])
             self.view.add(self.annotation_visuals[k])
             self.view.add(self.line_visuals[k])
             ind += 1
