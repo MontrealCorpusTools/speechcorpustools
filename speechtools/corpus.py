@@ -13,6 +13,8 @@ from speechtools.io.graph import time_data_to_csvs, import_utterance_csv
 
 from .graph.query import GraphQuery
 
+from .graph.attributes import PauseAnnotation
+
 from .sql.models import (Base, SoundFile, Discourse)
 
 from .acoustics.io import add_acoustic_info
@@ -35,6 +37,11 @@ class CorpusContext(BaseContext):
             self.config.reaper_path = None
         else:
             self.config.reaper_path = 'reaper'
+
+    def __getattr__(self, key):
+        if key == 'pause':
+            return PauseAnnotation(corpus = self.corpus_name)
+        return super(CorpusContext, self).__getattr__(key)
 
     def init_sql(self):
         self.engine = create_engine(self.config.sql_connection_string)
@@ -283,6 +290,18 @@ ORDER BY begin'''.format(corpus = self.corpus_name, discourse = discourse, word_
             utterances[0] = (times.min_begin, utterances[0][1])
         return utterances
 
+    def discourse(self, name, annotations = None):
+        '''
+        Get all words spoken in a discourse.
+
+        Parameters
+        ----------
+        name : str
+            Name of the discourse
+        '''
+        w = getattr(self, 'word') #FIXME make more general
+        q = self.query_graph(w).filter(w.discourse.name == name)
+        return q.all()
 
     def add_discourse(self, data):
         super(CorpusContext, self).add_discourse(data)
