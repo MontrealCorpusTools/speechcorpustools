@@ -116,6 +116,7 @@ class CorpusContext(BaseContext):
 
         self.execute_cypher(statement)
         self.hierarchy.annotation_types.add('pause')
+        self.save_variables()
 
     def reset_pauses(self):
         """
@@ -137,6 +138,7 @@ class CorpusContext(BaseContext):
         self.graph.cypher.execute(statement)
         try:
             self.hierarchy.annotation_types.remove('pause')
+            self.save_variables()
         except KeyError:
             pass
 
@@ -146,10 +148,13 @@ class CorpusContext(BaseContext):
         Remove all utterance annotations.
         """
         try:
-            q = self.query_graph(self.utterance)
-            q.delete()
+            for s in self.discourses:
+                q = self.query_graph(self.utterance)
+                q = q.filter(self.utterance.discourse.name == s)
+                q.delete()
             self.hierarchy.annotation_types.remove('utterance')
             del self.hierarchy['utterance']
+            self.save_variables()
         except GraphQueryError:
             pass
 
@@ -173,9 +178,9 @@ class CorpusContext(BaseContext):
             speech to count as an utterance
         """
         #initialize_csv('utterance', self.config.temporary_directory('csv'))
+        self.reset_utterances()
         self.graph.cypher.execute('CREATE INDEX ON :utterance(begin)')
         self.graph.cypher.execute('CREATE INDEX ON :utterance(end)')
-        self.reset_utterances()
         #tx = self.graph.cypher.begin()
         #try:
         for i, d in enumerate(self.discourses):
@@ -194,6 +199,7 @@ class CorpusContext(BaseContext):
 
         self.hierarchy[word_type] = 'utterance'
         self.hierarchy['utterance'] = None
+        self.save_variables()
 
     def get_utterances(self, discourse,
                 min_pause_length = 0.5, min_utterance_length = 0):

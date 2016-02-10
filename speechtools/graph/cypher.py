@@ -9,6 +9,8 @@ def generate_return(query):
     return_statement = ''
     if query._delete:
         return generate_delete(query)
+    if query._cache:
+        return generate_cache(query)
     set_strings = []
     set_label_strings = []
     remove_label_strings = []

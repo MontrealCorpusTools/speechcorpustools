@@ -14,10 +14,12 @@ def import_utterance_csv(corpus_context, discourse, transaction = None):
     word = getattr(corpus_context, 'word') #FIXME make word more general
     word_type = word.type
     statement = '''LOAD CSV FROM "{path}" AS csvLine
-            MATCH (begin:{word_type}:{corpus}:{discourse} {{begin: toFloat(csvLine[0])}}),
+            MATCH (begin:{word_type}:{corpus}:{discourse} {{begin: toFloat(csvLine[0])}})-[:spoken_by]->(s:Speaker:{corpus}),
             (end:{word_type}:{corpus}:{discourse} {{end: toFloat(csvLine[1])}}),
             (d:Discourse:{corpus} {{name: '{discourse}'}})
-            CREATE (d)<-[:spoken_in]-(utt:utterance:{corpus}:{discourse}:speech {{id: csvLine[2], begin: toFloat(csvLine[0]), end: toFloat(csvLine[1])}})-[:is_a]->(u_type:utterance_type)
+            CREATE (utt:utterance:{corpus}:{discourse}:speech {{id: csvLine[2], begin: toFloat(csvLine[0]), end: toFloat(csvLine[1])}})-[:is_a]->(u_type:utterance_type),
+                (d)<-[:spoken_in]-(utt),
+                (s)<-[:spoken_by]-(utt)
             WITH utt, begin, end
             MATCH path = shortestPath((begin)-[:precedes*0..]->(end))
             WITH utt, begin, end, nodes(path) as words

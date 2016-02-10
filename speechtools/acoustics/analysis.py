@@ -88,8 +88,10 @@ def analyze_pitch(corpus_context, sound_file, sound_file_path):
         algorithm = 'acousticsim'
     if os.path.isdir(sound_file_path):
         path_mapping = [(os.path.join(sound_file_path, x),) for x in os.listdir(sound_file_path)]
-
-        cache = generate_cache(path_mapping, pitch_function, None, default_njobs(), None, None)
+        try:
+            cache = generate_cache(path_mapping, pitch_function, None, default_njobs(), None, None)
+        except FileNotFoundError:
+            return
         for k, v in cache.items():
             name = os.path.basename(k)
             name = os.path.splitext(name)[0]
@@ -107,7 +109,10 @@ def analyze_pitch(corpus_context, sound_file, sound_file_path):
                 p = Pitch(sound_file = sound_file, time = timepoint, F0 = value, source = algorithm)
                 corpus_context.sql_session.add(p)
     else:
-        pitch = pitch_function(sound_file_path)
+        try:
+            pitch = pitch_function(sound_file_path)
+        except FileNotFoundError:
+            return
         for timepoint, value in pitch.items():
             try:
                 value = value[0]
