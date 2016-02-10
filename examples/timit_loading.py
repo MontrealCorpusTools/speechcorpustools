@@ -3,7 +3,7 @@ import os
 import time
 base = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
 sys.path.insert(0,base)
-import polyglotdb.io as aio
+import polyglotdb.io as pgio
 
 from speechtools.corpus import CorpusContext
 
@@ -17,10 +17,12 @@ def call_back(*args):
     if args:
         print(' '.join(args))
 
-with CorpusContext('timit', **graph_db) as g:
-    g.reset()
+parser = pgio.inspect_timit(path_to_timit)
+parser.call_back = call_back
+
+with CorpusContext('timit', **graph_db) as c:
+    c.reset()
     beg = time.time()
-    aio.load_directory_timit(g, path_to_timit,
-                                            call_back = call_back)
+    c.load(parser, path_to_timit)
     end = time.time()
     print('Time taken: {}'.format(end - beg))

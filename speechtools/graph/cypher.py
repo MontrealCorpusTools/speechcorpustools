@@ -1,14 +1,112 @@
 
-from polyglotdb.graph.cypher import *
 
-def create_return_statement(query):
-    kwargs = {'order_by': '', 'additional_columns':'', 'columns':''}
+from polyglotdb.graph.cypher.returns import *
+
+from polyglotdb.graph.cypher.main import *
+
+from polyglotdb.graph.cypher.matches import prec_template, foll_template
+
+from .attributes import PauseAnnotation, PausePathAnnotation
+
+prec_pause_template = '''{path_alias} = (:speech:word)-[:precedes_pause*0..]->({node_alias})'''
+foll_pause_template = '''{path_alias} = ({node_alias})-[:precedes_pause*0..]->(:speech:word)'''
+
+
+def generate_match(annotation_type, annotation_list, filter_annotations):
+    annotation_list = sorted(annotation_list, key = lambda x: x.pos)
+    positions = set(x.pos for x in annotation_list)
+    prec_condition = ''
+    foll_condition = ''
+    defined = set()
+
+    statements = []
+    wheres = []
+    optional_wheres = []
+    current = annotation_list[0].pos
+    optional_statements = []
+    if isinstance(annotation_type, PauseAnnotation):
+        prec = prec_pause_template
+        foll = foll_pause_template
+    else:
+        prec = prec_template
+        foll = foll_template
+        anchor_string = annotation_type.for_match()
+        statements.append(anchor_string)
+        defined.update(annotation_type.withs)
+    for a in annotation_list:
+        where = ''
+        if a.pos == 0:
+            if isinstance(annotation_type, PauseAnnotation):
+                anchor_string = annotation_type.for_match()
+
+                statements.append(anchor_string)
+                defined.update(annotation_type.withs)
+            continue
+        elif a.pos < 0:
+
+            kwargs = {}
+            if isinstance(annotation_type, PauseAnnotation):
+                kwargs['node_alias'] = AnnotationAttribute('word',0,a.corpus).alias
+                kwargs['path_alias'] = a.path_alias
+                where = a.additional_where()
+            else:
+                if a.pos + 1 in positions:
+                    kwargs['node_alias'] = AnnotationAttribute(a.type,a.pos+1,a.corpus).alias
+
+                    kwargs['dist'] = ''
+                else:
+                    kwargs['node_alias'] = AnnotationAttribute(a.type,0,a.corpus).alias
+                    if a.pos == -1:
+                        kwargs['dist'] = ''
+                    else:
+                        kwargs['dist'] = '*{}'.format(a.pos)
+                kwargs['prev_alias'] = a.define_alias
+                kwargs['prev_type_alias'] = a.define_type_alias
+            anchor_string = prec.format(**kwargs)
+        elif a.pos > 0:
+
+            kwargs = {}
+            if isinstance(annotation_type, PauseAnnotation):
+                kwargs['node_alias'] = AnnotationAttribute('word',0,a.corpus).alias #FIXME
+                kwargs['path_alias'] = a.path_alias
+                where = a.additional_where()
+            else:
+                if a.pos - 1 in positions:
+                    kwargs['node_alias'] = AnnotationAttribute(a.type,a.pos-1,a.corpus).alias
+
+                    kwargs['dist'] = ''
+                else:
+                    kwargs['node_alias'] = AnnotationAttribute(a.type,0,a.corpus).alias
+                    if a.pos == 1:
+                        kwargs['dist'] = ''
+                    else:
+                        kwargs['dist'] = '*{}'.format(a.pos)
+
+                kwargs['foll_alias'] = a.define_alias
+                kwargs['foll_type_alias'] = a.define_type_alias
+            anchor_string = foll.format(**kwargs)
+        if a in filter_annotations:
+            statements.append(anchor_string)
+            if where:
+                wheres.append(where)
+        else:
+            optional_statements.append(anchor_string)
+            if where:
+                optional_wheres.append(where)
+        if isinstance(annotation_type, PauseAnnotation):
+            defined.add(a.path_alias)
+        else:
+            defined.add(a.alias)
+            defined.add(a.type_alias)
+    return statements, optional_statements, defined, wheres, optional_wheres
+
+def generate_return(query):
+    kwargs = {'order_by': '', 'columns':''}
     return_statement = ''
     if query._delete:
-        kwargs = {}
-        kwargs['alias'] = query.to_find.alias
-        return_statement = delete_template.format(**kwargs)
-        return return_statement
+        return generate_delete(query)
+    if query._cache:
+        return generate_cache(query)
     set_strings = []
     set_label_strings = []
     remove_label_strings = []
@@ -62,56 +160,17 @@ def create_return_statement(query):
 
     if query._aggregate:
         template = aggregate_template
-        properties = []
-        for g in query._group_by:
-            properties.append(g.aliased_for_output())
-        if len(query._order_by) == 0 and len(query._group_by) > 0:
-            query._order_by.append((query._group_by[0], False))
-        for a in query._aggregate:
-            properties.append(a.for_cypher())
-        kwargs['aggregates'] = ', '.join(properties)
+        kwargs['aggregates'] = generate_aggregate(query)
     else:
         template = distinct_template
-        properties = []
-        for c in query._columns:
-            properties.append(c.aliased_for_output())
-        if properties:
-            kwargs['columns'] = ', '.join(properties)
-
-    properties = []
-    for c in query._order_by:
-        ac_set = set(query._additional_columns)
-        gb_set = set(query._group_by)
-        h_c = hash(c[0])
-        for col in ac_set:
-            if h_c == hash(col):
-                element = col.output_alias
-                break
+        kwargs['columns'] = generate_distinct(query)
+        if query._limit is not None:
+            kwargs['limit'] = '\nLIMIT {}'.format(query._limit)
         else:
-            for col in gb_set:
-                if h_c == hash(col):
-                    element = col.output_alias
-                    break
-            else:
-                query._additional_columns.append(c[0])
-                element = c[0].output_alias
-        if c[1]:
-            element += ' DESC'
-        properties.append(element)
+            kwargs['limit'] = ''
 
-    if properties:
-        kwargs['order_by'] += '\nORDER BY ' + ', '.join(properties)
+    kwargs['order_by'] = generate_order_by(query)
 
-    properties = []
-    for c in query._additional_columns:
-        if c in query._group_by:
-            continue
-        properties.append(c.aliased_for_output())
-    if properties:
-        string = ', '.join(properties)
-        if kwargs['columns'] or ('aggregates' in kwargs and kwargs['aggregates']):
-            string = ', ' + string
-        kwargs['additional_columns'] += string
     return template.format(**kwargs)
 
 def query_to_cypher(query):
@@ -137,15 +196,12 @@ def query_to_cypher(query):
     for k,v in annotation_levels.items():
         if k.has_subquery:
             continue
-        statements,optional_statements, withs, wheres, optional_wheres = generate_token_match(k,v, filter_annotations)
+        statements,optional_statements, withs, wheres, optional_wheres = generate_match(k,v, filter_annotations)
         all_withs.update(withs)
         match_strings.extend(statements)
         optional_match_strings.extend(optional_statements)
         optional_where_strings.extend(optional_wheres)
         where_strings.extend(wheres)
-
-    statements = generate_hierarchical_match(annotation_levels, query.corpus.hierarchy)
-    match_strings.extend(statements)
 
     kwargs['match'] = 'MATCH ' + ',\n'.join(match_strings)
 
@@ -154,11 +210,10 @@ def query_to_cypher(query):
         if optional_where_strings:
             kwargs['optional_match'] += '\nWHERE ' + ',\n'.join(optional_where_strings)
 
-    kwargs['where'] = criterion_to_where(query._criterion, wheres)
+    kwargs['where'] = generate_wheres(query._criterion, wheres)
 
     kwargs['with'] = generate_withs(query, all_withs)
 
-
-    kwargs['return'] = create_return_statement(query)
+    kwargs['return'] = generate_return(query)
     cypher = template.format(**kwargs)
     return cypher

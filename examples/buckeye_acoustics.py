@@ -26,6 +26,7 @@ def call_back(*args):
     args = [x for x in args if isinstance(x, str)]
     if args:
         print(' '.join(args))
+
 if __name__ == '__main__':
     with CorpusContext(config) as g:
         g.encode_pauses('^[{<].*')

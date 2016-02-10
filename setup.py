@@ -35,13 +35,22 @@ setup(name='speechtools',
       author='Montreal Corpus Tools',
       author_email='michael.e.mcauliffe@gmail.com',
       packages=['speechtools',
+                'speechtools.acoustics',
                 'speechtools.graph',
+                'speechtools.graph.attributes',
+                'speechtools.gui',
+                'speechtools.gui.plot',
+                'speechtools.gui.plot.widgets',
+                'speechtools.io',
                 'speechtools.sql'],
       install_requires=[
           'acousticsim',
           'polyglotdb',
           'vispy'
       ],
+      entry_points = {
+        'console_scripts': ['sct=speechtools.command_line.sct:main',],
+    },
     cmdclass={'test': PyTest},
     extras_require={
         'testing': ['pytest'],
