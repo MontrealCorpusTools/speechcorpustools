@@ -10,7 +10,7 @@ from polyglotdb.graph.func import Count, Average
 graph_db = {'host':'localhost', 'port': 7474,
             'user': 'neo4j', 'password': 'test'}
 
-first_run = False
+first_run = True
 
 from py2neo.packages.httpstream import http
 http.socket_timeout = 999
@@ -41,12 +41,10 @@ with CorpusContext('buckeye', **graph_db) as g:
         print('Finished encoding syllabics in {} seconds'.format(time.time() - begin))
 
         begin = time.time()
-        for s in g.speakers:
-            q = g.query_graph(g.utterance)
-            q = q.filter(g.utterance.speaker.name == s)
+        q = g.query_graph(g.utterance)
 
-            q.cache(g.utterance.surface_transcription.subset_type('syllabic').rate.column_name('syllables_per_second'),
-                    g.utterance.surface_transcription.subset_type('syllabic').count.column_name('number_of_syllables'))
+        q.cache(g.utterance.surface_transcription.subset_type('syllabic').rate.column_name('syllables_per_second'),
+                g.utterance.surface_transcription.subset_type('syllabic').count.column_name('number_of_syllables'))
         print('Finished caching query in: {} seconds'.format(time.time() - begin))
 
     else:

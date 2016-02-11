@@ -11,7 +11,7 @@ from polyglotdb.graph.func import Max, Min
 from polyglotdb.corpus import CorpusContext as BaseContext
 from speechtools.io.graph import time_data_to_csvs, import_utterance_csv
 
-from .graph.query import GraphQuery
+from .graph.query import GraphQuery, SpeakerGraphQuery, DiscourseGraphQuery
 
 from .graph.attributes import PauseAnnotation
 
@@ -38,6 +38,8 @@ class CorpusContext(BaseContext):
         else:
             self.config.reaper_path = 'reaper'
 
+        self.config.query_behavior = 'speaker'
+
     def __getattr__(self, key):
         if key == 'pause':
             return PauseAnnotation(corpus = self.corpus_name)
@@ -52,7 +54,13 @@ class CorpusContext(BaseContext):
     def query_graph(self, annotation_type):
         if annotation_type.type not in self.annotation_types:
             raise(GraphQueryError('The graph does not have any annotations of type \'{}\'.  Possible types are: {}'.format(annotation_type.name, ', '.join(sorted(self.annotation_types)))))
-        return GraphQuery(self, annotation_type)
+        if self.config.query_behavior == 'speaker':
+            cls = SpeakerGraphQuery
+        elif self.config.query_behavior == 'discourse':
+            cls = DiscourseGraphQuery
+        else:
+            cls = GraphQuery
+        return cls(self, annotation_type)
 
     def discourse_sound_file(self, discourse):
         q = self.sql_session.query(SoundFile).join(SoundFile.discourse)
@@ -155,10 +163,8 @@ class CorpusContext(BaseContext):
         Remove all utterance annotations.
         """
         try:
-            for s in self.discourses:
-                q = self.query_graph(self.utterance)
-                q = q.filter(self.utterance.discourse.name == s)
-                q.delete()
+            q = DiscourseGraphQuery(self, self.utterance)
+            q.delete()
             self.hierarchy.annotation_types.remove('utterance')
             del self.hierarchy['utterance']
             self.save_variables()
