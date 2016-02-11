@@ -20,12 +20,13 @@ reaper = r'D:\Dev\Tools\REAPER-master\reaper.exe'
 config = CorpusConfig('buckeye', **graph_db)
 
 config.reaper_path = reaper
-config.praat_path = praat
+#config.praat_path = praat
 
 def call_back(*args):
     args = [x for x in args if isinstance(x, str)]
     if args:
         print(' '.join(args))
+
 if __name__ == '__main__':
     with CorpusContext(config) as g:
         g.encode_pauses('^[{<].*')

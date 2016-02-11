@@ -17,13 +17,19 @@ class SoundFile(Base):
     discourse_id = Column(Integer, ForeignKey('discourse.id'), nullable = False)
     discourse = relationship(Discourse)
 
+    formants = relationship("Formants", back_populates = "sound_file",
+                            cascade="all, delete, delete-orphan")
+
+    pitches = relationship("Pitch", back_populates = "sound_file",
+                            cascade="all, delete, delete-orphan")
+
 class Formants(Base):
     __tablename__ = 'formants'
 
     id = Column(Integer, primary_key = True)
 
     file_id = Column(Integer, ForeignKey('sound_file.id'), nullable = False)
-    sound_file = relationship(SoundFile)
+    sound_file = relationship(SoundFile, back_populates="formants")
 
     time = Column(Float, nullable = False)
 
@@ -41,7 +47,7 @@ class Pitch(Base):
     id = Column(Integer, primary_key = True)
 
     file_id = Column(Integer, ForeignKey('sound_file.id'), nullable = False)
-    sound_file = relationship(SoundFile)
+    sound_file = relationship(SoundFile, back_populates= "pitches")
 
     time = Column(Float, nullable = False)
 

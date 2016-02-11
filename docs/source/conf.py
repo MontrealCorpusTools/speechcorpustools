@@ -22,8 +22,8 @@ class Mock(MagicMock):
     def __getattr__(cls, name):
             return Mock()
 
-MOCK_MODULES = ['numpy', 'scipy', 'matplotlib', 'acousticsim', 'sqlalchemy']
-sys.modules.update((mod_name, Mock()) for mod_name in MOCK_MODULES)
+MOCK_MODULES = ['polyglotdb', 'numpy', 'scipy', 'matplotlib', 'acousticsim', 'sqlalchemy']
+#sys.modules.update((mod_name, Mock()) for mod_name in MOCK_MODULES)
 import shlex
 import alabaster
 

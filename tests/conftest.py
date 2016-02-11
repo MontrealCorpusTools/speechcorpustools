@@ -1,7 +1,7 @@
 import pytest
 import os
 
-from polyglotdb.io.textgrid import inspect_discourse_textgrid, load_discourse_textgrid
+from polyglotdb.io import inspect_textgrid
 
 from speechtools.corpus import CorpusContext
 from polyglotdb.config import CorpusConfig
@@ -42,7 +42,7 @@ def acoustic_config(graph_db, textgrid_test_dir):
     acoustic_path = os.path.join(textgrid_test_dir, 'acoustic_corpus.TextGrid')
     with CorpusContext(config) as c:
         c.reset()
-        annotation_types = inspect_discourse_textgrid(acoustic_path)
-        load_discourse_textgrid(c, acoustic_path, annotation_types)
+        parser = inspect_textgrid(acoustic_path)
+        c.load(parser, acoustic_path)
         c.analyze_acoustics()
     return config

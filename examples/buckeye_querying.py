@@ -13,7 +13,6 @@ graph_db = {'host':'localhost', 'port': 7474,
 debug = False
 
 with CorpusContext('buckeye', **graph_db) as g:
-    print(g.hierarchy)
 
     q = g.query_graph(g.surface_transcription).filter(g.surface_transcription.label == 'aa')
     q = q.filter(g.surface_transcription.following.label.in_(['p','t','k','b','d','g','dx', 'tq']))
@@ -79,7 +78,8 @@ with CorpusContext('buckeye', **graph_db) as g:
     q = g.query_graph(g.surface_transcription).filter(g.surface_transcription.label == 'aa')
     q = q.filter(g.surface_transcription.following.label.in_(['p','t','k','b','d','g','dx']))
     q = q.filter(g.surface_transcription.end != g.word.end)
-    q = q.times().duration().columns(g.word.label, g.word.transcription, g.word.surface_transcription.label, g.word.following.label, g.word.duration,
+    q = q.times().duration().columns(g.surface_transcription.word.label, g.surface_transcription.word.transcription,
+        g.surface_transcription.word.surface_transcription.label, g.surface_transcription.word.following.label, g.surface_transcription.word.duration,
         g.surface_transcription.following.label.column_name('following_consonant'))
 
     if debug:

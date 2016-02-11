@@ -1,3 +1,5 @@
 pytest
 sphinx>=1.3b3
 numpydoc
+https://github.com/vispy/vispy/archive/master.zip
+https://github.com/MontrealCorpusTools/PolyglotDB/archive/master.zip

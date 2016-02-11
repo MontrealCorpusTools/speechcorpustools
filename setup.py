@@ -2,8 +2,6 @@ import sys
 from setuptools import setup
 from setuptools.command.test import test as TestCommand
 
-import speechtools
-
 def readme():
     with open('README.md') as f:
         return f.read()
@@ -21,7 +19,7 @@ class PyTest(TestCommand):
             sys.exit(errcode)
 
 setup(name='speechtools',
-      version=speechtools.__version__,
+      version='0.0.1',
       description='',
       long_description='',
       classifiers=[
@@ -33,16 +31,26 @@ setup(name='speechtools',
         'Topic :: Text Processing :: Linguistic',
       ],
       keywords='speech corpus phonetics',
-      url='https://github.com/mlml/speechcorpustools',
-      author='MLML',
+      url='https://github.com/MontrealCorpusTools/speechcorpustools',
+      author='Montreal Corpus Tools',
       author_email='michael.e.mcauliffe@gmail.com',
       packages=['speechtools',
+                'speechtools.acoustics',
                 'speechtools.graph',
+                'speechtools.graph.attributes',
+                'speechtools.gui',
+                'speechtools.gui.plot',
+                'speechtools.gui.plot.widgets',
+                'speechtools.io',
                 'speechtools.sql'],
       install_requires=[
           'acousticsim',
-          'polyglotdb'
+          'polyglotdb',
+          'vispy'
       ],
+      entry_points = {
+        'console_scripts': ['sct=speechtools.command_line.sct:main',],
+    },
     cmdclass={'test': PyTest},
     extras_require={
         'testing': ['pytest'],
