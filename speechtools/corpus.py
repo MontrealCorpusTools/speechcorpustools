@@ -307,6 +307,7 @@ ORDER BY begin'''.format(corpus = self.corpus_name, discourse = discourse, word_
         '''
         w = getattr(self, 'word') #FIXME make more general
         q = self.query_graph(w).filter(w.discourse.name == name)
+        q = q.order_by(w.begin)
         return q.all()
 
     def add_discourse(self, data):
