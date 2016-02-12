@@ -362,13 +362,13 @@ class ScalingText(scene.visuals.Text):
 
 #ScalingText = scene.visuals.create_visual_node(ScalingTextVisual)
 
-class SCTAnnotationVisual(visuals.CompoundVisual):
+class SCTAnnotationVisual(visuals.visual.CompoundVisual):
     def __init__(self, data = None, hierarchy = None):
         self._rect = visuals.RectangleVisual(border_color = 'b', border_width = 2)
         self._text = ScalingText()
         self.annotation = None
         self.hierarchy = hierarchy
-        visuals.CompoundVisual.__init__(self, [self._rect, self._text])
+        visuals.visual.CompoundVisual.__init__(self, [self._rect, self._text])
         self.set_data(data)
 
     def set_data(self, data = None, selected = False):

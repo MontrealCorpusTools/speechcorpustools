@@ -254,7 +254,6 @@ class ExportQueryWorker(QueryWorker):
                             a_type.discourse.name.column_name('Discourse'),
                             w_type.utterance.phones.rate.column_name('Speaking_rate'),
                             a_type.notes.column_name('Notes'))
-                print(q.cypher())
                 #q = q.limit(100)
                 results = q.to_csv(export_path)
         except Exception as e:
