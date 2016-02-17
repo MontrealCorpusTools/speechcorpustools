@@ -10,14 +10,15 @@ from polyglotdb.config import BASE_DIR, CorpusConfig
 from speechtools.corpus import CorpusContext
 
 from .widgets import (ViewWidget, HelpWidget, DiscourseWidget, QueryWidget, CollapsibleWidgetPair,
-                        get_system_font_height, DetailsWidget, ConnectWidget)
+                        DetailsWidget, ConnectWidget)
+
+from .helper import get_system_font_height
 
 sct_config_pickle_path = os.path.join(BASE_DIR, 'config')
 
 class LeftPane(QtWidgets.QWidget):
     def __init__(self):
         super(LeftPane, self).__init__()
-
 
         self.viewWidget = ViewWidget()
         self.queryWidget = QueryWidget()
