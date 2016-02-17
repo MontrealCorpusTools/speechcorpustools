@@ -41,18 +41,20 @@ setup(name='speechtools',
                 'speechtools.gui',
                 'speechtools.gui.plot',
                 'speechtools.gui.plot.widgets',
+                'speechtools.gui.widgets',
                 'speechtools.io',
                 'speechtools.sql'],
       install_requires=[
           'acousticsim',
-          'polyglotdb',
-          'vispy'
+          #'polyglotdb',
+          #'vispy',
+          'librosa',
       ],
       entry_points = {
         'console_scripts': ['sct=speechtools.command_line.sct:main',],
     },
     cmdclass={'test': PyTest},
     extras_require={
-        'testing': ['pytest'],
+        'testing': ['pytest', 'pytest-qt'],
     }
       )

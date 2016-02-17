@@ -12,10 +12,10 @@ if [ ! -d "$HOME/miniconda/miniconda/envs/test-environment" ]; then
   conda create -q -n test-environment python=$TRAVIS_PYTHON_VERSION setuptools=18.1 atlas numpy sqlalchemy pytest scipy scikit-learn networkx
   source activate test-environment
   which python
-  pip install -q coveralls coverage py2neo textgrid acousticsim
-  git clone https://github.com/MontrealCorpusTools/PolyglotDB.git
-  cd PolyglotDB
-  python setup.py install
+  conda install -c mmcauliffe pyqt5
+  pip install -q coveralls coverage py2neo textgrid acousticsim pytest-qt
+  pip install -q https://github.com/MontrealCorpusTools/PolyglotDB/archive/master.zip
+  pip install -q https://github.com/vispy/vispy/archive/master.zip
 else
   echo "Miniconda already installed."
 fi
