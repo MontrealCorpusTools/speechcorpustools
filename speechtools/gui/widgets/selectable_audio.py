@@ -2,7 +2,7 @@ import numpy as np
 from scipy.io import wavfile
 import time
 
-from PyQt5 import QtGui, QtCore, QtWidgets
+from PyQt5 import QtGui, QtCore, QtWidgets, QtMultimedia
 
 from .audio import AudioOutput, Generator
 
@@ -220,7 +220,7 @@ class SelectableAudioWidget(QtWidgets.QWidget):
                 elements = getattr(a, key[0])
                 for e in elements:
                     subs = getattr(e, key[1])
-                    for s in subs:
+                    for s in sorted(subs, key = lambda x: x.begin):
                         if time >= s.begin and time <= s.end:
                             annotation = s
                             break
@@ -359,9 +359,9 @@ class SelectableAudioWidget(QtWidgets.QWidget):
                 dialog = SubannotationDialog()
                 if dialog.exec_():
                     type = dialog.value()
-                    if type not in annotation._subannotations or len(annotation._subannotations[type]) == 0:
-                        annotation.add_subannotation(type,
-                                begin = annotation.begin, end = annotation.end)
+                    #if type not in annotation._subannotations or len(annotation._subannotations[type]) == 0:
+                    annotation.add_subannotation(type,
+                            begin = annotation.begin, end = annotation.end)
                     update = True
             elif action == note_action:
                 dialog = NoteDialog(annotation)
@@ -526,7 +526,9 @@ class SelectableAudioWidget(QtWidgets.QWidget):
 
     def save_selected_boundary(self):
         key, ind = self.selected_boundary
-        actual_index = int(ind / 4)
+        print(key, ind)
+        actual_index = int(ind / 6)
+        print(actual_index)
         index = 0
         selected_annotation = None
         for a in self.annotations:
@@ -538,7 +540,7 @@ class SelectableAudioWidget(QtWidgets.QWidget):
                     if e.end < self.min_vis_time:
                         continue
                     subs = getattr(e, key[1])
-                    for s in subs:
+                    for s in sorted(subs, key = lambda x: x.begin):
                         if index == actual_index:
                             selected_annotation = s
                             break
@@ -547,7 +549,7 @@ class SelectableAudioWidget(QtWidgets.QWidget):
                         break
             elif key != a._type:
                 elements = getattr(a, key)
-                for e in elements:
+                for e in sorted(elements, key = lambda x: x.begin):
                     if index == actual_index:
                         selected_annotation = e
                         break
@@ -556,7 +558,7 @@ class SelectableAudioWidget(QtWidgets.QWidget):
                 selected_annotation = a
             if selected_annotation is not None:
                 break
-        mod = ind % 4
+        mod = ind % 6
         if self.selected_time > self.max_vis_time:
             self.selected_time = self.max_vis_time
         elif self.selected_time < self.min_vis_time:

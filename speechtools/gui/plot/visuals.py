@@ -66,12 +66,18 @@ class SCTLinePlot(scene.visuals.Line):
                     event.source.transform_pos_to_time([0])
         pos_scene = event.source.transform_pos_to_time(event.pos)
 
-        index = 0
+        index = -1
         for p in self.pos:
+            index += 1
+            if index % 2 == 0:
+                if p[0] != self.pos[index+1][0]:
+                    continue
+            else:
+                if p[0] != self.pos[index-1][0]:
+                    continue
             if np.linalg.norm(pos_scene - p[0]) < radius_time:
                 # point found, return point and its index
                 return p, index
-            index += 1
         # no point found, return None
         return None, -1
 
@@ -80,6 +86,10 @@ class SCTLinePlot(scene.visuals.Line):
             p = self.pos
             p[selected_index][0] = new_time
             p[selected_index + 1][0] = new_time
+            if selected_index % 6 == 0:
+                p[selected_index+2][0] = new_time
+            else:
+                p[selected_index - 1][0] = new_time
 
             scene.visuals.Line.set_data(self, pos = p)
 

@@ -155,6 +155,7 @@ class QueryWorker(FunctionWorker):
 class Lab1QueryWorker(QueryWorker):
     def run_query(self):
         config = self.kwargs['config']
+        filters = self.kwargs['filters']
         try:
             stops = gp_language_stops[config.corpus_name]
         except KeyError:
@@ -170,7 +171,8 @@ class Lab1QueryWorker(QueryWorker):
             q = c.query_graph(a_type)
             q = q.order_by(a_type.discourse.name)
             q = q.order_by(a_type.begin)
-            q = q.filter(a_type.phon4lab1 == True)
+            if filters:
+                q = q.filter(*filters)
             #print('Number found: {}'.format(q.count()))
             q = q.columns(a_type.label.column_name('Stop'),
                         a_type.begin.column_name('Begin'),
@@ -206,6 +208,7 @@ class ExportQueryWorker(QueryWorker):
         try:
             config = self.kwargs['config']
             export_path = self.kwargs['path']
+            filters = self.kwargs['filters']
             try:
                 stops = gp_language_stops[config.corpus_name]
             except KeyError:
@@ -221,7 +224,8 @@ class ExportQueryWorker(QueryWorker):
                 q = c.query_graph(a_type)
                 q = q.order_by(a_type.discourse.name)
                 q = q.order_by(a_type.begin)
-                q = q.filter(a_type.phon4lab1 == True)
+                if filters:
+                    q = q.filter(*filters)
                 #print('Number found: {}'.format(q.count()))
                 q = q.columns(a_type.label.column_name('Stop'),
                             a_type.begin.column_name('Begin'),

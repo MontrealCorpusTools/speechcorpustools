@@ -56,18 +56,20 @@ def import_subannotation_csv(corpus_context, type, annotated_type, props, transa
         pass
 
     for p in props:
-        if p in ['id', 'annotated_id', 'checked', 'begin', 'end']:
+        if p in ['id', 'annotated_id', 'begin', 'end']:
             continue
         corpus_context.execute_cypher('CREATE INDEX ON :%s(%s)' % (type, p))
         properties.append(prop_temp.format(name = p))
     if properties:
         properties = ', ' + ', '.join(properties)
+    else:
+        properties = ''
     statement = '''USING PERIODIC COMMIT 500
     LOAD CSV WITH HEADERS FROM "{path}" AS csvLine
             MATCH (annotated:{a_type}:{corpus} {{id: csvLine.annotated_id}})
             CREATE (annotated) <-[:annotates]-(annotation:{type}:{corpus}
                 {{id: csvLine.id, begin: toFloat(csvLine.begin),
-                end: toFloat(csvLine.end), checked: false{properties}}})
+                end: toFloat(csvLine.end){properties}}})
             '''
     statement = statement.format(path = csv_path,
                 corpus = corpus_context.corpus_name,

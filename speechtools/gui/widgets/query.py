@@ -1,6 +1,8 @@
 
 from PyQt5 import QtGui, QtCore, QtWidgets
 
+from speechtools.corpus import CorpusContext
+
 from ..models import QueryResultsModel, ProxyModel
 
 from ..views import ResultsView
@@ -41,6 +43,20 @@ class QueryForm(QtWidgets.QWidget):
 
         mainLayout.addLayout(phon4Layout)
 
+        phon4Lab2Layout = QtWidgets.QHBoxLayout()
+
+        self.lab2Button = QtWidgets.QPushButton('Search for Lab 2 stops')
+        self.lab2Button.setDisabled(True)
+        self.lab2Button.clicked.connect(self.lab2Query)
+        self.export2Button = QtWidgets.QPushButton('Export Lab 2 stops')
+        self.export2Button.clicked.connect(self.runExport2Query)
+        self.export2Button.setDisabled(True)
+
+        phon4Lab2Layout.addWidget(self.lab2Button)
+        phon4Lab2Layout.addWidget(self.export2Button)
+
+        mainLayout.addLayout(phon4Lab2Layout)
+
         self.setLayout(mainLayout)
 
         self.worker = QueryWorker()
@@ -63,6 +79,11 @@ class QueryForm(QtWidgets.QWidget):
             return
         kwargs = {}
         kwargs['config'] = self.config
+        filters = []
+        with CorpusContext(self.config) as c:
+            a_type = getattr(c, c.hierarchy.lowest)
+            filters.append(a_type.phon4lab1 == True)
+        kwargs['filters'] = filters
         self.lab1Worker.setParams(kwargs)
         self.lab1Worker.start()
 
@@ -76,6 +97,42 @@ class QueryForm(QtWidgets.QWidget):
         kwargs = {}
         kwargs['config'] = self.config
         kwargs['path'] = path
+        filters = []
+        with CorpusContext(self.config) as c:
+            a_type = getattr(c, c.hierarchy.lowest)
+            filters.append(a_type.phon4lab1 == True)
+        kwargs['filters'] = filters
+        self.exportWorker.setParams(kwargs)
+        self.exportWorker.start()
+
+    def lab2Query(self):
+        if self.config is None:
+            return
+        kwargs = {}
+        kwargs['config'] = self.config
+        filters = []
+        with CorpusContext(self.config) as c:
+            a_type = getattr(c, c.hierarchy.lowest)
+            filters.append(a_type.phon4lab2 == True)
+        kwargs['filters'] = filters
+        self.lab1Worker.setParams(kwargs)
+        self.lab1Worker.start()
+
+    def runExport2Query(self):
+        if self.config is None:
+            return
+        path, _ = QtWidgets.QFileDialog.getSaveFileName(self, "Export data", filter = "CSV (*.txt  *.csv)")
+
+        if not path:
+            return
+        kwargs = {}
+        kwargs['config'] = self.config
+        kwargs['path'] = path
+        filters = []
+        with CorpusContext(self.config) as c:
+            a_type = getattr(c, c.hierarchy.lowest)
+            filters.append(a_type.phon4lab2 == True)
+        kwargs['filters'] = filters
         self.exportWorker.setParams(kwargs)
         self.exportWorker.start()
 
@@ -95,10 +152,14 @@ class QueryForm(QtWidgets.QWidget):
             self.executeButton.setDisabled(True)
             self.lab1Button.setDisabled(True)
             self.exportButton.setDisabled(True)
+            self.lab2Button.setDisabled(True)
+            self.export2Button.setDisabled(True)
             return
         self.executeButton.setDisabled(False)
         self.lab1Button.setDisabled(False)
         self.exportButton.setDisabled(False)
+        self.lab2Button.setDisabled(False)
+        self.export2Button.setDisabled(False)
         #with CorpusContext(config) as c:
         #    for a in c.annotation_types:
         #        self.linguisticSelect.addItem(a)

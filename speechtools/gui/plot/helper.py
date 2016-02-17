@@ -1,5 +1,7 @@
 import numpy as np
 
+max_sig = 1
+min_sig = -1
 
 def get_histogram_mesh_data(data, bins=100, color='k', orientation='h'):
     # shamlessly stolen from vispy.visuals.histogram.__init__()
@@ -27,8 +29,6 @@ def get_histogram_mesh_data(data, bins=100, color='k', orientation='h'):
     return (rr, tris)
 
 def generate_boundaries(annotations, hierarchy, min_time, max_time):
-    max_sig = 1
-    min_sig = -1
     num_types = len(hierarchy.keys())
     lowest = hierarchy.lowest
     size = max_sig / (num_types)
@@ -49,6 +49,7 @@ def generate_boundaries(annotations, hierarchy, min_time, max_time):
     except ZeroDivisionError:
         sub_size = max_sig
     subannotation_keys = {s: i for i, s in enumerate(subannotation_keys)}
+    print(subannotation_keys)
     cur = 0
     main_vert_min = max_sig - size
     main_vert_max = max_sig
@@ -80,26 +81,11 @@ def generate_boundaries(annotations, hierarchy, min_time, max_time):
             for stype in hierarchy.subannotations[a._type]:
                 subs = getattr(a, stype)
                 ind = subannotation_keys[a._type,stype]
-                sub_vert_max = min_sig + sub_size * (ind+1)
-                sub_vert_min = min_sig + sub_size * (ind)
-                sub_vert_mid = (sub_vert_max - sub_vert_min)/2 + sub_vert_min
-                for s in subs:
-                    end = s.end
-                    begin = s.begin
-                    if end < min_time:
-                        continue
-                    if begin > max_time:
-                        continue
-                    midpoint = ((end - begin) / 2) + begin
-                    if midpoint > max_time or midpoint < min_time:
-                        midpoint = vis_mid
-                    text = s.label
-                    if text is None:
-                        text = ''
-                    line_outputs[a._type,stype].append([begin,sub_vert_min])
-                    line_outputs[a._type,stype].append([begin,sub_vert_max])
-                    line_outputs[a._type,stype].append([end,sub_vert_min])
-                    line_outputs[a._type,stype].append([end,sub_vert_max])
+                lines, text_poses, texts = generate_subannotation_lines(subs,
+                                                ind, sub_size, min_time, max_time)
+                line_outputs[a._type, stype].extend(lines)
+                text_pos[a._type, stype].extend(text_poses)
+                text_labels[a._type, stype].extend(texts)
 
         for i, t in enumerate(hierarchy.get_lower_types(a._type)):
             elements = getattr(a, t)
@@ -132,32 +118,11 @@ def generate_boundaries(annotations, hierarchy, min_time, max_time):
                     for stype in hierarchy.subannotations[t]:
                         subs = getattr(e, stype)
                         ind = subannotation_keys[t,stype]
-                        sub_vert_max = 0 - sub_size * (ind)
-                        sub_vert_min = 0 - sub_size * (ind + 1)
-                        sub_vert_mid = (sub_vert_max - sub_vert_min)/2 + sub_vert_min
-                        for s in subs:
-                            end = s.end
-                            begin = s.begin
-                            if end < min_time:
-                                continue
-                            if begin > max_time:
-                                continue
-                            midpoint = ((end - begin) / 2) + begin
-                            if midpoint > max_time or midpoint < min_time:
-                                midpoint = vis_mid
-                            text_pos[t,stype].append((midpoint, sub_vert_mid))
-                            try:
-                                text = s.label
-                            except AttributeError:
-                                text = None
-                            if text is None:
-                                text = ''
-
-                            text_labels[t,stype].append(text)
-                            line_outputs[t,stype].append([begin,sub_vert_min])
-                            line_outputs[t,stype].append([begin,sub_vert_max])
-                            line_outputs[t,stype].append([end,sub_vert_min])
-                            line_outputs[t,stype].append([end,sub_vert_max])
+                        lines, text_poses, texts = generate_subannotation_lines(subs,
+                                                ind, sub_size, min_time, max_time)
+                        line_outputs[t, stype].extend(lines)
+                        text_pos[t, stype].extend(text_poses)
+                        text_labels[t, stype].extend(texts)
 
     text_outputs = {}
     for t in hierarchy.highest_to_lowest:
@@ -172,3 +137,44 @@ def generate_boundaries(annotations, hierarchy, min_time, max_time):
 
 def rescale(value, oldmax, newmax):
     return value * newmax/oldmax
+
+def generate_subannotation_lines(subs, ind, sub_size, min_time, max_time):
+    vis_mid = (max_time - min_time) /2 + min_time
+    output = []
+    text_output = []
+    text_labels = []
+    if len(subs) > 1:
+        rel_sub_size = sub_size / len(subs)
+    else:
+        rel_sub_size = sub_size
+    for i,s in enumerate(sorted(subs, key = lambda x: x.begin)):
+        sub_vert_min = 0 - sub_size * (ind + 1) + rel_sub_size * i
+        sub_vert_max = sub_vert_min + rel_sub_size
+        sub_vert_mid = (sub_vert_max - sub_vert_min)/2 + sub_vert_min
+        end = s.end
+        begin = s.begin
+        if end < min_time:
+            continue
+        if begin > max_time:
+            break
+        midpoint = ((end - begin) / 2) + begin
+        if midpoint > max_time or midpoint < min_time:
+            midpoint = vis_mid
+        text = s.label
+        if text is None:
+            text = ''
+        text_output.append((midpoint, sub_vert_mid))
+        try:
+            text = s.label
+        except AttributeError:
+            text = None
+        if text is None:
+            text = ''
+        text_labels.append(text)
+        output.append([begin,sub_vert_min])
+        output.append([begin,sub_vert_max])
+        output.append([begin, sub_vert_min])
+        output.append([end, sub_vert_min])
+        output.append([end,sub_vert_min])
+        output.append([end,sub_vert_max])
+    return output, text_output, text_labels
