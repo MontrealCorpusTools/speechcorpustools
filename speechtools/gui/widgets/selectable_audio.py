@@ -526,9 +526,7 @@ class SelectableAudioWidget(QtWidgets.QWidget):
 
     def save_selected_boundary(self):
         key, ind = self.selected_boundary
-        print(key, ind)
         actual_index = int(ind / 6)
-        print(actual_index)
         index = 0
         selected_annotation = None
         for a in self.annotations:
