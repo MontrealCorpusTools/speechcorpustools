@@ -8,7 +8,7 @@ class SubannotationDialog(QtWidgets.QDialog):
         layout = QtWidgets.QFormLayout()
 
         if subannotation_types is None:
-            subannotation_types = ['burst', 'voicing']
+            subannotation_types = ['burst', 'closure', 'voicing']
 
         self.typeEdit = QtWidgets.QComboBox()
         for sa in subannotation_types:

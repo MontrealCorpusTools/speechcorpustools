@@ -3,6 +3,8 @@ from PyQt5 import QtGui, QtCore, QtWidgets
 
 from speechtools.corpus import CorpusContext
 
+from .base import DetailedMessageBox
+
 from ..models import QueryResultsModel, ProxyModel
 
 from ..views import ResultsView

@@ -49,7 +49,6 @@ def generate_boundaries(annotations, hierarchy, min_time, max_time):
     except ZeroDivisionError:
         sub_size = max_sig
     subannotation_keys = {s: i for i, s in enumerate(subannotation_keys)}
-    print(subannotation_keys)
     cur = 0
     main_vert_min = max_sig - size
     main_vert_max = max_sig
@@ -147,7 +146,7 @@ def generate_subannotation_lines(subs, ind, sub_size, min_time, max_time):
         rel_sub_size = sub_size / len(subs)
     else:
         rel_sub_size = sub_size
-    for i,s in enumerate(sorted(subs, key = lambda x: x.begin)):
+    for i,s in enumerate(subs):
         sub_vert_min = 0 - sub_size * (ind + 1) + rel_sub_size * i
         sub_vert_max = sub_vert_min + rel_sub_size
         sub_vert_mid = (sub_vert_max - sub_vert_min)/2 + sub_vert_min

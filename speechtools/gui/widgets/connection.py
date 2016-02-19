@@ -1,10 +1,13 @@
 
 from PyQt5 import QtGui, QtCore, QtWidgets
 
+
 from polyglotdb.config import CorpusConfig
 from polyglotdb.exceptions import (ConnectionError, PGError,
                             AuthorizationError,NetworkAddressError)
 from polyglotdb.corpus import get_corpora_list
+
+from speechtools.corpus import CorpusContext
 
 from ..workers import AudioFinderWorker, AudioCheckerWorker
 
@@ -42,8 +45,6 @@ class ConnectWidget(QtWidgets.QWidget):
     configChanged = QtCore.pyqtSignal(object)
     def __init__(self, config = None, parent = None):
         super(ConnectWidget, self).__init__(parent)
-        self.audioLookupButton = QtWidgets.QPushButton('Find audio')
-        self.audioLookupButton.setEnabled(True)
 
         layout = QtWidgets.QHBoxLayout()
         self.formlayout = QtWidgets.QFormLayout()
@@ -80,21 +81,31 @@ class ConnectWidget(QtWidgets.QWidget):
         self.passwordEdit.returnPressed.connect(connectButton.click)
         self.formlayout.addRow(connectButton)
 
+        self.audioLookupButton = QtWidgets.QPushButton('Find audio')
+        self.audioLookupButton.setEnabled(True)
+
+        self.audioLookupButton.clicked.connect(self.findAudio)
+
+        self.formlayout.addRow(self.audioLookupButton)
+
+        self.resetCacheButton = QtWidgets.QPushButton('Reset local cache')
+        self.resetCacheButton.setEnabled(False)
+
+        self.resetCacheButton.clicked.connect(self.resetCache)
+
+        self.formlayout.addRow(self.resetCacheButton)
+
         layout.addLayout(self.formlayout)
 
         self.corporaList = CorporaList()
         self.corporaList.selectionChanged.connect(self.changeConfig)
+
+        self.corporaList.selectionChanged.connect(self.enableFindAudio)
         layout.addWidget(self.corporaList)
 
         self.setLayout(layout)
         if config is not None:
             self.connectToServer()
-
-        self.formlayout.addRow(self.audioLookupButton)
-
-        self.audioLookupButton.clicked.connect(self.findAudio)
-
-        self.corporaList.selectionChanged.connect(self.enableFindAudio)
 
         self.checkerWorker = AudioCheckerWorker()
         self.checkerWorker.dataReady.connect(self.enableFindAudio)
@@ -138,6 +149,22 @@ class ConnectWidget(QtWidgets.QWidget):
             return
         self.checkAudio()
 
+    def resetCache(self):
+        config = self.createConfig()
+        if config is None:
+            return
+        with CorpusContext(config) as c:
+            h = c.generate_hierarchy()
+            try:
+                del h._data['syllabic']
+                h.annotation_types.remove('syllabic')
+            except KeyError:
+                pass
+            print(h._data)
+            print(h.subannotations)
+            c.hierarchy = h
+            c.save_variables()
+
     def changeConfig(self, name):
         host = self.hostEdit.text()
         port = self.portEdit.text()
@@ -148,12 +175,14 @@ class ConnectWidget(QtWidgets.QWidget):
         self.configChanged.emit(config)
 
     def enableFindAudio(self, all_found):
-        if not isinstance(all_found, str):
+        name = self.corporaList.text()
+        self.audioLookupButton.setText('Find local audio files')
+        if name is None:
             self.audioLookupButton.setEnabled(False)
-            self.audioLookupButton.setText('Audio available')
+            self.resetCacheButton.setEnabled(False)
         else:
-            self.audioLookupButton.setText('Find local audio files')
             self.audioLookupButton.setEnabled(True)
+            self.resetCacheButton.setEnabled(True)
 
     def createConfig(self):
         name = self.corporaList.text()

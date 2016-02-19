@@ -84,6 +84,6 @@ gp_language_stops = {'gp_croatian': ['p','t','k', 'b', 'd', 'g'],
                     'gp_korean': ['B','BB','p', 'Ph','D','DD','t','Th','Kh','k','G','GG'],
                     'gp_polish': ['p','t','k', 'b', 'd', 'g'],
                     'gp_swedish': ['p','t','tr','k', 'b', 'd','dr', 'g'],
-                    'gp_thai': ['p','ph','t','th','c','ch','k','kh','b','d'],
+                    'gp_thai': ['p','ph','t','th','k','kh','b','d'],
                     'gp_turkish': ['p','t','k', 'b', 'd', 'g']}
 

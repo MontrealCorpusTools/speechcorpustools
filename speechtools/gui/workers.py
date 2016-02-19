@@ -7,6 +7,8 @@ from PyQt5 import QtGui, QtCore, QtWidgets
 
 from polyglotdb.exceptions import ConnectionError, NetworkAddressError, TemporaryConnectionError, PGError
 
+from polyglotdb.graph.func import Sum
+
 from speechtools.corpus import CorpusContext
 
 from speechtools.utils import update_sound_files, gp_language_stops
@@ -187,11 +189,15 @@ class Lab1QueryWorker(QueryWorker):
             if 'burst' in c.hierarchy.subannotations[c.hierarchy.lowest]:
                 q = q.columns(a_type.burst.begin.column_name('Burst_begin'),
                         a_type.burst.end.column_name('Burst_end'),
-                        a_type.burst.duration.column_name('Burst_duration'))
+                        Sum(a_type.burst.duration).column_name('Burst_duration'))
             if 'voicing' in c.hierarchy.subannotations[c.hierarchy.lowest]:
                 q = q.columns(a_type.voicing.begin.column_name('Voicing_begin'),
                             a_type.voicing.end.column_name('Voicing_end'),
-                            a_type.voicing.duration.column_name('Voicing_duration'))
+                            Sum(a_type.voicing.duration).column_name('Voicing_duration'))
+                if 'closure' in c.hierarchy.subannotations[c.hierarchy.lowest]:
+                    q = q.columns(a_type.closure.begin.column_name('Closure_begin'),
+                                a_type.closure.end.column_name('Closure_end'),
+                                Sum(a_type.closure.duration).column_name('Closure_duration'))
             #q = q.limit(100)
             results = q.all()
         return q, results
@@ -234,11 +240,15 @@ class ExportQueryWorker(QueryWorker):
                 if 'burst' in c.hierarchy.subannotations[c.hierarchy.lowest]:
                     q = q.columns(a_type.burst.begin.column_name('Burst_begin'),
                             a_type.burst.end.column_name('Burst_end'),
-                            a_type.burst.duration.column_name('Burst_duration'))
+                            Sum(a_type.burst.duration).column_name('Burst_duration'))
                 if 'voicing' in c.hierarchy.subannotations[c.hierarchy.lowest]:
                     q = q.columns(a_type.voicing.begin.column_name('Voicing_begin'),
                                 a_type.voicing.end.column_name('Voicing_end'),
-                                a_type.voicing.duration.column_name('Voicing_duration'))
+                                Sum(a_type.voicing.duration).column_name('Voicing_duration'))
+                if 'closure' in c.hierarchy.subannotations[c.hierarchy.lowest]:
+                    q = q.columns(a_type.closure.begin.column_name('Closure_begin'),
+                                a_type.closure.end.column_name('Closure_end'),
+                                Sum(a_type.closure.duration).column_name('Closure_duration'))
 
                 q = q.columns(w_type.label.column_name('Word'),
                             w_type.begin.column_name('Word_begin'),

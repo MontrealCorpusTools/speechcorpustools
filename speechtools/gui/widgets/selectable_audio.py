@@ -220,7 +220,7 @@ class SelectableAudioWidget(QtWidgets.QWidget):
                 elements = getattr(a, key[0])
                 for e in elements:
                     subs = getattr(e, key[1])
-                    for s in sorted(subs, key = lambda x: x.begin):
+                    for s in subs:
                         if time >= s.begin and time <= s.end:
                             annotation = s
                             break
@@ -540,7 +540,7 @@ class SelectableAudioWidget(QtWidgets.QWidget):
                     if e.end < self.min_vis_time:
                         continue
                     subs = getattr(e, key[1])
-                    for s in sorted(subs, key = lambda x: x.begin):
+                    for s in subs:
                         if index == actual_index:
                             selected_annotation = s
                             break
@@ -549,7 +549,7 @@ class SelectableAudioWidget(QtWidgets.QWidget):
                         break
             elif key != a._type:
                 elements = getattr(a, key)
-                for e in sorted(elements, key = lambda x: x.begin):
+                for e in elements:
                     if index == actual_index:
                         selected_annotation = e
                         break
