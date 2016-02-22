@@ -34,20 +34,8 @@ def acoustic_analysis(corpus_context):
     for sf in sound_files:
         log.info('Begin acoustic analysis for {}...'.format(sf.filepath))
         log_begin = time.time()
-        try:
-            q = corpus_context.query_graph(corpus_context.utterance)
-            q = q.filter(corpus_context.utterance.discourse == sf.discourse.name).times()
-            utterances = q.all()
 
-            outdir = corpus_context.config.temporary_directory(sf.discourse.name)
-            for i, u in enumerate(utterances):
-                outpath = os.path.join(outdir, 'temp-{}-{}.wav'.format(u.begin, u.end))
-                extract_audio(sf.filepath, outpath, u.begin, u.end, padding = padding)
-            path = outdir
-        except GraphQueryError:
-            path = sf.filepath
-
-        analyze_pitch(corpus_context, sf, path)
+        analyze_pitch(corpus_context, sf)
         #analyze_formants(corpus_context, sf, path)
         log.info('Acoustic analysis finished!')
         log.debug('Acoustic analysis took: {} seconds'.format(time.time() - log_begin))
@@ -61,18 +49,37 @@ def get_pitch(corpus_context, sound_file, algorithm = 'reaper'):
     q = corpus_context.sql_session.query(Pitch).join(SoundFile)
     q = q.filter(SoundFile.id == sound_file.id)
     q = q.filter(Pitch.source == algorithm)
+    q = q.order_by(Pitch.time)
     listing = q.all()
     if len(listing) == 0:
-        sound_file = corpus_context.sql_session.query(SoundFile).filter(SoundFile.id == sound_file.id).first()
+        sound_file = corpus_context.sql_session.query(SoundFile).join(Discourse).filter(SoundFile.id == sound_file.id).first()
 
-        analyze_pitch(corpus_context, sound_file, sound_file.filepath)
+        analyze_pitch(corpus_context, sound_file)
         q = corpus_context.sql_session.query(Pitch).join(SoundFile)
         q = q.filter(SoundFile.id == sound_file.id)
         q = q.filter(Pitch.source == algorithm)
+        q = q.order_by(Pitch.time)
         listing = q.all()
     return listing
 
-def analyze_pitch(corpus_context, sound_file, sound_file_path):
+def get_formants(corpus_context, sound_file, algorithm = 'acousticsim'):
+    q = corpus_context.sql_session.query(Formants).join(SoundFile)
+    q = q.filter(SoundFile.id == sound_file.id)
+    q = q.filter(Formants.source == algorithm)
+    q = q.order_by(Formants.time)
+    listing = q.all()
+    if len(listing) == 0:
+        sound_file = corpus_context.sql_session.query(SoundFile).join(Discourse).filter(SoundFile.id == sound_file.id).first()
+
+        analyze_formants(corpus_context, sound_file)
+        q = corpus_context.sql_session.query(Formants).join(SoundFile)
+        q = q.filter(SoundFile.id == sound_file.id)
+        q = q.filter(Formants.source == algorithm)
+        q = q.order_by(Formants.time)
+        listing = q.all()
+    return listing
+
+def analyze_pitch(corpus_context, sound_file):
     if getattr(corpus_context.config, 'reaper_path', None) is not None:
         pitch_function = partial(ReaperPitch, reaper = corpus_context.config.reaper_path,
                                 time_step = 0.01, freq_lims = (75,500))
@@ -86,8 +93,20 @@ def analyze_pitch(corpus_context, sound_file, sound_file_path):
     else:
         pitch_function = partial(ASPitch, time_step = 0.01, freq_lims = (75,500))
         algorithm = 'acousticsim'
-    if os.path.isdir(sound_file_path):
-        path_mapping = [(os.path.join(sound_file_path, x),) for x in os.listdir(sound_file_path)]
+
+    if sound_file.duration > 5:
+        atype = corpus_context.hierarchy.highest
+        prob_utt = getattr(corpus_context, atype)
+        q = corpus_context.query_graph(prob_utt)
+        q = q.filter(prob_utt.discourse.name == sound_file.discourse.name).times()
+        utterances = q.all()
+
+        outdir = corpus_context.config.temporary_directory(sound_file.discourse.name)
+        for i, u in enumerate(utterances):
+            outpath = os.path.join(outdir, 'temp-{}-{}.wav'.format(u.begin, u.end))
+            extract_audio(sound_file.filepath, outpath, u.begin, u.end, padding = padding)
+
+        path_mapping = [(os.path.join(outdir, x),) for x in os.listdir(outdir)]
         try:
             cache = generate_cache(path_mapping, pitch_function, None, default_njobs(), None, None)
         except FileNotFoundError:
@@ -110,7 +129,7 @@ def analyze_pitch(corpus_context, sound_file, sound_file_path):
                 corpus_context.sql_session.add(p)
     else:
         try:
-            pitch = pitch_function(sound_file_path)
+            pitch = pitch_function(sound_file.filepath)
         except FileNotFoundError:
             return
         for timepoint, value in pitch.items():
@@ -122,7 +141,7 @@ def analyze_pitch(corpus_context, sound_file, sound_file_path):
             corpus_context.sql_session.add(p)
     corpus_context.sql_session.flush()
 
-def analyze_formants(corpus_context, sound_file, sound_file_path):
+def analyze_formants(corpus_context, sound_file):
     if getattr(corpus_context.config, 'praat_path', None) is not None:
         formant_function = partial(PraatFormants,
                             praatpath = corpus_context.config.praat_path,
@@ -134,8 +153,20 @@ def analyze_formants(corpus_context, sound_file, sound_file_path):
                             num_formants = 5, win_len = 0.025,
                             time_step = 0.01)
         algorithm = 'acousticsim'
-    if os.path.isdir(sound_file_path):
-        path_mapping = [(os.path.join(sound_file_path, x),) for x in os.listdir(sound_file_path)]
+    if sound_file.duration > 5:
+        atype = corpus_context.hierarchy.highest
+        prob_utt = getattr(corpus_context, atype)
+        q = corpus_context.query_graph(prob_utt)
+        q = q.filter(prob_utt.discourse.name == sound_file.discourse.name).times()
+        utterances = q.all()
+
+        outdir = corpus_context.config.temporary_directory(sound_file.discourse.name)
+        path_mapping = []
+        for i, u in enumerate(utterances):
+            outpath = os.path.join(outdir, 'temp-{}-{}.wav'.format(u.begin, u.end))
+            if not os.path.exists(outpath):
+                extract_audio(sound_file.filepath, outpath, u.begin, u.end, padding = padding)
+            path_mapping.append((outpath,))
 
         cache = generate_cache(path_mapping, formant_function, None, default_njobs(), None, None)
         for k, v in cache.items():
@@ -153,7 +184,7 @@ def analyze_formants(corpus_context, sound_file, sound_file_path):
                         F2 = f2, F3 = f3, source = algorithm)
                 corpus_context.sql_session.add(f)
     else:
-        formants = formant_function(sound_file_path)
+        formants = formant_function(sound_file.filepath)
         for timepoint, value in formants.items():
             f1, f2, f3 = sanitize_formants(value)
             f = Formants(sound_file = sound_file, time = timepoint, F1 = f1,

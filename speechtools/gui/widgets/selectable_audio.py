@@ -10,7 +10,7 @@ from .annotation import SubannotationDialog, NoteDialog
 
 from .structure import HierarchyWidget
 
-from ..workers import PitchGeneratorWorker
+from ..workers import PitchGeneratorWorker, FormantsGeneratorWorker
 
 from ..plot import AnnotationWidget, SpectralWidget
 
@@ -24,6 +24,7 @@ class SelectableAudioWidget(QtWidgets.QWidget):
         self.signal = None
         self.sr = None
         self.pitch = None
+        self.formants = None
         self.annotations = None
         self.hierarchy = None
         self.config = None
@@ -82,6 +83,9 @@ class SelectableAudioWidget(QtWidgets.QWidget):
 
         self.pitchWorker = PitchGeneratorWorker()
         self.pitchWorker.dataReady.connect(self.updatePitch)
+
+        self.formantsWorker = FormantsGeneratorWorker()
+        self.formantsWorker.dataReady.connect(self.updateFormants)
 
         self.m_audioOutput = AudioOutput()
         self.m_audioOutput.notify.connect(self.notified)
@@ -527,7 +531,14 @@ class SelectableAudioWidget(QtWidgets.QWidget):
             self.updatePlayTime(self.min_vis_time)
             if self.pitch is not None:
                 self.spectrumWidget.update_pitch([[x[0] - min_time, x[1]] for x in self.pitch if x[0] > min_time - 1 and x[0] < max_time + 1])
-
+            else:
+                self.spectrumWidget.update_pitch([])
+            if self.formants is not None:
+                self.spectrumWidget.update_formants({'F1':[[x[0] - min_time, x[1]] for x in self.formants['F1'] if x[0] > min_time - 1 and x[0] < max_time + 1],
+                                        'F2':[[x[0] - min_time, x[1]] for x in self.formants['F2'] if x[0] > min_time - 1 and x[0] < max_time + 1],
+                                        'F3':[[x[0] - min_time, x[1]] for x in self.formants['F3'] if x[0] > min_time - 1 and x[0] < max_time + 1],})
+            else:
+                self.spectrumWidget.update_formants({})
             #sp_begin = time.time()
             #print('aud_time', time.time() - sp_begin)
         if self.annotations is None:
@@ -609,11 +620,20 @@ class SelectableAudioWidget(QtWidgets.QWidget):
         self.pitch = pitch
         self.updateVisible()
 
+    def updateFormants(self, formants):
+        self.formants = formants
+        self.updateVisible()
+
     def updateAudio(self, audio_file):
         if audio_file is not None:
             kwargs = {'config':self.config, 'sound_file': audio_file, 'algorithm':'reaper'}
+            self.pitch = None
             self.pitchWorker.setParams(kwargs)
             self.pitchWorker.start()
+            kwargs = {'config':self.config, 'sound_file': audio_file, 'algorithm':'acousticsim'}
+            self.formants = None
+            self.formantsWorker.setParams(kwargs)
+            self.formantsWorker.start()
             self.sr, self.signal = wavfile.read(audio_file.filepath)
             self.signal = self.signal / 32768
 
