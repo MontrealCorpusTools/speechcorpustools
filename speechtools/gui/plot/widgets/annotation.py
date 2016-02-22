@@ -71,8 +71,8 @@ class AnnotationPlotWidget(SelectablePlotWidget):
             if k == self.hierarchy.lowest:
                 self.annotation_visuals[k].set_lowest()
             self.line_visuals[k] = SCTLinePlot(connect = 'segments', color = c)
-            self.box_visuals[k] = TierRectangle(i, self.num_types, len(keys))
-            self.view.add(self.box_visuals[k])
+            #self.box_visuals[k] = TierRectangle(i, self.num_types, len(keys))
+            #self.view.add(self.box_visuals[k])
             self.view.add(self.annotation_visuals[k])
             self.view.add(self.line_visuals[k])
         ind = len(self.hierarchy.highest_to_lowest)
@@ -81,8 +81,8 @@ class AnnotationPlotWidget(SelectablePlotWidget):
             self.annotation_visuals[k] = ScalingText(face = 'OpenSans')
             self.annotation_visuals[k].set_lowest()
             self.line_visuals[k] = SCTLinePlot(connect = 'segments', color = c)
-            self.box_visuals[k] = TierRectangle(ind, self.num_types, len(keys))
-            self.view.add(self.box_visuals[k])
+            #self.box_visuals[k] = TierRectangle(ind, self.num_types, len(keys))
+            #self.view.add(self.box_visuals[k])
             self.view.add(self.annotation_visuals[k])
             self.view.add(self.line_visuals[k])
             ind += 1
