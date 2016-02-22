@@ -186,7 +186,8 @@ class SelectableAudioWidget(QtWidgets.QWidget):
             self.previousRequested.emit()
         elif event.key() == QtCore.Qt.Key_Period:
             self.nextRequested.emit()
-        elif self.selected_annotation is not None:
+        elif self.selected_annotation is not None and \
+                event.modifiers() == QtCore.Qt.ControlModifier | QtCore.Qt.AltModifier:
             existing_label = self.selected_annotation.label
             if existing_label is None:
                 existing_label = ''
@@ -201,6 +202,21 @@ class SelectableAudioWidget(QtWidgets.QWidget):
             self.selected_annotation.save()
             self.selectionChanged.emit(self.selected_annotation)
             self.updateVisible()
+        elif self.selected_annotation is not None:
+            if self.selected_annotation._type == self.hierarchy.lowest and\
+                event.modifiers() == QtCore.Qt.ControlModifier and \
+                event.key() in [QtCore.Qt.Key_C, QtCore.Qt.Key_B, QtCore.Qt.Key_V]:
+                if event.key() == QtCore.Qt.Key_C:
+                    type = 'closure'
+                elif event.key() == QtCore.Qt.Key_B:
+                    type = 'burst'
+                elif event.key() == QtCore.Qt.Key_V:
+                    type = 'voicing'
+                self.selected_annotation.add_subannotation(type,
+                        begin = self.selected_annotation.begin,
+                        end = self.selected_annotation.end)
+                self.selected_annotation.save()
+                self.updateVisible()
         else:
             print(event.key())
 
