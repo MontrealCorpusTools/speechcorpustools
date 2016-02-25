@@ -29,7 +29,7 @@ class SpectralPlotWidget(SelectablePlotWidget):
             self.pitchplot.visible = False
         else:
             self.pitchplot.visible = True
-            factor = 250 / 600
+            factor = 125 / 600
             data = []
             for i,(t, p) in enumerate(pitch):
                 if p <= 0:

@@ -526,7 +526,8 @@ class SelectableAudioWidget(QtWidgets.QWidget):
             #print('spec_time', time.time() - sp_begin)
             self.updatePlayTime(self.min_vis_time)
             if self.pitch is not None:
-                self.spectrumWidget.update_pitch([[x[0] - min_time, x[1]] for x in self.pitch if x[0] > min_time - 1 and x[0] < max_time + 1])
+                pitch = [[x[0] - min_time, x[1]] for x in self.pitch if x[0] > min_time - 0.1 and x[0] < max_time + 0.1]
+                self.spectrumWidget.update_pitch(pitch)
 
             #sp_begin = time.time()
             #print('aud_time', time.time() - sp_begin)
