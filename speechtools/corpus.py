@@ -34,7 +34,7 @@ class CorpusContext(BaseContext):
         self._has_sound_files = None
         self._has_all_sound_files = None
         if getattr(sys, 'frozen', False):
-            self.config.reaper_path = None
+            self.config.reaper_path = os.path.join(sys.path[-1],'reaper')
         else:
             self.config.reaper_path = 'reaper'
 
@@ -44,6 +44,14 @@ class CorpusContext(BaseContext):
         if key == 'pause':
             return PauseAnnotation(corpus = self.corpus_name)
         return super(CorpusContext, self).__getattr__(key)
+
+    def __exit__(self, exc_type, exc, exc_tb):
+        if exc_type is None:
+            self.sql_session.commit()
+        else:
+            self.sql_session.rollback()
+        self.sql_session.expunge_all()
+        self.sql_session.close()
 
     def init_sql(self):
         self.engine = create_engine(self.config.sql_connection_string)

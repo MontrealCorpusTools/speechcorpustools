@@ -13,9 +13,18 @@ class SpectralPlotWidget(SelectablePlotWidget):
         self.unfreeze()
         self.spec = Spectrogram()
         self.pitchplot = scene.visuals.Line(connect = 'segments', color = 'b')
+        self.formantplots = {'F1':scene.visuals.Line(connect = 'segments', color = 'r'),
+                            'F2':scene.visuals.Line(connect = 'segments', color = 'r'),
+                            'F3':scene.visuals.Line(connect = 'segments', color = 'r')}
         self.yaxis.axis.ticker = ScaledTicker(self.yaxis.axis)
         self.xaxis.axis.ticker = ScaledTicker(self.xaxis.axis)
         self.view.add(self.pitchplot)
+        for k,v in self.formantplots.items():
+            self.view.add(v)
+        self.show_pitch = True
+        self.show_spec = True
+        self.show_voicing = False
+        self.show_formants = True
         self.freeze()
         self.view.add(self.spec)
         self.selection_time_line.parent = None
@@ -25,7 +34,7 @@ class SpectralPlotWidget(SelectablePlotWidget):
         self.play_time_line.visible = True
 
     def set_pitch(self, pitch):
-        if not pitch:
+        if not pitch or not self.show_pitch:
             self.pitchplot.visible = False
         else:
             self.pitchplot.visible = True
@@ -47,12 +56,39 @@ class SpectralPlotWidget(SelectablePlotWidget):
             data = np.array(data)
             self.pitchplot.set_data(pos = data)
 
+    def set_formants(self, formants):
+        if not formants or not self.show_formants:
+            for k, v in self.formantplots.items():
+                v.visible = False
+        else:
+            for k,v in self.formantplots.items():
+                v.visible = True
+                data = []
+                for i,(t, f) in enumerate(formants[k]):
+                    if f <= 0:
+                        continue
+                    if i <= 0:
+                        continue
+                    if formants[k][i-1][1] <= 0:
+                        continue
+                    t = t * self.spec.xscale
+                    f = f / self.spec.yscale
+                    prev_f = formants[k][i-1]
+                    prev_f = [prev_f[0] * self.spec.xscale, prev_f[1]  / self.spec.yscale]
+                    data.append(prev_f)
+                    data.append([t, f])
+                #print(data)
+                data = np.array(data)
+                self.formantplots[k].set_data(pos = data)
+
+
     def set_sampling_rate(self, sr):
         self.spec.set_sampling_rate(sr)
 
     def set_signal(self, data):
+        if not self.show_spec:
+            self.spec.visible = False
         self.spec.set_signal(data)
-        self.spec.clim = 'auto'
         #self.view.camera.set_range()
         #max_time = data[:,0].max()
         #min_time = data[:,0].min()
@@ -61,7 +97,6 @@ class SpectralPlotWidget(SelectablePlotWidget):
         self.view.camera.rect = (0, 0, self.spec.xmax(), self.spec.ymax())
         self.yaxis.axis.ticker.scale = self.spec.yscale
         #self.xaxis.axis.ticker.scale = 1/ self.spec.xscale
-        self.pitchplot.visible = True
 
     def set_selection_time(self, pos):
         if pos is None:

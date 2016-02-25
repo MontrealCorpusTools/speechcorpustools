@@ -13,7 +13,7 @@ from speechtools.corpus import CorpusContext
 
 from speechtools.utils import update_sound_files, gp_language_stops
 
-from speechtools.acoustics.analysis import get_pitch
+from speechtools.acoustics.analysis import get_pitch, get_formants
 
 class FunctionWorker(QtCore.QThread):
     updateProgress = QtCore.pyqtSignal(object)
@@ -319,8 +319,19 @@ class BoundaryGeneratorWorker(QueryWorker):
 class SpectrogramGeneratorWorker(QueryWorker):
     pass
 
-class FormantGeneratorWorker(QueryWorker):
-    pass
+class FormantsGeneratorWorker(QueryWorker):
+    def run(self):
+        print('beginning formants work')
+        config = self.kwargs['config']
+        algorithm = self.kwargs['algorithm']
+        sound_file = self.kwargs['sound_file']
+        with CorpusContext(config) as c:
+            formant_list = get_formants(c, sound_file, algorithm)
+            formant_dict = {'F1': np.array([[x.time, x.F1] for x in formant_list]),
+                            'F2': np.array([[x.time, x.F2] for x in formant_list]),
+                            'F3': np.array([[x.time, x.F3] for x in formant_list])}
+        self.dataReady.emit(formant_dict)
+        print('finished formants work')
 
 class PitchGeneratorWorker(QueryWorker):
     def run(self):
