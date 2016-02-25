@@ -7,6 +7,6 @@ from .query import QueryWidget
 
 from .help import HelpWidget
 
-from .details import DetailsWidget
+from .details import DetailsWidget, AcousticDetailsWidget
 
 from .main import DiscourseWidget, ViewWidget

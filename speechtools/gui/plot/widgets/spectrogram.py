@@ -35,7 +35,10 @@ class SpectralPlotWidget(SelectablePlotWidget):
 
     def set_pitch(self, pitch):
         if not pitch:
-            data = None
+            self.pitchplot._bounds = None
+            self.pitchplot._changed['pos'] = True
+            self.pitchplot._pos = None
+            self.pitchplot.update()
         else:
             factor = 125 / 600
             data = []
@@ -53,13 +56,16 @@ class SpectralPlotWidget(SelectablePlotWidget):
                 data.append(prev_p)
                 data.append([t, p])
             data = np.array(data)
-        self.pitchplot.set_data(pos = data)
+            self.pitchplot.set_data(pos = data)
 
     def set_formants(self, formants):
         if not formants:
             data = None
             for k,v in self.formantplots.items():
-                self.formantplots[k].set_data(pos = data)
+                self.formantplots[k]._bounds = None
+                self.formantplots[k]._changed['pos'] = True
+                self.formantplots[k]._pos = None
+                self.formantplots[k].update()
         else:
             for k,v in self.formantplots.items():
                 data = []

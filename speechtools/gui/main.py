@@ -10,7 +10,7 @@ from polyglotdb.config import BASE_DIR, CorpusConfig
 from speechtools.corpus import CorpusContext
 
 from .widgets import (ViewWidget, HelpWidget, DiscourseWidget, QueryWidget, CollapsibleWidgetPair,
-                        DetailsWidget, ConnectWidget)
+                        DetailsWidget, ConnectWidget, AcousticDetailsWidget)
 
 from .helper import get_system_font_height
 
@@ -55,6 +55,7 @@ class RightPane(QtWidgets.QWidget):
         self.discourseWidget.discourseChanged.connect(self.discourseChanged.emit)
         self.helpWidget = HelpWidget()
         self.detailsWidget = DetailsWidget()
+        self.acousticsWidget = AcousticDetailsWidget()
         upper = QtWidgets.QTabWidget()
 
         upper.addTab(self.connectWidget,'Connection')
@@ -63,6 +64,8 @@ class RightPane(QtWidgets.QWidget):
         lower = QtWidgets.QTabWidget()
 
         lower.addTab(self.detailsWidget, 'Details')
+
+        lower.addTab(self.acousticsWidget, 'Acoustics')
 
         lower.addTab(self.helpWidget, 'Help')
 
@@ -98,6 +101,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.leftPane.viewWidget.discourseWidget.previousRequested.connect(self.leftPane.queryWidget.requestPrevious)
         self.leftPane.viewWidget.discourseWidget.markedAsAnnotated.connect(self.leftPane.queryWidget.markAnnotated)
         self.leftPane.viewWidget.discourseWidget.selectionChanged.connect(self.rightPane.detailsWidget.showDetails)
+        self.leftPane.viewWidget.discourseWidget.acousticsSelected.connect(self.rightPane.acousticsWidget.showDetails)
         self.mainWidget = CollapsibleWidgetPair(QtCore.Qt.Horizontal, self.leftPane,self.rightPane)
 
         #self.mainWidget.setStretchFactor(0, 1)

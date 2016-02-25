@@ -19,6 +19,7 @@ class SelectableAudioWidget(QtWidgets.QWidget):
     nextRequested = QtCore.pyqtSignal()
     markedAsAnnotated = QtCore.pyqtSignal(bool)
     selectionChanged = QtCore.pyqtSignal(object)
+    acousticsSelected = QtCore.pyqtSignal(object)
     def __init__(self, parent = None):
         super(SelectableAudioWidget, self).__init__(parent)
         self.signal = None
@@ -261,6 +262,45 @@ class SelectableAudioWidget(QtWidgets.QWidget):
                 break
         return annotation
 
+    def get_acoustics(self, time):
+        acoustics = {}
+        if self.pitch is None:
+            acoustics['F0'] = None
+        else:
+            for i,p in enumerate(self.pitch):
+                if p[0] > time:
+                    if i != 0:
+                        prev_time = self.pitch[i-1][0]
+                        prev_pitch = self.pitch[i-1][1]
+                        dur = p[0] - prev_time
+                        cur_time = time - prev_time
+                        percent = cur_time / dur
+                        acoustics['F0'] = prev_pitch * percent + p[1] * (1 - percent)
+                    else:
+                        acoustics['F0'] = p[1]
+                    break
+            else:
+                acoustics['F0'] = None
+        if self.formants is None:
+            acoustics['F1'] = None
+            acoustics['F2'] = None
+            acoustics['F3'] = None
+        else:
+            for k,v in self.formants.items():
+                for i,f in enumerate(v):
+                    if f[0] > time:
+                        if i != 0:
+                            prev_time = v[i-1][0]
+                            prev_formant = v[i-1][1]
+                            dur = p[0] - prev_time
+                            cur_time = time - prev_time
+                            percent = cur_time / dur
+                            acoustics[k] = prev_formant * percent + f[1] * (1 - percent)
+                        else:
+                            acoustics[k] = f[1]
+                        break
+        self.acousticsSelected.emit(acoustics)
+
     def on_mouse_press(self, event):
         """
         Mouse button press event
@@ -277,6 +317,7 @@ class SelectableAudioWidget(QtWidgets.QWidget):
             self.max_selected_time = None
             self.audioWidget.update_selection(self.min_selected_time, self.max_selected_time)
             time = self.audioWidget.transform_pos_to_time(event.pos)
+            self.get_acoustics(time)
             selection = self.audioWidget.check_selection(event)
             if selection is not None:
                 self.selected_boundary = selection
