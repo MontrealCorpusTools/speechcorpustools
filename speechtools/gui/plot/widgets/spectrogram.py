@@ -34,10 +34,9 @@ class SpectralPlotWidget(SelectablePlotWidget):
         self.play_time_line.visible = True
 
     def set_pitch(self, pitch):
-        if not pitch or not self.show_pitch:
-            self.pitchplot.visible = False
+        if not pitch:
+            data = None
         else:
-            self.pitchplot.visible = True
             factor = 125 / 600
             data = []
             for i,(t, p) in enumerate(pitch):
@@ -54,15 +53,15 @@ class SpectralPlotWidget(SelectablePlotWidget):
                 data.append(prev_p)
                 data.append([t, p])
             data = np.array(data)
-            self.pitchplot.set_data(pos = data)
+        self.pitchplot.set_data(pos = data)
 
     def set_formants(self, formants):
-        if not formants or not self.show_formants:
-            for k, v in self.formantplots.items():
-                v.visible = False
+        if not formants:
+            data = None
+            for k,v in self.formantplots.items():
+                self.formantplots[k].set_data(pos = data)
         else:
             for k,v in self.formantplots.items():
-                v.visible = True
                 data = []
                 for i,(t, f) in enumerate(formants[k]):
                     if f <= 0:

@@ -59,6 +59,16 @@ class SpectralWidget(vp.Fig):
         super(SpectralWidget, self).__init__()
         self._grid._default_class = SpectralPlotWidget
 
+    def toggle_spectrogram(self):
+        self[0:2, 0].spec.visible = not self[0:2, 0].spec.visible
+
+    def toggle_pitch(self):
+        self[0:2, 0].pitchplot.visible = not self[0:2, 0].pitchplot.visible
+
+    def toggle_formants(self):
+        for v in self[0:2, 0].formantplots.values():
+            v.visible = not v.visible
+
     def update_sampling_rate(self, sr):
         self[0:2, 0].set_sampling_rate(sr)
 

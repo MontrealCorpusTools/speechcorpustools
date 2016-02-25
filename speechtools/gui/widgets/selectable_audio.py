@@ -76,6 +76,9 @@ class SelectableAudioWidget(QtWidgets.QWidget):
         mainlayout.addLayout(layout)
 
         self.hierarchyWidget = HierarchyWidget()
+        self.hierarchyWidget.toggleSpectrogram.connect(self.spectrumWidget.toggle_spectrogram)
+        self.hierarchyWidget.togglePitch.connect(self.spectrumWidget.toggle_pitch)
+        self.hierarchyWidget.toggleFormants.connect(self.spectrumWidget.toggle_formants)
 
         mainlayout.addWidget(self.hierarchyWidget)
 

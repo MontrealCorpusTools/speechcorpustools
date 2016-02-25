@@ -3,7 +3,27 @@ from PyQt5 import QtGui, QtCore, QtWidgets
 
 from ..helper import get_system_font_height
 
+class ClickableLabel(QtWidgets.QLabel):
+    clicked = QtCore.pyqtSignal()
+    def __init__(self, *args, **kwargs):
+        super(ClickableLabel, self).__init__(*args, **kwargs)
+
+        self.enabled = True
+
+    def toggle(self):
+        self.enabled = not self.enabled
+        if self.enabled:
+            self.setStyleSheet("QLabel { color : black; }")
+        else:
+            self.setStyleSheet("QLabel { color : grey; }")
+
+    def mousePressEvent(self, event):
+        self.clicked.emit()
+
 class HierarchyWidget(QtWidgets.QWidget):
+    toggleSpectrogram = QtCore.pyqtSignal()
+    toggleFormants = QtCore.pyqtSignal()
+    togglePitch = QtCore.pyqtSignal()
     def __init__(self, parent = None):
         super(HierarchyWidget, self).__init__(parent)
         layout = QtWidgets.QVBoxLayout()
@@ -17,20 +37,28 @@ class HierarchyWidget(QtWidgets.QWidget):
         self.spectrumLayout = QtWidgets.QVBoxLayout()
         self.spectrumLayout.setSpacing(0)
         self.spectrumLayout.setContentsMargins(0,0,0,0)
-        s = QtWidgets.QLabel('Spectrogram')
-        self.setFixedWidth(s.fontMetrics().width(s.text())*2)
-        f = QtWidgets.QLabel('Formants')
-        p = QtWidgets.QLabel('Pitch')
-        v = QtWidgets.QLabel('Voicing')
-        i = QtWidgets.QLabel('Intensity')
-        s.setSizePolicy(QtWidgets.QSizePolicy.Minimum,QtWidgets.QSizePolicy.Minimum)
-        f.setSizePolicy(QtWidgets.QSizePolicy.Minimum,QtWidgets.QSizePolicy.Minimum)
-        p.setSizePolicy(QtWidgets.QSizePolicy.Minimum,QtWidgets.QSizePolicy.Minimum)
+
+        self.specLabel = ClickableLabel('Spectrogram')
+        self.specLabel.clicked.connect(self.toggleSpecLabel)
+        self.setFixedWidth(self.specLabel.fontMetrics().width(self.specLabel.text())*2)
+        self.specLabel.setSizePolicy(QtWidgets.QSizePolicy.Minimum,QtWidgets.QSizePolicy.Minimum)
+
+        self.formantLabel = ClickableLabel('Formants')
+        self.formantLabel.clicked.connect(self.toggleFormantLabel)
+        #self.setFixedWidth(self.formantLabel.fontMetrics().width(self.formantLabel.text())*2)
+        self.formantLabel.setSizePolicy(QtWidgets.QSizePolicy.Minimum,QtWidgets.QSizePolicy.Minimum)
+
+        self.pitchLabel = ClickableLabel('Pitch')
+        self.pitchLabel.clicked.connect(self.togglePitchLabel)
+        #self.setFixedWidth(self.pitchLabel.fontMetrics().width(self.pitchLabel.text())*2)
+        self.pitchLabel.setSizePolicy(QtWidgets.QSizePolicy.Minimum,QtWidgets.QSizePolicy.Minimum)
+        v = ClickableLabel('Voicing')
+        i = ClickableLabel('Intensity')
         v.setSizePolicy(QtWidgets.QSizePolicy.Minimum,QtWidgets.QSizePolicy.Minimum)
         i.setSizePolicy(QtWidgets.QSizePolicy.Minimum,QtWidgets.QSizePolicy.Minimum)
-        self.spectrumLayout.addWidget(s)
-        #self.spectrumLayout.addWidget(f)
-        #self.spectrumLayout.addWidget(p)
+        self.spectrumLayout.addWidget(self.specLabel)
+        self.spectrumLayout.addWidget(self.formantLabel)
+        self.spectrumLayout.addWidget(self.pitchLabel)
         #self.spectrumLayout.addWidget(v)
         #self.spectrumLayout.addWidget(i)
         self.hWidget = QtWidgets.QWidget()
@@ -41,6 +69,18 @@ class HierarchyWidget(QtWidgets.QWidget):
         layout.addLayout(self.spectrumLayout)
 
         self.setLayout(layout)
+
+    def toggleSpecLabel(self):
+        self.toggleSpectrogram.emit()
+        self.specLabel.toggle()
+
+    def toggleFormantLabel(self):
+        self.toggleFormants.emit()
+        self.formantLabel.toggle()
+
+    def togglePitchLabel(self):
+        self.togglePitch.emit()
+        self.pitchLabel.toggle()
 
     def resizeEvent(self, event):
         super(HierarchyWidget, self).resizeEvent(event)
