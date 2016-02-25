@@ -7,7 +7,7 @@ from ..plot import SCTSummaryWidget
 
 from ..workers import (DiscourseQueryWorker, DiscourseAudioWorker)
 
-from .base import DataListWidget, CollapsibleWidgetPair
+from .base import DataListWidget, CollapsibleWidgetPair, DetailedMessageBox
 
 from .selectable_audio import SelectableAudioWidget
 

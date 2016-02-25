@@ -303,7 +303,7 @@ class DiscourseQueryWorker(QueryWorker):
             q = c.query_graph(word).filter(word.discourse.name == discourse)
             preloads = []
             if a_type in c.hierarchy.subannotations:
-                for s in c.hierarchy.subannotations[t]:
+                for s in c.hierarchy.subannotations[a_type]:
                     preloads.append(getattr(word, s))
             for t in c.hierarchy.get_lower_types(a_type):
                 preloads.append(getattr(word, t))

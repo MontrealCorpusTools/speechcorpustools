@@ -60,7 +60,7 @@ class CorpusContext(BaseContext):
             Base.metadata.create_all(self.engine)
 
     def query_graph(self, annotation_type):
-        if annotation_type.type not in self.annotation_types:
+        if annotation_type.type not in self.annotation_types and annotation_type.type != 'pause': #FIXME make more general
             raise(GraphQueryError('The graph does not have any annotations of type \'{}\'.  Possible types are: {}'.format(annotation_type.name, ', '.join(sorted(self.annotation_types)))))
         if self.config.query_behavior == 'speaker':
             cls = SpeakerGraphQuery
@@ -139,6 +139,9 @@ class CorpusContext(BaseContext):
 
         self.execute_cypher(statement)
         self.hierarchy.annotation_types.add('pause')
+        self.hierarchy.subset_tokens[word_type].add('pause')
+        self.encode_hierarchy()
+        self.hierarchy = self.generate_hierarchy()
         self.save_variables()
 
     def reset_pauses(self):
@@ -161,10 +164,12 @@ class CorpusContext(BaseContext):
         self.graph.cypher.execute(statement)
         try:
             self.hierarchy.annotation_types.remove('pause')
+            self.hierarchy.subset_tokens[word_type].remove('pause')
+            self.encode_hierarchy()
+            self.hierarchy = self.generate_hierarchy()
             self.save_variables()
         except KeyError:
             pass
-
 
     def reset_utterances(self):
         """
@@ -175,6 +180,8 @@ class CorpusContext(BaseContext):
             q.delete()
             self.hierarchy.annotation_types.remove('utterance')
             del self.hierarchy['utterance']
+            self.encode_hierarchy()
+            self.hierarchy = self.generate_hierarchy()
             self.save_variables()
         except GraphQueryError:
             pass
@@ -220,6 +227,8 @@ class CorpusContext(BaseContext):
 
         self.hierarchy[word_type] = 'utterance'
         self.hierarchy['utterance'] = None
+        self.encode_hierarchy()
+        self.hierarchy = self.generate_hierarchy()
         self.save_variables()
 
     def get_utterances(self, discourse,

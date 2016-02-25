@@ -27,7 +27,7 @@ class PauseAnnotation(AnnotationAttribute):
                 pos = self.pos + 1
             return PausePathAnnotation(self.type, pos, corpus = self.corpus, hierarchy = self.hierarchy)
 
-        return PauseAttribute(self, key)
+        return PauseAttribute(self, key, False)
 
     @property
     def key(self):
@@ -45,7 +45,7 @@ class PausePathAnnotation(PathAnnotation):
     def __getattr__(self, key):
         if key == 'annotation':
             raise(AttributeError('Annotations cannot have annotations.'))
-        return PausePathAttribute(self, key)
+        return PausePathAttribute(self, key, False)
 
 class PausePathAttribute(PathAttribute):
     duration_return_template = 'extract(n in {alias}[-1..]| n.end)[0] - extract(n in {alias}[0..1]| n.begin)[0]'
