@@ -158,6 +158,7 @@ class Lab1QueryWorker(QueryWorker):
     def run_query(self):
         config = self.kwargs['config']
         filters = self.kwargs['filters']
+        columns = self.kwargs['columns']
         try:
             stops = gp_language_stops[config.corpus_name]
         except KeyError:
@@ -169,43 +170,19 @@ class Lab1QueryWorker(QueryWorker):
             utt_type = c.hierarchy.highest
             a_type = getattr(c, a_type)
             w_type = getattr(a_type, w_type)
-            utt_type = getattr(a_type, utt_type)
+            utt_type = getattr(w_type, utt_type)
             q = c.query_graph(a_type)
-            q = q.order_by(a_type.discourse.name)
-            q = q.order_by(a_type.begin)
+            q = q.filter(a_type.label.in_(stops))
+            if self.kwargs['query_type'] in ['Lab 1 stops', 'Lab 2 stops']:
+                q = q.order_by(a_type.discourse.name)
+                q = q.order_by(a_type.begin)
             if filters:
                 q = q.filter(*filters)
-            #print('Number found: {}'.format(q.count()))
-            q = q.columns(a_type.label.column_name('Stop'),
-                        a_type.begin.column_name('Begin'),
-                        a_type.end.column_name('End'),
-                        w_type.label.column_name('Word'),
-                        a_type.checked.column_name('Annotated'),
-                        a_type.speaker.name.column_name('Speaker'),
-                        a_type.discourse.name.column_name('Discourse'),
-                        a_type.id.column_name('Unique_id'),
-                        a_type.notes.column_name('Notes'))
-
-            if 'burst' in c.hierarchy.subannotations[c.hierarchy.lowest]:
-                q = q.columns(a_type.burst.begin.column_name('Burst_begin'),
-                        a_type.burst.end.column_name('Burst_end'),
-                        Sum(a_type.burst.duration).column_name('Burst_duration'))
-            if 'voicing' in c.hierarchy.subannotations[c.hierarchy.lowest]:
-                q = q.columns(a_type.voicing.begin.column_name('Voicing_begin'),
-                            a_type.voicing.end.column_name('Voicing_end'),
-                            Sum(a_type.voicing.duration).column_name('Voicing_duration'))
-                if 'closure' in c.hierarchy.subannotations[c.hierarchy.lowest]:
-                    q = q.columns(a_type.closure.begin.column_name('Closure_begin'),
-                                a_type.closure.end.column_name('Closure_end'),
-                                Sum(a_type.closure.duration).column_name('Closure_duration'))
+            if columns:
+                q = q.columns(*columns)
             #q = q.limit(100)
             results = q.all()
         return q, results
-
-
-
-class AnnotatedQueryWorker(QueryWorker):
-    pass
 
 class ExportQueryWorker(QueryWorker):
     def run(self):
@@ -215,6 +192,7 @@ class ExportQueryWorker(QueryWorker):
             config = self.kwargs['config']
             export_path = self.kwargs['path']
             filters = self.kwargs['filters']
+            columns = self.kwargs['columns']
             try:
                 stops = gp_language_stops[config.corpus_name]
             except KeyError:
@@ -228,46 +206,13 @@ class ExportQueryWorker(QueryWorker):
                 w_type = getattr(a_type, w_type)
                 utt_type = getattr(a_type, utt_type)
                 q = c.query_graph(a_type)
-                q = q.order_by(a_type.discourse.name)
-                q = q.order_by(a_type.begin)
                 if filters:
+                    q = q.order_by(a_type.discourse.name)
+                    q = q.order_by(a_type.begin)
                     q = q.filter(*filters)
-                #print('Number found: {}'.format(q.count()))
-                q = q.columns(a_type.label.column_name('Stop'),
-                            a_type.begin.column_name('Begin'),
-                            a_type.end.column_name('End'),
-                            a_type.duration.column_name('Duration'))
-                if 'burst' in c.hierarchy.subannotations[c.hierarchy.lowest]:
-                    q = q.columns(a_type.burst.begin.column_name('Burst_begin'),
-                            a_type.burst.end.column_name('Burst_end'),
-                            Sum(a_type.burst.duration).column_name('Burst_duration'))
-                if 'voicing' in c.hierarchy.subannotations[c.hierarchy.lowest]:
-                    q = q.columns(a_type.voicing.begin.column_name('Voicing_begin'),
-                                a_type.voicing.end.column_name('Voicing_end'),
-                                Sum(a_type.voicing.duration).column_name('Voicing_duration'))
-                if 'closure' in c.hierarchy.subannotations[c.hierarchy.lowest]:
-                    q = q.columns(a_type.closure.begin.column_name('Closure_begin'),
-                                a_type.closure.end.column_name('Closure_end'),
-                                Sum(a_type.closure.duration).column_name('Closure_duration'))
+                if columns:
+                    q = q.columns(*columns)
 
-                q = q.columns(w_type.label.column_name('Word'),
-                            w_type.begin.column_name('Word_begin'),
-                            w_type.end.column_name('Word_end'),
-                            w_type.duration.column_name('Word_duration'),
-                            w_type.transcription.column_name('Word_transcription'),
-                            a_type.following.label.column_name('Following_segment'),
-                            a_type.following.begin.column_name('Following_segment_begin'),
-                            a_type.following.end.column_name('Following_segment_end'),
-                            a_type.following.duration.column_name('Following_segment_duration'),
-                            a_type.following.following.label.column_name('Following_following_segment'),
-                            a_type.following.following.begin.column_name('Following_following_segment_begin'),
-                            a_type.following.following.end.column_name('Following_following_segment_end'),
-                            a_type.following.following.duration.column_name('Following_following_segment_duration'),
-                            a_type.checked.column_name('Annotated'),
-                            a_type.speaker.name.column_name('Speaker'),
-                            a_type.discourse.name.column_name('Discourse'),
-                            w_type.utterance.phones.rate.column_name('Speaking_rate'),
-                            a_type.notes.column_name('Notes'))
                 #q = q.limit(100)
                 results = q.to_csv(export_path)
         except Exception as e:
