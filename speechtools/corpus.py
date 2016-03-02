@@ -340,11 +340,11 @@ ORDER BY begin'''.format(corpus = self.corpus_name, discourse = discourse, word_
             WHERE speaker.name = {{speaker_name}}
             WITH node_utterance, node_word_in_node_utterance
             ORDER BY node_word_in_node_utterance.begin
-            WITH collect(node_word_in_node_utterance) as nodes
-            WITH nodes,
+            WITH node_utterance,collect(node_word_in_node_utterance) as nodes
+            WITH node_utterance,nodes,
             range(0, size(nodes)) as pos
             UNWIND pos as p
-            WITH p, nodes[p] as n
+            WITH node_utterance, p, nodes[p] as n
             SET n.position_in_utterance = p + 1
             '''.format(w_type = w_type, corpus_name = self.corpus_name)
             for s in self.speakers:
@@ -355,11 +355,11 @@ ORDER BY begin'''.format(corpus = self.corpus_name, discourse = discourse, word_
             WHERE discourse.name = {{discourse_name}}
             WITH node_utterance, node_word_in_node_utterance
             ORDER BY node_word_in_node_utterance.begin
-            WITH collect(node_word_in_node_utterance) as nodes
-            WITH nodes,
+            WITH node_utterance, collect(node_word_in_node_utterance) as nodes
+            WITH node_utterance, nodes,
             range(0, size(nodes)) as pos
             UNWIND pos as p
-            WITH p, nodes[p] as n
+            WITH node_utterance, p, nodes[p] as n
             SET n.position_in_utterance = p + 1
             '''.format(w_type = w_type, corpus_name = self.corpus_name)
             for d in self.discourses:
@@ -369,11 +369,11 @@ ORDER BY begin'''.format(corpus = self.corpus_name, discourse = discourse, word_
             (node_word_in_node_utterance:{w_type}:{corpus_name})-[:contained_by]->(node_utterance)
             WITH node_utterance, node_word_in_node_utterance
             ORDER BY node_word_in_node_utterance.begin
-            WITH collect(node_word_in_node_utterance) as nodes
-            WITH nodes,
+            WITH node_utterance, collect(node_word_in_node_utterance) as nodes
+            WITH node_utterance, nodes,
             range(0, size(nodes)) as pos
             UNWIND pos as p
-            WITH p, nodes[p] as n
+            WITH node_utterance, p, nodes[p] as n
             SET n.position_in_utterance = p + 1
             '''.format(w_type = w_type, corpus_name = self.corpus_name)
             self.execute_cypher(statement)
