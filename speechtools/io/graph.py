@@ -34,7 +34,7 @@ def import_utterance_csv(corpus_context, discourse, transaction = None):
     else:
         transaction.append(statement)
 
-def subannoations_data_to_csv(corpus_context, type, data):
+def subannotations_data_to_csv(corpus_context, type, data):
     path = os.path.join(corpus_context.config.temporary_directory('csv'),
                         '{}_subannotations.csv'.format(type))
     header = sorted(data[0].keys())

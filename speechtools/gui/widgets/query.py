@@ -211,9 +211,9 @@ class QueryForm(QtWidgets.QWidget):
                             #w_type.num_syllables <= 3,
                             ])
                 columns.extend([a_type.speaker.name.column_name('speaker'),
-                            Count(getattr(a_type, 'class').column_name('class')),
-                            #a_type.place.column_name('place'),
-                            #Count(a_type.label)
+                            getattr(a_type, 'class').column_name('class'),
+                            a_type.place.column_name('place'),
+                            Count(a_type.label)
                             ])
         kwargs['query_type'] = query_type
         kwargs['filters'] = filters

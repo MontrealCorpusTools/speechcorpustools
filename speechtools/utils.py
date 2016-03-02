@@ -4,7 +4,7 @@ from uuid import uuid1
 
 from polyglotdb.sql import get_or_create
 
-from speechtools.io.graph import subannoations_data_to_csv, import_subannotation_csv
+from speechtools.io.graph import subannotations_data_to_csv, import_subannotation_csv
 
 from speechtools.sql.models import (SoundFile, Discourse)
 

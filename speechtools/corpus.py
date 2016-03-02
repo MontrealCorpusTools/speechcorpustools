@@ -330,3 +330,52 @@ ORDER BY begin'''.format(corpus = self.corpus_name, discourse = discourse, word_
     def add_discourse(self, data):
         super(CorpusContext, self).add_discourse(data)
         add_acoustic_info(self, data)
+
+    def encode_utterance_position(self):
+        w_type = getattr(self, 'word')
+        w_type = w_type.type
+        if self.config.query_behavior == 'speaker':
+            statement = '''MATCH (node_utterance:utterance:speech:{corpus_name})-[:spoken_by]->(speaker:Speaker:{corpus_name}),
+            (node_word_in_node_utterance:{w_type}:{corpus_name})-[:contained_by]->(node_utterance)
+            WHERE speaker.name = {{speaker_name}}
+            WITH node_utterance, node_word_in_node_utterance
+            ORDER BY node_word_in_node_utterance.begin
+            WITH collect(node_word_in_node_utterance) as nodes
+            WITH nodes,
+            range(0, size(nodes)) as pos
+            UNWIND pos as p
+            WITH p, nodes[p] as n
+            SET n.position_in_utterance = p + 1
+            '''.format(w_type = w_type, corpus_name = self.corpus_name)
+            for s in self.speakers:
+                self.execute_cypher(statement, speaker_name = s)
+        elif self.config.query_behavior == 'discourse':
+            statement = '''MATCH (node_utterance:utterance:speech:{corpus_name})-[:spoken_in]->(discourse:Discourse:{corpus_name}),
+            (node_word_in_node_utterance:{w_type}:{corpus_name})-[:contained_by]->(node_utterance)
+            WHERE discourse.name = {{discourse_name}}
+            WITH node_utterance, node_word_in_node_utterance
+            ORDER BY node_word_in_node_utterance.begin
+            WITH collect(node_word_in_node_utterance) as nodes
+            WITH nodes,
+            range(0, size(nodes)) as pos
+            UNWIND pos as p
+            WITH p, nodes[p] as n
+            SET n.position_in_utterance = p + 1
+            '''.format(w_type = w_type, corpus_name = self.corpus_name)
+            for d in self.discourses:
+                self.execute_cypher(statement, discourse_name = d)
+        else:
+            statement = '''MATCH (node_utterance:utterance:speech:{corpus_name}),
+            (node_word_in_node_utterance:{w_type}:{corpus_name})-[:contained_by]->(node_utterance)
+            WITH node_utterance, node_word_in_node_utterance
+            ORDER BY node_word_in_node_utterance.begin
+            WITH collect(node_word_in_node_utterance) as nodes
+            WITH nodes,
+            range(0, size(nodes)) as pos
+            UNWIND pos as p
+            WITH p, nodes[p] as n
+            SET n.position_in_utterance = p + 1
+            '''.format(w_type = w_type, corpus_name = self.corpus_name)
+            self.execute_cypher(statement)
+        self.hierarchy.add_token_properties(self, w_type, [('position_in_utterance', int)])
+        self.save_variables()
