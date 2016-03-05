@@ -46,6 +46,10 @@ class RightPane(QtWidgets.QWidget):
         if os.path.exists(sct_config_pickle_path):
             with open(sct_config_pickle_path, 'rb') as f:
                 config = pickle.load(f)
+            if config.corpus_name:
+                with CorpusContext(config) as c:
+                    c.hierarchy = c.generate_hierarchy()
+                    c.save_variables()
         else:
             config = None
         self.connectWidget = ConnectWidget(config = config)

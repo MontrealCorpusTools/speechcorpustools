@@ -41,6 +41,15 @@ class CorporaList(QtWidgets.QGroupBox):
             return None
         return sel[0].text()
 
+    def select(self, corpus_name):
+        for i in range(self.corporaList.count()):
+            item = self.corporaList.item(i)
+            if item.text() == corpus_name:
+                self.corporaList.setCurrentRow(i,
+                      QtCore.QItemSelectionModel.ClearAndSelect|QtCore.QItemSelectionModel.Current)
+
+                self.changed()
+
 class ConnectWidget(QtWidgets.QWidget):
     configChanged = QtCore.pyqtSignal(object)
     def __init__(self, config = None, parent = None):
@@ -106,6 +115,7 @@ class ConnectWidget(QtWidgets.QWidget):
         self.setLayout(layout)
         if config is not None:
             self.connectToServer()
+            self.corporaList.select(config.corpus_name)
 
         self.checkerWorker = AudioCheckerWorker()
         self.checkerWorker.dataReady.connect(self.enableFindAudio)
@@ -134,12 +144,16 @@ class ConnectWidget(QtWidgets.QWidget):
         password = self.passwordEdit.text()
         if not password:
             password = None
-        config = CorpusConfig('', graph_host = host, graph_port = port,
+        current_corpus = self.corporaList.text()
+        if current_corpus is None:
+            current_corpus = ''
+        config = CorpusConfig(current_corpus, graph_host = host, graph_port = port,
                         graph_user = user, graph_password = password)
         self.corporaList.clear()
         try:
             corpora = get_corpora_list(config)
             self.corporaList.add(corpora)
+            self.corporaList.select(current_corpus)
             self.configChanged.emit(config)
         except (ConnectionError, AuthorizationError, NetworkAddressError) as e:
             self.configChanged.emit(None)
