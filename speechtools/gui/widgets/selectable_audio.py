@@ -37,7 +37,6 @@ class SelectableAudioWidget(QtWidgets.QWidget):
         self.max_selected_time = None
         self.selected_boundary = None
         self.selected_time = None
-        self.rectselect = False
         self.allowSubEdit = True
         self.allowEdit = False
         self.selected_annotation = None
@@ -116,9 +115,7 @@ class SelectableAudioWidget(QtWidgets.QWidget):
         """
         Bootstrap the Qt keypress event items
         """
-        if event.key() == QtCore.Qt.Key_Shift:
-            self.rectselect = True
-        elif event.key() == QtCore.Qt.Key_Delete:
+        if event.key() == QtCore.Qt.Key_Delete or (event.key() == QtCore.Qt.Key_Backspace and event.modifiers() & QtCore.Qt.AltModifier):
             if self.selected_annotation is not None:
                 if self.selected_annotation._type not in self.hierarchy:
                     self.selected_annotation._annotation.delete_subannotation(self.selected_annotation)
@@ -167,7 +164,8 @@ class SelectableAudioWidget(QtWidgets.QWidget):
             elif self.m_audioOutput.state() == QtMultimedia.QAudio.SuspendedState:
                 self.m_audioOutput.resume()
         elif event.key() == QtCore.Qt.Key_Left:
-            if event.modifiers() == QtCore.Qt.ShiftModifier:
+            print(event.modifiers())
+            if event.modifiers() & QtCore.Qt.ShiftModifier:
                 print('shift left')
             else:
                 vis = self.max_vis_time - self.min_vis_time
@@ -195,7 +193,7 @@ class SelectableAudioWidget(QtWidgets.QWidget):
         elif event.key() == QtCore.Qt.Key_Period:
             self.nextRequested.emit()
         elif self.selected_annotation is not None and \
-                event.modifiers() == QtCore.Qt.ControlModifier | QtCore.Qt.AltModifier:
+                not event.modifiers() & (QtCore.Qt.ControlModifier | QtCore.Qt.AltModifier):
             existing_label = self.selected_annotation.label
             if existing_label is None:
                 existing_label = ''
@@ -228,12 +226,12 @@ class SelectableAudioWidget(QtWidgets.QWidget):
         else:
             print(event.key())
 
-    def keyReleaseEvent(self, event):
-        """
-        Bootstrap the Qt Key release event
-        """
-        if event.key() == QtCore.Qt.Key_Shift:
-            self.rectselect = False
+    #def keyReleaseEvent(self, event):
+    #    """
+    #    Bootstrap the Qt Key release event
+    #    """
+    #    if event.key() == QtCore.Qt.Key_Shift:
+    #        self.rectselect = False
 
     def find_annotation(self, key, time):
         annotation = None
@@ -312,7 +310,7 @@ class SelectableAudioWidget(QtWidgets.QWidget):
 
         if event.handled:
             return
-        if event.button == 1 and self.rectselect == False:
+        if event.button == 1 and not event.native.modifiers() & QtCore.Qt.ShiftModifier:
             self.min_selected_time = None
             self.max_selected_time = None
             self.audioWidget.update_selection(self.min_selected_time, self.max_selected_time)
@@ -326,7 +324,7 @@ class SelectableAudioWidget(QtWidgets.QWidget):
                 self.audioWidget.update_play_time(time)
                 self.spectrumWidget.update_play_time(event.pos[0])
 
-        elif event.button == 1 and self.rectselect == True:
+        elif event.button == 1:
             self.max_selected_time = None
             self.min_selected_time = self.audioWidget.transform_pos_to_time(event.pos)
 
@@ -356,7 +354,7 @@ class SelectableAudioWidget(QtWidgets.QWidget):
         if event.handled:
             return
         is_single_click = not event.is_dragging or abs(np.sum(event.press_event.pos - event.pos)) < 10
-        if event.button == 1 and is_single_click and self.rectselect == True:
+        if event.button == 1 and is_single_click and event.native.modifiers() & QtCore.Qt.ShiftModifier:
             key = self.audioWidget.get_key(event.pos)
             if key is None:
                 return
@@ -370,7 +368,7 @@ class SelectableAudioWidget(QtWidgets.QWidget):
             if self.signal is None:
                 return
             self.updatePlayTime(self.min_selected_time)
-        elif event.button == 1 and is_single_click and self.rectselect == False and \
+        elif event.button == 1 and is_single_click and not event.native.modifiers() & QtCore.Qt.ShiftModifier and \
                 self.selected_annotation is None:
             time = self.audioWidget.transform_pos_to_time(event.pos)
             if self.signal is None:
@@ -449,7 +447,7 @@ class SelectableAudioWidget(QtWidgets.QWidget):
 
     def on_mouse_move(self, event):
         snap = True
-        if event.button == 1 and event.is_dragging and self.rectselect:
+        if event.button == 1 and event.is_dragging and event.native.modifiers() & QtCore.Qt.ShiftModifier:
             time = self.audioWidget.transform_pos_to_time(event.pos)
             if self.max_selected_time is None:
                 if time < self.min_selected_time:
