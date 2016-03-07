@@ -154,6 +154,10 @@ class ConnectWidget(QtWidgets.QWidget):
             corpora = get_corpora_list(config)
             self.corporaList.add(corpora)
             self.corporaList.select(current_corpus)
+            if config.corpus_name:
+                with CorpusContext(config) as c:
+                    c.hierarchy = c.generate_hierarchy()
+                    c.save_variables()
             self.configChanged.emit(config)
         except (ConnectionError, AuthorizationError, NetworkAddressError) as e:
             self.configChanged.emit(None)
@@ -161,7 +165,7 @@ class ConnectWidget(QtWidgets.QWidget):
                 reply = QtWidgets.QMessageBox.critical(self,
                     "Could not connect to server", str(e))
             return
-        self.checkAudio()
+        #self.checkAudio()
 
     def resetCache(self):
         config = self.createConfig()

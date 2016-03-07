@@ -8,7 +8,7 @@ class SubannotationDialog(QtWidgets.QDialog):
         layout = QtWidgets.QFormLayout()
 
         if subannotation_types is None:
-            subannotation_types = ['burst', 'closure', 'voicing']
+            subannotation_types = ['burst', 'closure', 'voicing', 'preaspiration']
 
         self.typeEdit = QtWidgets.QComboBox()
         for sa in subannotation_types:
@@ -45,6 +45,7 @@ class NoteDialog(QtWidgets.QDialog):
 
         self.typeEdit = QtWidgets.QLineEdit()
         self.typeEdit.setText('notes')
+        self.typeEdit.setEnabled(False)
 
         self.notesEdit = QtWidgets.QLineEdit()
         if annotation.notes is not None:
