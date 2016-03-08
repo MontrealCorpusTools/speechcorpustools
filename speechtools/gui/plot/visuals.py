@@ -14,14 +14,15 @@ from vispy.geometry import Rect
 
 from vispy.visuals.visual import Visual
 from vispy.visuals.shaders import Function
+from vispy.visuals import collections
 from vispy.color import Color, ColorArray, get_colormap
 
 
 
-class SCTLinePlot(scene.visuals.Line):
+class SCTLineVisual(visuals.LineVisual):
     def __init__(self, *args, **kwargs):
         kwargs.update(width = 40)
-        scene.visuals.Line.__init__(self, *args, **kwargs)
+        visuals.LineVisual.__init__(self, *args, **kwargs)
         self.unfreeze()
         try:
             colormap = get_colormap(self._color)
@@ -102,6 +103,58 @@ class SCTLinePlot(scene.visuals.Line):
             c[selected_index + 1] = highlight_color
 
         scene.visuals.Line.set_data(self, color = c)
+
+class LineCollectionVisual(visuals.visual.BaseVisual, collections.agg_segment_collection.AggSegmentCollection):
+    pass
+
+class SCTAggLine(visuals.line.line._AggLineVisual):
+    def _prepare_draw(self, view):
+        bake = False
+        if self._parent._changed['pos']:
+            if self._parent._pos is None:
+                return False
+            # todo: does this result in unnecessary copies?
+            self._pos = np.ascontiguousarray(
+                self._parent._pos.astype(np.float32))
+            bake = True
+
+        if self._parent._changed['color']:
+            self._color = self._parent._interpret_color()
+            bake = True
+
+        if bake:
+            if self._parent._connect not in [None, 'strip']:
+                segments = SegmentCollection("agg")
+                P0 = self._pos[np.arange(0, self._pos.shape[0], 2)]
+                P0 = np.hstack((P0, np.zeros((P0.shape[0],1))))
+                P1 = self._pos[np.arange(1, self._pos.shape[0], 2)]
+                P1 = np.hstack((P1, np.zeros((P1.shape[0],1))))
+                c = self._color[np.arange(0, self._color.shape[0], 2)]
+                segments.append(P0,
+                        P1,
+                        color = c)
+                segments._update()
+                #self.shared_program.bind(segments._vertices_buffer)
+                #if self._uniforms_list is not None:
+                #    self.shared_program["uniforms"] = segments._uniforms_texture
+                #    self.shared_program["uniforms_shape"] = segments._ushape
+                #V, I = segments._uniforms_list.data, segments._indices_list.data
+            else:
+                V, I = self._agg_bake(self._pos, self._color)
+                self._vbo.set_data(V)
+                self._index_buffer.set_data(I)
+
+                #self._program.prepare()
+                self.shared_program.bind(self._vbo)
+                uniforms = dict(closed=False, miter_limit=4.0, dash_phase=0.0,
+                                linewidth=self._parent._width)
+                for n, v in uniforms.items():
+                    self.shared_program[n] = v
+                for n, v in self._U.items():
+                    self.shared_program[n] = v
+                self.shared_program['u_dash_atlas'] = self._dash_atlas
+
+
 
 class DashedAgg(visuals.line.line._AggLineVisual):
     def __init__(self, parent):
@@ -223,10 +276,14 @@ class SCTSpectrogramVisual(visuals.ImageVisual):
         #    step = step_samp / self._sr
         #self._n_fft = 512
         #window = partial(gaussian, std = 250/12)
+        if self._window == 'gaussian':
+            window = partial(gaussian, std = 0.45*(self._win_len)/2)
+        else:
+            window = None
         #import matplotlib.pyplot as plt
         #plt.plot(window(250))
         #plt.show()
-        data = stft(self._signal, self._n_fft, step_samp, center = True, win_length = self._win_len)#, window = window)
+        data = stft(self._signal, self._n_fft, step_samp, center = True, win_length = self._win_len, window = window)
 
         data = np.abs(data)
         data = 20 * np.log10(data) if self._color_scale == 'log' else data
@@ -257,6 +314,7 @@ SelectionLine = scene.visuals.create_visual_node(SelectionLineVisual)
 PlayLine = scene.visuals.create_visual_node(PlayLineVisual)
 
 Spectrogram = scene.visuals.create_visual_node(SCTSpectrogramVisual)
+SCTLinePlot = scene.visuals.create_visual_node(SCTLineVisual)
 
 class TierRectangle(scene.Rectangle):
     def __init__(self, tier_index, num_types, num_sub_types):

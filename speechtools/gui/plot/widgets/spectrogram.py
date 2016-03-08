@@ -13,9 +13,9 @@ class SpectralPlotWidget(SelectablePlotWidget):
         self.unfreeze()
         self.spec = Spectrogram()
         self.pitchplot = scene.visuals.Line(connect = 'segments', color = 'b')
-        self.formantplots = {'F1':scene.visuals.Line(connect = 'segments', color = 'r'),
-                            'F2':scene.visuals.Line(connect = 'segments', color = 'r'),
-                            'F3':scene.visuals.Line(connect = 'segments', color = 'r')}
+        self.formantplots = {'F1':scene.visuals.Line(connect = 'strip', color = 'r'),
+                            'F2':scene.visuals.Line(connect = 'strip', color = 'r'),
+                            'F3':scene.visuals.Line(connect = 'strip', color = 'r')}
         self.yaxis.axis.ticker = ScaledTicker(self.yaxis.axis)
         self.xaxis.axis.ticker = ScaledTicker(self.xaxis.axis)
         self.view.add(self.pitchplot)
@@ -78,9 +78,9 @@ class SpectralPlotWidget(SelectablePlotWidget):
                         continue
                     t = t * self.spec.xscale
                     f = f / self.spec.yscale
-                    prev_f = formants[k][i-1]
-                    prev_f = [prev_f[0] * self.spec.xscale, prev_f[1]  / self.spec.yscale]
-                    data.append(prev_f)
+                    #prev_f = formants[k][i-1]
+                    #prev_f = [prev_f[0] * self.spec.xscale, prev_f[1]  / self.spec.yscale]
+                    #data.append(prev_f)
                     data.append([t, f])
                 #print(data)
                 data = np.array(data)

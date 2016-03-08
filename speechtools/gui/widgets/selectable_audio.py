@@ -547,52 +547,10 @@ class SelectableAudioWidget(QtWidgets.QWidget):
         begin = time.time()
         min_time, max_time = self.min_vis_time, self.max_vis_time
         self.audioWidget.update_time_bounds(min_time, max_time)
-        if self.signal is None or self.sr is None:
-            self.audioWidget.update_signal(None)
-            self.spectrumWidget.update_signal(None)
-        else:
-            min_samp = np.floor(min_time * self.sr)
-            max_samp = np.ceil(max_time * self.sr)
-            desired = self.audioQtWidget.width() * 3
-            actual = max_samp - min_samp
-            factor = int(actual/desired)
-            if factor == 0:
-                factor = 1
-
-            sig = self.signal[min_samp:max_samp:factor]
-
-            t = np.arange(sig.shape[0]) / (self.sr/factor) + min_time
-            data = np.array((t, sig)).T
-            #sp_begin = time.time()
-            self.audioWidget.update_signal(data)
-            #print('wave_time', time.time() - sp_begin)
-            max_samp = np.ceil((max_time) * self.sr)
-            #sp_begin = time.time()
-            self.spectrumWidget.update_signal(self.signal[min_samp:max_samp])
-            #print('spec_time', time.time() - sp_begin)
-            self.updatePlayTime(self.min_vis_time)
-            if self.pitch is not None:
-                pitch = [[x[0] - min_time, x[1]] for x in self.pitch if x[0] > min_time - 0.1 and x[0] < max_time + 0.1]
-                self.spectrumWidget.update_pitch(pitch)
-            else:
-                self.spectrumWidget.update_pitch([])
-            if self.formants is not None:
-                self.spectrumWidget.update_formants({'F1':[[x[0] - min_time, x[1]] for x in self.formants['F1'] if x[0] > min_time - 1 and x[0] < max_time + 1],
-                                        'F2':[[x[0] - min_time, x[1]] for x in self.formants['F2'] if x[0] > min_time - 1 and x[0] < max_time + 1],
-                                        'F3':[[x[0] - min_time, x[1]] for x in self.formants['F3'] if x[0] > min_time - 1 and x[0] < max_time + 1],})
-            else:
-                self.spectrumWidget.update_formants({})
-            #sp_begin = time.time()
-            #print('aud_time', time.time() - sp_begin)
-        if self.annotations is None:
-            self.audioWidget.update_annotations(None)
-        else:
-            #sp_begin = time.time()
-            annos = [x for x in self.annotations if x.end > self.min_vis_time
-                and x.begin < self.max_vis_time]
-            self.audioWidget.update_annotations(annos)
-            #print('anno_time', time.time() - sp_begin)
-        #print(self.signal is None, self.annotations is None, time.time() - begin)
+        self.drawSignal()
+        self.drawAnnotations()
+        self.drawFormants()
+        self.drawPitch()
 
     def save_selected_boundary(self):
         key, ind = self.selected_boundary
@@ -642,8 +600,32 @@ class SelectableAudioWidget(QtWidgets.QWidget):
         self.hierarchy = hierarchy
         self.hierarchyWidget.updateHierachy(hierarchy)
 
-    def updateHierarchyVisibility(self):
-        pass
+    def drawSignal(self):
+        if self.signal is None or self.sr is None:
+            self.audioWidget.update_signal(None)
+            self.spectrumWidget.update_signal(None)
+        else:
+            min_samp = np.floor(self.min_vis_time * self.sr)
+            max_samp = np.ceil(self.max_vis_time * self.sr)
+            desired = self.audioQtWidget.width() * 3
+            actual = max_samp - min_samp
+            factor = int(actual/desired)
+            if factor == 0:
+                factor = 1
+
+            sig = self.signal[min_samp:max_samp:factor]
+
+            t = np.arange(sig.shape[0]) / (self.sr/factor) + self.min_vis_time
+            data = np.array((t, sig)).T
+            #sp_begin = time.time()
+            self.audioWidget.update_signal(data)
+            #print('wave_time', time.time() - sp_begin)
+            #sp_begin = time.time()
+            self.spectrumWidget.update_signal(self.signal[min_samp:max_samp])
+            #print('spec_time', time.time() - sp_begin)
+            self.updatePlayTime(self.min_vis_time)
+            #sp_begin = time.time()
+            #print('aud_time', time.time() - sp_begin)
 
     def updateAnnotations(self, annotations):
         self.annotations = annotations
@@ -656,16 +638,43 @@ class SelectableAudioWidget(QtWidgets.QWidget):
             if self.min_vis_time is None:
                 self.min_vis_time = 0
                 self.max_vis_time = self.max_time
+        min_time, max_time = self.min_vis_time, self.max_vis_time
+        self.audioWidget.update_time_bounds(min_time, max_time)
+        self.drawAnnotations()
 
-        self.updateVisible()
+    def drawAnnotations(self):
+        if self.annotations is None:
+            self.audioWidget.update_annotations(None)
+        else:
+            annos = [x for x in self.annotations if x.end > self.min_vis_time
+                and x.begin < self.max_vis_time]
+            self.audioWidget.update_annotations(annos)
 
     def updatePitch(self, pitch):
         self.pitch = pitch
-        self.updateVisible()
+        self.drawPitch()
+
+    def drawPitch(self):
+        if self.pitch is not None:
+            pitch = [[x[0] - self.min_vis_time, x[1]]
+                        for x in self.pitch
+                        if x[0] > self.min_vis_time - 0.1
+                        and x[0] < self.max_vis_time + 0.1]
+            self.spectrumWidget.update_pitch(pitch)
+        else:
+            self.spectrumWidget.update_pitch([])
 
     def updateFormants(self, formants):
         self.formants = formants
-        self.updateVisible()
+        self.drawFormants()
+
+    def drawFormants(self):
+        if self.formants is not None:
+            self.spectrumWidget.update_formants({'F1':[[x[0] - self.min_vis_time, x[1]] for x in self.formants['F1'] if x[0] > self.min_vis_time - 0.1 and x[0] < self.max_vis_time + 0.1],
+                                    'F2':[[x[0] - self.min_vis_time, x[1]] for x in self.formants['F2'] if x[0] > self.min_vis_time - 0.1 and x[0] < self.max_vis_time + 0.1],
+                                    'F3':[[x[0] - self.min_vis_time, x[1]] for x in self.formants['F3'] if x[0] > self.min_vis_time - 0.1 and x[0] < self.max_vis_time + 0.1],})
+        else:
+            self.spectrumWidget.update_formants({})
 
     def updateAudio(self, audio_file):
         if audio_file is not None:
@@ -690,7 +699,7 @@ class SelectableAudioWidget(QtWidgets.QWidget):
                 self.min_vis_time = 0
                 self.max_vis_time = self.max_time
             self.spectrumWidget.update_sampling_rate(self.sr)
-            self.updateVisible()
+            self.drawSignal()
         else:
             self.signal = None
             self.sr = None
@@ -708,5 +717,9 @@ class SelectableAudioWidget(QtWidgets.QWidget):
         self.max_time = None
         self.min_selected_time = None
         self.max_selected_time = None
+        self.pitch = None
+        self.formants = None
+        self.drawPitch()
+        self.drawFormants()
         self.audioWidget.update_selection(self.min_selected_time, self.max_selected_time)
         #self.audioWidget.clear()

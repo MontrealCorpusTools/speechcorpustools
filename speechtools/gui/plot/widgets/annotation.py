@@ -1,8 +1,11 @@
 
 import numpy as np
 import copy
+import time
 
 from vispy import scene
+
+from vispy.visuals.text.text import FontManager
 
 from .base import SelectablePlotWidget, PlotWidget
 
@@ -29,6 +32,7 @@ class AnnotationPlotWidget(SelectablePlotWidget):
         self.view.add(self.waveform)
         self.visuals.append(self.breakline)
         self.visuals.append(self.waveform)
+        self.font_manager = FontManager()
         self.freeze()
         self.play_time_line.visible = True
 
@@ -67,7 +71,7 @@ class AnnotationPlotWidget(SelectablePlotWidget):
         cycle = ['b', 'r']
         for i, k in enumerate(self.hierarchy.highest_to_lowest):
             c = cycle[i % len(cycle)]
-            self.annotation_visuals[k] = ScalingText(face = 'OpenSans') #FIXME Need to get a better font that covers more scripts, i.e. Thai (**Only applies to windows)
+            self.annotation_visuals[k] = ScalingText(face = 'OpenSans', font_manager = self.font_manager) #FIXME Need to get a better font that covers more scripts, i.e. Thai (**Only applies to windows)
             if k == self.hierarchy.lowest:
                 self.annotation_visuals[k].set_lowest()
             self.line_visuals[k] = SCTLinePlot(connect = 'segments', color = c)
@@ -78,7 +82,7 @@ class AnnotationPlotWidget(SelectablePlotWidget):
         ind = len(self.hierarchy.highest_to_lowest)
         for k in sorted(keys):
             c = cycle[ind % len(cycle)]
-            self.annotation_visuals[k] = ScalingText(face = 'OpenSans')
+            self.annotation_visuals[k] = ScalingText(face = 'OpenSans', font_manager = self.font_manager)
             self.annotation_visuals[k].set_lowest()
             self.line_visuals[k] = SCTLinePlot(connect = 'segments', color = c)
             #self.box_visuals[k] = TierRectangle(ind, self.num_types, len(keys))
