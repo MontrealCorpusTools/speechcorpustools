@@ -149,6 +149,7 @@ class SCTSpectrogramVisual(visuals.ImageVisual):
         self._color_scale='log'
         self._cmap='cubehelix'
         self._clim='auto'
+        self._dynamic_range = 70
         self._sr = None
         self.min_time = 0
         self.max_time = None
@@ -229,6 +230,7 @@ class SCTSpectrogramVisual(visuals.ImageVisual):
 
         data = np.abs(data)
         data = 20 * np.log10(data) if self._color_scale == 'log' else data
+
         self.set_data(data)
 
     def set_data(self, image):
@@ -239,6 +241,9 @@ class SCTSpectrogramVisual(visuals.ImageVisual):
             The image data.
         """
         data = np.asarray(image)
+        max_spec = data.max()
+        clim = (max_spec - self._dynamic_range, max_spec)
+        self.clim = clim
         if self._data is None or self._data.shape != data.shape:
             self._need_vertex_update = True
         self._data = data

@@ -9,10 +9,16 @@ from polyglotdb.config import BASE_DIR, CorpusConfig
 
 from speechtools.corpus import CorpusContext
 
+from speechtools.utils import gp_speakers
+
 from .widgets import (ViewWidget, HelpWidget, DiscourseWidget, QueryWidget, CollapsibleWidgetPair,
                         DetailsWidget, ConnectWidget, AcousticDetailsWidget)
 
 from .helper import get_system_font_height
+
+from .progress import ProgressWidget
+
+from .workers import AcousticAnalysisWorker
 
 sct_config_pickle_path = os.path.join(BASE_DIR, 'config')
 
@@ -130,6 +136,10 @@ class MainWindow(QtWidgets.QMainWindow):
         if os.path.exists(sct_config_pickle_path):
             self.rightPane.connectWidget.connectToServer(ignore=True)
 
+        self.acousticWorker = AcousticAnalysisWorker()
+
+        self.progressWidget = ProgressWidget(self)
+
     def havingConnectionIssues(self):
         size = get_system_font_height()
         self.connectionStatus.setPixmap(QtWidgets.qApp.style().standardIcon(QtWidgets.QStyle.SP_MessageBoxWarning).pixmap(size, size))
@@ -164,10 +174,6 @@ class MainWindow(QtWidgets.QMainWindow):
 
     def createActions(self):
 
-        self.connectAct = QtWidgets.QAction( "Connect to corpus...",
-                self,
-                statusTip="Connect to a corpus", triggered=self.connect)
-
         self.importAct = QtWidgets.QAction( "Import a  corpus...",
                 self,
                 statusTip="Import a corpus", triggered=self.importCorpus)
@@ -180,17 +186,44 @@ class MainWindow(QtWidgets.QMainWindow):
                 self,
                 statusTip="Export a corpus", triggered=self.exportCorpus)
 
+        self.pausesAct = QtWidgets.QAction( "Encode pauses...",
+                self,
+                statusTip="Encode pauses based on word labels", triggered=self.encodePauses)
+        self.pausesAct.setEnabled(False)
+
+        self.utterancesAct = QtWidgets.QAction( "Encode utterances...",
+                self,
+                statusTip="Encode utterances for the current corpus using parameters for pause length", triggered=self.encodeUtterances)
+        self.utterancesAct.setEnabled(False)
+
+        self.speechRateAct = QtWidgets.QAction( "Encode speech rate...",
+                self,
+                statusTip="Calculate and save speech rate for utterances based on phone subsets", triggered=self.speechRate)
+        self.speechRateAct.setEnabled(False)
+
+        self.utterancePositionAct = QtWidgets.QAction( "Encode position in utterance...",
+                self,
+                statusTip="Calculate and save each word's position in its utterance", triggered=self.utterancePosition)
+        self.utterancePositionAct.setEnabled(False)
+
+        self.analyzeAcousticsAct = QtWidgets.QAction( "Analyze acoustics...",
+                self,
+                statusTip="Batch analysis of formants and pitch for the current corpus", triggered=self.analyzeAcoustics)
+
     def createMenus(self):
         self.corpusMenu = self.menuBar().addMenu("Corpus")
-        self.corpusMenu.addAction(self.connectAct)
 
-        self.corpusMenu.addSeparator()
         self.corpusMenu.addAction(self.importAct)
         self.corpusMenu.addAction(self.specifyAct)
         self.corpusMenu.addAction(self.exportAct)
 
-    def connect(self):
-        pass
+        self.enhancementMenu = self.menuBar().addMenu("Enhance corpus")
+
+        self.enhancementMenu.addAction(self.pausesAct)
+        self.enhancementMenu.addAction(self.utterancesAct)
+        self.enhancementMenu.addAction(self.speechRateAct)
+        self.enhancementMenu.addAction(self.utterancePositionAct)
+        self.enhancementMenu.addAction(self.analyzeAcousticsAct)
 
     def importCorpus(self):
         pass
@@ -200,3 +233,29 @@ class MainWindow(QtWidgets.QMainWindow):
 
     def exportCorpus(self):
         pass
+
+    def encodePauses(self):
+        pass
+
+    def encodeUtterances(self):
+        pass
+
+    def speechRate(self):
+        pass
+
+    def utterancePosition(self):
+        pass
+
+    def analyzeAcoustics(self):
+        if self.corpusConfig is None:
+            return
+        if self.corpusConfig.corpus_name not in gp_speakers:
+            return
+        kwargs = {'config': self.corpusConfig}
+        self.acousticWorker.setParams(kwargs)
+        self.progressWidget.createProgressBar('acoustic', self.acousticWorker)
+        self.progressWidget.show()
+        self.acousticWorker.start()
+
+    def createProgressBar(self, key, worker):
+        self.progressWidget.createProgressBar(key, worker)

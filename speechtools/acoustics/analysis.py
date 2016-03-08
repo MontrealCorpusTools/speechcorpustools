@@ -25,22 +25,42 @@ from acousticsim.multiprocessing import generate_cache, default_njobs
 
 padding = 0.1
 
-def acoustic_analysis(corpus_context):
+def acoustic_analysis(corpus_context, pitch_algorithm = 'reaper',
+            formants_algorithm = 'acousticsim',
+            speaker_subset = None,
+            call_back = None,
+            stop_check = None):
 
-    sound_files = corpus_context.sql_session.query(SoundFile).join(Discourse).all()
+    if speaker_subset is None:
+        q = corpus_context.sql_session.query(SoundFile).join(Discourse)
+        sound_files = q.all()
+    else:
+        sound_files = []
+        for s in speaker_subset:
+            q = corpus_context.sql_session.query(SoundFile).join(Discourse)
+            q = q.filter(Discourse.name.like('{}%'.format(s)))
+            sound_files += q.all()
     log = logging.getLogger('{}_acoustics'.format(corpus_context.corpus_name))
     log.info('Beginning acoustic analysis for {} corpus...'.format(corpus_context.corpus_name))
     initial_begin = time.time()
-    for sf in sound_files:
+    num_sound_files = len(sound_files)
+    if call_back is not None:
+        call_back('Analyzing files...')
+        call_back(0, num_sound_files)
+    for i, sf in enumerate(sound_files):
+        if stop_check is not None and stop_check():
+            log.info('Exiting acoustic analysis! Stopping on {}.'.format(sf.filepath))
+            break
+        if call_back is not None:
+            call_back('Analyzing  file {} of {} ({})...'.format(i, num_sound_files, sf.filepath))
+            call_back(i)
         log.info('Begin acoustic analysis for {}...'.format(sf.filepath))
         log_begin = time.time()
 
-        analyze_pitch(corpus_context, sf)
-        #analyze_formants(corpus_context, sf, path)
+        get_pitch(corpus_context, sf, pitch_algorithm)
+        get_formants(corpus_context, sf, formants_algorithm)
         log.info('Acoustic analysis finished!')
         log.debug('Acoustic analysis took: {} seconds'.format(time.time() - log_begin))
-
-        break
 
     log.info('Finished acoustic analysis for {} corpus!'.format(corpus_context.corpus_name))
     log.debug('Total time taken: {} seconds'.format(time.time() - initial_begin))

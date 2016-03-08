@@ -11,12 +11,13 @@ from polyglotdb.graph.func import Sum
 
 from speechtools.corpus import CorpusContext
 
-from speechtools.utils import update_sound_files, gp_language_stops
+from speechtools.utils import update_sound_files, gp_language_stops, gp_speakers
 
-from speechtools.acoustics.analysis import get_pitch, get_formants
+from speechtools.acoustics.analysis import get_pitch, get_formants, acoustic_analysis
 
 class FunctionWorker(QtCore.QThread):
     updateProgress = QtCore.pyqtSignal(object)
+    updateMaximum = QtCore.pyqtSignal(object)
     updateProgressText = QtCore.pyqtSignal(str)
     errorEncountered = QtCore.pyqtSignal(object)
     finishedCancelling = QtCore.pyqtSignal()
@@ -43,16 +44,13 @@ class FunctionWorker(QtCore.QThread):
     def emitProgress(self,*args):
         if isinstance(args[0],str):
             self.updateProgressText.emit(args[0])
-            return
         elif isinstance(args[0],dict):
             self.updateProgressText.emit(args[0]['status'])
-            return
         else:
             progress = args[0]
             if len(args) > 1:
-                self.total = args[1]
-        if self.total:
-            self.updateProgress.emit((progress/self.total))
+                self.updateMaximum.emit(args[1])
+            self.updateProgress.emit(progress)
 
 
 class ImportCorpusWorker(FunctionWorker):
@@ -306,3 +304,12 @@ class AudioCheckerWorker(QueryWorker):
             all_found = c.has_all_sound_files()
         self.dataReady.emit(all_found)
 
+class AcousticAnalysisWorker(QueryWorker):
+    def run_query(self):
+        config = self.kwargs['config']
+        speakers = gp_speakers[config.corpus_name]
+        with CorpusContext(config) as c:
+            acoustic_analysis(c, speaker_subset = speakers,
+                            stop_check = self.kwargs['stop_check'],
+                            call_back = self.kwargs['call_back'])
+        return True

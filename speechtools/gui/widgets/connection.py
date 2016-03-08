@@ -154,7 +154,7 @@ class ConnectWidget(QtWidgets.QWidget):
             corpora = get_corpora_list(config)
             self.corporaList.add(corpora)
             self.corporaList.select(current_corpus)
-            if config.corpus_name:
+            if config.corpus_name and config.corpus_name in corpora:
                 with CorpusContext(config) as c:
                     c.hierarchy = c.generate_hierarchy()
                     c.save_variables()
@@ -178,8 +178,6 @@ class ConnectWidget(QtWidgets.QWidget):
                 h.annotation_types.remove('syllabic')
             except KeyError:
                 pass
-            print(h._data)
-            print(h.subannotations)
             c.hierarchy = h
             c.save_variables()
 

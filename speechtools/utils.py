@@ -87,3 +87,13 @@ gp_language_stops = {'gp_croatian': ['p','t','k', 'b', 'd', 'g'],
                     'gp_thai': ['p','ph','t','th','k','kh','b','d'],
                     'gp_turkish': ['p','t','k', 'b', 'd', 'g']}
 
+gp_speakers = {'gp_croatian': ['CR003', 'CR071', 'CR010', 'CR012', 'CR031', 'CR045', 'CR053','CR083'],
+            'gp_french': ['FR013', 'FR015', 'FR016', 'FR023', 'FR030',
+                            'FR035', 'FR051', 'FR095'],
+            'gp_german': ['GE047', 'GE006', 'GE007', 'GE002', 'GE013', 'GE043', 'GE016', 'GE050'],
+            'gp_korean': ['KO004', 'KO014', 'KO015', 'KO023','KO035','KO044','KO075'],
+            'gp_swedish': ['SW030', 'SW029','SW089','SW008','SW018','SW037', 'SW015','SW006'],
+            'gp_thai': ['TH004', 'TH008', 'TH009', 'TH023', 'TH032',
+                        'TH046', 'TH081'],
+            'gp_turkish': ['TU005', 'TU014', 'TU015', 'TU025',
+                            'TU045', 'TU082', 'TU086', 'TU088']}
