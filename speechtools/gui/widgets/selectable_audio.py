@@ -1,5 +1,6 @@
 import numpy as np
 from scipy.io import wavfile
+from scipy.signal import lfilter
 import time
 
 from PyQt5 import QtGui, QtCore, QtWidgets, QtMultimedia
@@ -23,6 +24,7 @@ class SelectableAudioWidget(QtWidgets.QWidget):
     def __init__(self, parent = None):
         super(SelectableAudioWidget, self).__init__(parent)
         self.signal = None
+        self.preemph_signal = None
         self.sr = None
         self.pitch = None
         self.formants = None
@@ -631,7 +633,7 @@ class SelectableAudioWidget(QtWidgets.QWidget):
             self.audioWidget.update_signal(data)
             #print('wave_time', time.time() - sp_begin)
             #sp_begin = time.time()
-            self.spectrumWidget.update_signal(self.signal[min_samp:max_samp])
+            self.spectrumWidget.update_signal(self.preemph_signal[min_samp:max_samp])
             #print('spec_time', time.time() - sp_begin)
             self.updatePlayTime(self.min_vis_time)
             #sp_begin = time.time()
@@ -688,6 +690,7 @@ class SelectableAudioWidget(QtWidgets.QWidget):
 
     def updateAudio(self, audio_file):
         if audio_file is not None:
+            alpha = 0.95
             kwargs = {'config':self.config, 'sound_file': audio_file, 'algorithm':'reaper'}
             self.pitch = None
             self.pitchWorker.setParams(kwargs)
@@ -698,6 +701,7 @@ class SelectableAudioWidget(QtWidgets.QWidget):
             self.formantsWorker.start()
             self.sr, self.signal = wavfile.read(audio_file.filepath)
             self.signal = self.signal / 32768
+            self.preemph_signal = lfilter([1., -alpha], 1, self.signal)
 
             if self.m_generator.isOpen():
                 self.m_generator.close()
