@@ -104,7 +104,7 @@ class SelectableAudioWidget(QtWidgets.QWidget):
                 min_time = self.min_vis_time
             else:
                 min_time = self.min_selected_time
-            self.updatePlayTime(time)
+            self.updatePlayTime(min_time)
 
     def updatePlayTime(self, time):
         if time is None:
@@ -153,7 +153,6 @@ class SelectableAudioWidget(QtWidgets.QWidget):
                 return
             if self.m_audioOutput.state() == QtMultimedia.QAudio.StoppedState or \
                 self.m_audioOutput.state() == QtMultimedia.QAudio.IdleState:
-                print(self.m_audioOutput.state())
                 if self.min_selected_time is None:
                     min_time = self.min_vis_time
                     max_time = self.max_vis_time
