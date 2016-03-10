@@ -102,15 +102,9 @@ class SelectableAudioWidget(QtWidgets.QWidget):
         if state == QtMultimedia.QAudio.StoppedState:
             if self.min_selected_time is None:
                 min_time = self.min_vis_time
-                max_time = self.max_vis_time
             else:
                 min_time = self.min_selected_time
-                max_time = self.max_selected_time
-            #print(min_time, max_time, max_time - min_time)
-            self.m_generator.generateData(min_time, max_time)
-            #print(self.m_generator.pos())
-            #print(self.m_audioOutput.periodSize())
-            self.m_audioOutput.reset() # Needed to prevent OpenError on Macs
+            self.updatePlayTime(time)
 
     def updatePlayTime(self, time):
         if time is None:
@@ -159,6 +153,7 @@ class SelectableAudioWidget(QtWidgets.QWidget):
                 return
             if self.m_audioOutput.state() == QtMultimedia.QAudio.StoppedState or \
                 self.m_audioOutput.state() == QtMultimedia.QAudio.IdleState:
+                print(self.m_audioOutput.state())
                 if self.min_selected_time is None:
                     min_time = self.min_vis_time
                     max_time = self.max_vis_time
@@ -167,9 +162,12 @@ class SelectableAudioWidget(QtWidgets.QWidget):
                     max_time = self.max_selected_time
                 #print(min_time, max_time, max_time - min_time)
                 self.m_generator.generateData(min_time, max_time)
-                self.m_audioOutput.start(self.m_generator)
+                self.m_audioOutput.reset()
+                if self.m_audioOutput.state() == QtMultimedia.QAudio.StoppedState:
+                    self.m_audioOutput.start(self.m_generator)
                 #print(self.m_audioOutput.error(), self.m_audioOutput.state())
                 #print(self.m_generator.pos())
+
             elif self.m_audioOutput.state() == QtMultimedia.QAudio.ActiveState:
                 self.m_audioOutput.suspend()
             elif self.m_audioOutput.state() == QtMultimedia.QAudio.SuspendedState:
