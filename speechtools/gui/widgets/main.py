@@ -138,6 +138,8 @@ class ViewWidget(QtWidgets.QWidget):
         self.discourseWidget.config = config
         if self.config is None:
             return
-        with CorpusContext(self.config) as c:
-            self.discourseWidget.hierarchy = c.hierarchy
+        if self.config.corpus_name:
+            with CorpusContext(self.config) as c:
+                if c.hierarchy != self.discourseWidget.hierarchy:
+                    self.discourseWidget.updateHierachy(c.hierarchy)
 

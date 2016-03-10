@@ -87,12 +87,11 @@ class HierarchyWidget(QtWidgets.QWidget):
         self.updateHierachy(self.hierarchy)
 
     def updateHierachy(self, hierarchy):
-        if self.hierarchy is not None:
-            while self.hierarchyLayout.count():
-                item = self.hierarchyLayout.takeAt(0)
-                if item.widget() is None:
-                    continue
-                item.widget().deleteLater()
+        while self.hierarchyLayout.count():
+            item = self.hierarchyLayout.takeAt(0)
+            if item.widget() is None:
+                continue
+            item.widget().deleteLater()
         self.hierarchy = hierarchy
         if self.hierarchy is not None:
             space = (self.height() / 2) * 0.75

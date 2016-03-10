@@ -153,12 +153,11 @@ class ConnectWidget(QtWidgets.QWidget):
         try:
             corpora = get_corpora_list(config)
             self.corporaList.add(corpora)
-            self.corporaList.select(current_corpus)
             if config.corpus_name and config.corpus_name in corpora:
                 with CorpusContext(config) as c:
                     c.hierarchy = c.generate_hierarchy()
                     c.save_variables()
-            self.configChanged.emit(config)
+            self.corporaList.select(current_corpus)
         except (ConnectionError, AuthorizationError, NetworkAddressError) as e:
             self.configChanged.emit(None)
             if not ignore:

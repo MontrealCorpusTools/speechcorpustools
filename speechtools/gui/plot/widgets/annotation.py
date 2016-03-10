@@ -97,11 +97,15 @@ class AnnotationPlotWidget(SelectablePlotWidget):
         if data is None:
             if self.hierarchy is not None:
                 for k in self.hierarchy.keys():
+                    self.line_visuals[k].visible = False
                     self.line_visuals[k].set_data(None)
+                    self.annotation_visuals[k].visible = False
                     self.annotation_visuals[k].set_data(None, None)
                 for k,v in self.hierarchy.subannotations.items():
                     for s in v:
+                        self.line_visuals[k, s].visible = False
                         self.line_visuals[k, s].set_data(None)
+                        self.annotation_visuals[k, s].visible = False
                         self.annotation_visuals[k, s].set_data(None, None)
             return
         if self.hierarchy is not None:
@@ -109,7 +113,9 @@ class AnnotationPlotWidget(SelectablePlotWidget):
             for k in self.hierarchy.keys():
                 if text_data[k][0] and (self.max_time - self.min_time < 10 or k != self.hierarchy.lowest):
                         self.line_visuals[k].set_data(line_data[k])
+                        self.line_visuals[k].visible = True
                         self.annotation_visuals[k].set_data(text_data[k][0], pos = text_data[k][1])
+                        self.annotation_visuals[k].visible = True
                 else:
                     self.line_visuals[k].set_data(None)
                     self.annotation_visuals[k].set_data(None, None)
@@ -117,10 +123,13 @@ class AnnotationPlotWidget(SelectablePlotWidget):
                 for s in v:
                     if text_data[k, s][0] and self.max_time - self.min_time < 10:
                         self.line_visuals[k, s].set_data(line_data[k, s])
+                        self.line_visuals[k, s].visible = True
                         self.annotation_visuals[k, s].set_data(text_data[k, s][0], pos = text_data[k, s][1])
                         self.annotation_visuals[k, s].visible = True
                     else:
+                        self.line_visuals[k, s].visible = False
                         self.line_visuals[k, s].set_data(None)
+                        self.annotation_visuals[k, s].visible = False
                         self.annotation_visuals[k, s].set_data(None, None)
 
     def rank_key_by_relevance(self, key):
@@ -139,6 +148,7 @@ class AnnotationPlotWidget(SelectablePlotWidget):
 
     def set_signal(self, data):
         if data is None:
+            self.waveform.visible = False
             self.waveform.set_data(None)
             return
         new_data = copy.deepcopy(data)
@@ -148,6 +158,7 @@ class AnnotationPlotWidget(SelectablePlotWidget):
             new_data[:,1] *=  ratio
 
         self.waveform.set_data(new_data)
+        self.waveform.visible = True
 
     def set_play_time(self, time):
         if time is None:

@@ -598,7 +598,8 @@ class SelectableAudioWidget(QtWidgets.QWidget):
 
     def updateHierachy(self, hierarchy):
         self.hierarchy = hierarchy
-        self.hierarchyWidget.updateHierachy(hierarchy)
+        self.hierarchyWidget.hierarchy = hierarchy
+        self.audioWidget.update_hierarchy(self.hierarchy)
 
     def drawSignal(self):
         if self.signal is None or self.sr is None:
@@ -699,6 +700,7 @@ class SelectableAudioWidget(QtWidgets.QWidget):
                 self.min_vis_time = 0
                 self.max_vis_time = self.max_time
             self.spectrumWidget.update_sampling_rate(self.sr)
+            self.audioWidget.update_time_bounds(self.min_vis_time, self.max_vis_time)
             self.drawSignal()
         else:
             self.signal = None
@@ -712,14 +714,15 @@ class SelectableAudioWidget(QtWidgets.QWidget):
         #self.updateVisible()
 
     def clearDiscourse(self):
-        self.audioWidget.update_hierarchy(self.hierarchy)
         self.min_time = None
         self.max_time = None
         self.min_selected_time = None
         self.max_selected_time = None
         self.pitch = None
         self.formants = None
+        self.signal = None
         self.drawPitch()
         self.drawFormants()
+        self.drawSignal()
         self.audioWidget.update_selection(self.min_selected_time, self.max_selected_time)
         #self.audioWidget.clear()
