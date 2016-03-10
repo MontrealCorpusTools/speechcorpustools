@@ -92,8 +92,23 @@ class SelectableAudioWidget(QtWidgets.QWidget):
 
         self.m_audioOutput = AudioOutput()
         self.m_audioOutput.notify.connect(self.notified)
+        self.m_audioOutput.stateChanged.connect(self.handleAudioState)
 
         self.m_generator = Generator(self.m_audioOutput.m_format, self)
+
+    def handleAudioState(self, state):
+        if state == QtMultimedia.QAudio.StoppedState:
+            if self.min_selected_time is None:
+                min_time = self.min_vis_time
+                max_time = self.max_vis_time
+            else:
+                min_time = self.min_selected_time
+                max_time = self.max_selected_time
+            #print(min_time, max_time, max_time - min_time)
+            self.m_generator.generateData(min_time, max_time)
+            #print(self.m_generator.pos())
+            #print(self.m_audioOutput.periodSize())
+            self.m_audioOutput.reset() # Needed to prevent OpenError on Macs
 
     def updatePlayTime(self, time):
         if time is None:
@@ -104,8 +119,11 @@ class SelectableAudioWidget(QtWidgets.QWidget):
         self.spectrumWidget.update_play_time(pos)
 
     def notified(self):
+        min_time = self.m_generator.min_time
+        if min_time is None:
+            return
         time = self.m_audioOutput.processedUSecs() / 1000000
-        time += self.m_generator.min_time
+        time += min_time
         self.updatePlayTime(time)
 
     def focusNextPrevChild(self, next_):
@@ -139,23 +157,14 @@ class SelectableAudioWidget(QtWidgets.QWidget):
                 return
             if self.m_audioOutput.state() == QtMultimedia.QAudio.StoppedState or \
                 self.m_audioOutput.state() == QtMultimedia.QAudio.IdleState:
-                min_time = self.audioWidget.get_play_time()
                 if self.min_selected_time is None:
-                    if self.max_vis_time - min_time < 0.01 or min_time <= self.min_vis_time:
-                        min_time = self.min_vis_time
-                else:
-                    #print(min_time, self.max_selected_time)
-                    if self.max_selected_time - min_time < 0.01 or min_time <= self.min_selected_time:
-                        min_time = self.min_selected_time
-                if self.max_selected_time is not None:
-                    max_time = self.max_selected_time
-                else:
+                    min_time = self.min_vis_time
                     max_time = self.max_vis_time
+                else:
+                    min_time = self.min_selected_time
+                    max_time = self.max_selected_time
                 #print(min_time, max_time, max_time - min_time)
                 self.m_generator.generateData(min_time, max_time)
-                #print(self.m_generator.pos())
-                #print(self.m_audioOutput.periodSize())
-                self.m_audioOutput.reset() # Needed to prevent OpenError on Macs
                 self.m_audioOutput.start(self.m_generator)
                 #print(self.m_audioOutput.error(), self.m_audioOutput.state())
                 #print(self.m_generator.pos())
@@ -290,7 +299,7 @@ class SelectableAudioWidget(QtWidgets.QWidget):
                         if i != 0:
                             prev_time = v[i-1][0]
                             prev_formant = v[i-1][1]
-                            dur = p[0] - prev_time
+                            dur = f[0] - prev_time
                             cur_time = time - prev_time
                             percent = cur_time / dur
                             acoustics[k] = prev_formant * percent + f[1] * (1 - percent)
@@ -354,12 +363,16 @@ class SelectableAudioWidget(QtWidgets.QWidget):
         if event.handled:
             return
         is_single_click = not event.is_dragging or abs(np.sum(event.press_event.pos - event.pos)) < 10
-        if event.button == 1 and is_single_click and event.native.modifiers() & QtCore.Qt.ShiftModifier:
-            key = self.audioWidget.get_key(event.pos)
-            if key is None:
-                return
-            time = self.audioWidget.transform_pos_to_time(event.pos)
+
+        time = self.audioWidget.transform_pos_to_time(event.pos)
+        key = self.audioWidget.get_key(event.pos)
+        if key is None:
+            annotation = None
+        else:
             annotation = self.find_annotation(key, time)
+        if event.button == 1 and is_single_click and \
+                    event.native.modifiers() & QtCore.Qt.ShiftModifier and \
+            annotation is not None:
             self.selected_annotation = annotation
             self.selectionChanged.emit(annotation)
             self.min_selected_time = annotation.begin
@@ -383,14 +396,10 @@ class SelectableAudioWidget(QtWidgets.QWidget):
             self.selected_time = None
             self.audioWidget.update_selection_time(self.selected_time)
             self.spectrumWidget.update_selection_time(self.selected_time)
-        elif event.button == 2:
+        elif event.button == 2 and annotation is not None:
             key = self.audioWidget.get_key(event.pos)
 
-            if key is None:
-                return
             update = False
-            time = self.audioWidget.transform_pos_to_time(event.pos)
-            annotation = self.find_annotation(key, time)
             self.selected_annotation = annotation
             self.selectionChanged.emit(annotation)
             self.min_selected_time = annotation.begin
