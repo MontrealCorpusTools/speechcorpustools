@@ -128,7 +128,7 @@ def analyze_pitch(corpus_context, sound_file):
 
         path_mapping = [(os.path.join(outdir, x),) for x in os.listdir(outdir)]
         try:
-            cache = generate_cache(path_mapping, pitch_function, None, default_njobs(), None, None)
+            cache = generate_cache(path_mapping, pitch_function, None, default_njobs() - 1, None, None)
         except FileNotFoundError:
             return
         for k, v in cache.items():
@@ -188,7 +188,7 @@ def analyze_formants(corpus_context, sound_file):
                 extract_audio(sound_file.filepath, outpath, u.begin, u.end, padding = padding)
             path_mapping.append((outpath,))
 
-        cache = generate_cache(path_mapping, formant_function, None, default_njobs(), None, None)
+        cache = generate_cache(path_mapping, formant_function, None, default_njobs() - 1, None, None)
         for k, v in cache.items():
             name = os.path.basename(k)
             name = os.path.splitext(name)[0]
