@@ -1,6 +1,14 @@
 
 from PyQt5 import QtGui, QtCore, QtWidgets
 
+class NonScrollingComboBox(QtWidgets.QComboBox):
+    def __init__(self, parent = None):
+        super(NonScrollingComboBox, self).__init__(parent)
+        self.setFocusPolicy(QtCore.Qt.StrongFocus)
+
+    def wheelEvent(self, e):
+        e.ignore()
+
 class DetailedMessageBox(QtWidgets.QMessageBox):
     # Adapted from http://stackoverflow.com/questions/2655354/how-to-allow-resizing-of-qmessagebox-in-pyqt4
     def __init__(self, *args, **kwargs):

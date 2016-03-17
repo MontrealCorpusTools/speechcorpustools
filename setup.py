@@ -42,6 +42,7 @@ setup(name='speechtools',
                 'speechtools.gui.plot',
                 'speechtools.gui.plot.widgets',
                 'speechtools.gui.widgets',
+                'speechtools.gui.widgets.query',
                 'speechtools.io',
                 'speechtools.sql'],
       install_requires=[
