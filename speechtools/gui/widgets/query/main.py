@@ -161,22 +161,26 @@ class QueryForm(QtWidgets.QWidget):
             w_type = getattr(a_type, w_type)
             utt_type = getattr(w_type, utt_type)
             if query_type in ['Lab 1 stops', 'Lab 2 stops', 'Lab 3 stops']:
+                columns = [a_type.label.column_name('Stop')]
                 if query_type == 'Lab 1 stops':
                     filters.append(a_type.phon4lab1 == True)
                 elif query_type == 'Lab 2 stops':
                     filters.append(a_type.phon4lab2 == True)
                 elif query_type == 'Lab 3 stops':
                     filters.append(a_type.phon4lab3 == True)
-                columns = [a_type.label.column_name('Stop'),
-                            a_type.begin.column_name('Begin'),
-                            a_type.end.column_name('End'),
-                            w_type.label.column_name('Word'),
-                            w_type.transcription.column_name('Transcription'),
-                            a_type.checked.column_name('Annotated'),
-                            a_type.speaker.name.column_name('Speaker'),
-                            a_type.discourse.name.column_name('Discourse'),
-                            a_type.id.column_name('Unique_id'),
-                            a_type.notes.column_name('Notes')]
+                    if ('final_sound', str) in c.hierarchy.type_properties[w_type.type]:
+                        columns.append(w_type.final_sound.column_name('Underlying_sound'))
+                    if ('tense_sound', str) in c.hierarchy.type_properties[w_type.type]:
+                        columns.append(w_type.tense_sound.column_name('Underlying_tense_sound'))
+                columns.extend([a_type.begin.column_name('Begin'),
+                        a_type.end.column_name('End'),
+                        w_type.label.column_name('Word'),
+                        w_type.transcription.column_name('Transcription'),
+                        a_type.checked.column_name('Annotated'),
+                        a_type.speaker.name.column_name('Speaker'),
+                        a_type.discourse.name.column_name('Discourse'),
+                        a_type.id.column_name('Unique_id'),
+                        a_type.notes.column_name('Notes')])
 
                 if 'burst' in c.hierarchy.subannotations[c.hierarchy.lowest]:
                     columns.extend([a_type.burst.begin.column_name('Burst_begin'),
