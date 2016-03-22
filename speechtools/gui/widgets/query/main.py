@@ -271,6 +271,7 @@ class QueryResults(QtWidgets.QWidget):
         self.proxyModel = ProxyModel()
         self.proxyModel.setSourceModel(self.resultsModel)
         self.proxyModel.setSortRole( QueryResultsModel.SortRole )
+        self.proxyModel.setDynamicSortFilter(False)
         self.tableWidget.setModel(self.proxyModel)
 
         layout = QtWidgets.QVBoxLayout()
