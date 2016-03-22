@@ -164,14 +164,18 @@ class QueryForm(QtWidgets.QWidget):
                 columns = [a_type.label.column_name('Stop')]
                 if query_type == 'Lab 1 stops':
                     filters.append(a_type.phon4lab1 == True)
+                    columns.append(a_type.following.label.column_name('Following_segment'))
                 elif query_type == 'Lab 2 stops':
                     filters.append(a_type.phon4lab2 == True)
+                    columns.extend([a_type.previous.label.column_name('Previous_segment'),
+                                    a_type.following.label.column_name('Following_segment')])
                 elif query_type == 'Lab 3 stops':
                     filters.append(a_type.phon4lab3 == True)
                     if ('final_sound', str) in c.hierarchy.type_properties[w_type.type]:
                         columns.append(w_type.final_sound.column_name('Underlying_sound'))
                     if ('tense_sound', str) in c.hierarchy.type_properties[w_type.type]:
                         columns.append(w_type.tense_sound.column_name('Underlying_tense_sound'))
+                    columns.append(a_type.previous.label.column_name('Previous_segment'))
                 columns.extend([a_type.begin.column_name('Begin'),
                         a_type.end.column_name('End'),
                         w_type.label.column_name('Word'),
@@ -194,6 +198,10 @@ class QueryForm(QtWidgets.QWidget):
                     columns.extend([a_type.closure.begin.column_name('Closure_begin'),
                                 a_type.closure.end.column_name('Closure_end'),
                                 Sum(a_type.closure.duration).column_name('Closure_duration')])
+                if 'preaspiration' in c.hierarchy.subannotations[c.hierarchy.lowest]:
+                    columns.extend([a_type.preaspiration.begin.column_name('Preaspiration_begin'),
+                                a_type.preaspiration.end.column_name('Preaspiration_end'),
+                                Sum(a_type.preaspiration.duration).column_name('Preaspiration_duration')])
                 if 'vowel_duration' in c.hierarchy.subannotations[c.hierarchy.lowest]:
                     columns.extend([a_type.vowel_duration.begin.column_name('vowel_duration_begin'),
                                 a_type.vowel_duration.end.column_name('vowel_duration_end'),
