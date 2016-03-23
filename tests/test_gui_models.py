@@ -1,7 +1,7 @@
 
 import pytest
 
-from speechtools.gui.models import ProxyModel, QueryResultsModel, make_safe
+from speechtools.models import ProxyModel, QueryResultsModel, make_safe
 
 def test_models(qtbot):
     pass
