@@ -9,11 +9,11 @@ from polyglotdb.exceptions import ConnectionError, NetworkAddressError, Temporar
 
 from polyglotdb.graph.func import Sum
 
-from speechtools.corpus import CorpusContext
+from polyglotdb import CorpusContext
 
-from speechtools.utils import update_sound_files, gp_language_stops, gp_speakers
+from polyglotdb.utils import update_sound_files, gp_language_stops, gp_speakers
 
-from speechtools.acoustics.analysis import get_pitch, get_formants, acoustic_analysis
+from polyglotdb.acoustics.analysis import get_pitch, get_formants, acoustic_analysis
 
 class FunctionWorker(QtCore.QThread):
     updateProgress = QtCore.pyqtSignal(object)

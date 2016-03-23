@@ -1,7 +1,7 @@
 import sys
 from PyQt5 import QtGui, QtCore, QtWidgets
 
-from speechtools.corpus import CorpusContext
+from polyglotdb import CorpusContext
 
 from polyglotdb.graph.func import Sum, Count
 

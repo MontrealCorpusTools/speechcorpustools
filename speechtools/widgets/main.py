@@ -11,7 +11,7 @@ from .base import DataListWidget, CollapsibleWidgetPair, DetailedMessageBox
 
 from .selectable_audio import SelectableAudioWidget
 
-from speechtools.corpus import CorpusContext
+from polyglotdb import CorpusContext
 
 class DiscourseWidget(QtWidgets.QWidget):
     discourseChanged = QtCore.pyqtSignal(str)

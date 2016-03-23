@@ -3,7 +3,7 @@ import os
 
 from polyglotdb.io import inspect_textgrid
 
-from speechtools.corpus import CorpusContext
+from polyglotdb import CorpusContext
 from polyglotdb.config import CorpusConfig
 
 

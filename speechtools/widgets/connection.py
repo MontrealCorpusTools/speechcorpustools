@@ -5,9 +5,9 @@ from PyQt5 import QtGui, QtCore, QtWidgets
 from polyglotdb.config import CorpusConfig
 from polyglotdb.exceptions import (ConnectionError, PGError,
                             AuthorizationError,NetworkAddressError)
-from polyglotdb.corpus import get_corpora_list
+from polyglotdb.utils import get_corpora_list
 
-from speechtools.corpus import CorpusContext
+from polyglotdb import CorpusContext
 
 from ..workers import AudioFinderWorker, AudioCheckerWorker
 

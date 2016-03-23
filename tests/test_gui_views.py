@@ -1,7 +1,7 @@
 
 import pytest
 
-from speechtools.gui.views import ResultsView
+from speechtools.views import ResultsView
 
 def test_results_view(qtbot):
     w = ResultsView()

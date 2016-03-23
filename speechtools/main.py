@@ -7,9 +7,9 @@ import vispy
 
 from polyglotdb.config import BASE_DIR, CorpusConfig
 
-from speechtools.corpus import CorpusContext
+from polyglotdb import CorpusContext
 
-from speechtools.utils import gp_speakers
+from polyglotdb.utils import gp_speakers
 
 from .widgets import (ViewWidget, HelpWidget, DiscourseWidget, QueryWidget, CollapsibleWidgetPair,
                         DetailsWidget, ConnectWidget, AcousticDetailsWidget)
