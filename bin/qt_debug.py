@@ -2,7 +2,7 @@ import os
 import sys
 base = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
 sys.path.insert(0,base)
-from speechtools.gui.main import MainWindow, QtWidgets
+from speechtools.main import MainWindow, QtWidgets
 
 if __name__ == '__main__':
 

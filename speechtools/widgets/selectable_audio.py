@@ -234,13 +234,6 @@ class SelectableAudioWidget(QtWidgets.QWidget):
         else:
             print(event.key())
 
-    #def keyReleaseEvent(self, event):
-    #    """
-    #    Bootstrap the Qt Key release event
-    #    """
-    #    if event.key() == QtCore.Qt.Key_Shift:
-    #        self.rectselect = False
-
     def find_annotation(self, key, time):
         annotation = None
         for a in self.annotations:
