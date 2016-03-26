@@ -17,6 +17,31 @@ from .graphical import GraphicalQuery
 
 from .basic import BasicQuery
 
+from ...profiles import available_query_profiles, QueryProfile
+
+class QueryProfileWidget(QtWidgets.QWidget):
+    profileSelected = QtCore.pyqtSignal(object)
+    def __init__(self, parent = None):
+        super(QueryProfileWidget, self).__init__(parent)
+        self.querySelect = QtWidgets.QComboBox()
+        self.querySelect.addItem('New query')
+        profiles = available_query_profiles()
+        for p in profiles:
+            self.querySelect.addItem(p)
+
+        self.querySelect.currentIndexChanged.connect(self.changeProfile)
+
+        layout = QtWidgets.QFormLayout()
+        layout.addRow('Query profiles', self.querySelect)
+        self.setLayout(layout)
+
+    def changeProfile(self):
+        name = self.querySelect.currentText()
+        if name == 'New query':
+            self.profileSelected.emit(QueryProfile())
+        else:
+            self.profileSelected.emit(QueryProfile.load_profile(name))
+
 class QueryForm(QtWidgets.QWidget):
     finishedRunning = QtCore.pyqtSignal(object)
     def __init__(self):
@@ -26,27 +51,21 @@ class QueryForm(QtWidgets.QWidget):
         mainLayout = QtWidgets.QVBoxLayout()
         headerLayout = QtWidgets.QHBoxLayout()
 
-        self.graphicalQuery = BasicQuery()
+        self.queryWidget = BasicQuery()
 
+        self.profileWidget = QueryProfileWidget()
+        self.profileWidget.profileSelected.connect(self.queryWidget.updateProfile)
 
-        self.linguisticSelect = QtWidgets.QComboBox()
-        self.querySelect = QtWidgets.QComboBox()
-        self.querySelect.addItem('Lab 1 stops')
-        self.querySelect.addItem('Lab 2 stops')
-        self.querySelect.addItem('Lab 3 stops')
-        if not getattr(sys, 'frozen', False):
-            mainLayout.addWidget(self.graphicalQuery)
-            self.querySelect.addItem('Lab 1 laryngeal sampling')
-            self.querySelect.addItem('Lab 2 laryngeal sampling')
         self.executeButton = QtWidgets.QPushButton('Run query')
-        self.exportButton = QtWidgets.QPushButton('Export query')
+        self.exportButton = QtWidgets.QPushButton('Export query results')
+        self.saveButton = QtWidgets.QPushButton('Save query profile')
         self.executeButton.clicked.connect(self.runQuery)
         self.executeButton.setDisabled(True)
         self.exportButton.clicked.connect(self.exportQuery)
         self.exportButton.setDisabled(True)
-        headerLayout.addWidget(QtWidgets.QLabel('Query type'))
 
-        headerLayout.addWidget(self.querySelect)
+        mainLayout.addWidget(self.profileWidget)
+        mainLayout.addWidget(self.queryWidget)
         headerLayout.addWidget(self.executeButton)
         headerLayout.addWidget(self.exportButton)
         mainLayout.addLayout(headerLayout)
@@ -234,25 +253,15 @@ class QueryForm(QtWidgets.QWidget):
 
     def updateConfig(self, config):
         self.config = config
-        self.linguisticSelect.clear()
         if self.config is None or self.config.corpus_name == '':
             self.executeButton.setDisabled(True)
-            #self.lab1Button.setDisabled(True)
             self.exportButton.setDisabled(True)
-            #self.lab2Button.setDisabled(True)
-            #self.export2Button.setDisabled(True)
             return
         self.executeButton.setDisabled(False)
-        #self.lab1Button.setDisabled(False)
         self.exportButton.setDisabled(False)
-        #self.lab2Button.setDisabled(False)
-        #self.export2Button.setDisabled(False)
-        #with CorpusContext(config) as c:
-        #    for a in c.annotation_types:
-        #        self.linguisticSelect.addItem(a)
         with CorpusContext(config) as c:
             h = c.hierarchy
-        self.graphicalQuery.setHierarchy(h)
+        self.queryWidget.setHierarchy(h)
 
 
     def setResults(self, results):
