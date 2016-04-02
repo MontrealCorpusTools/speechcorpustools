@@ -14,8 +14,11 @@ class AttributeSelect(QtWidgets.QComboBox):
         super(AttributeSelect, self).__init__()
         if not alignment:
             self.addItem('alignment')
+            self.addItem('following')
+            self.addItem('previous')
             self.addItem('subset')
-            self.types = ['node','subset']
+            self.addItem('duration')
+            self.types = ['alignment', 'annotation',' annotation','subset', float]
             for k,t in sorted(hierarchy.token_properties[to_find]):
                 self.addItem(k)
                 self.types.append(t)
@@ -54,6 +57,7 @@ class AttributeWidget(QtWidgets.QWidget):
         super(AttributeWidget, self).__init__()
 
         self.mainLayout = QtWidgets.QHBoxLayout()
+        self.mainLayout.setContentsMargins(0,5,0,5)
         self.initWidget()
 
         self.setLayout(self.mainLayout)
@@ -82,14 +86,30 @@ class AttributeWidget(QtWidgets.QWidget):
             if item.widget() is None:
                 continue
             item.widget().deleteLater()
-        if combobox.currentText() in self.hierarchy.annotation_types:
-            widget = AttributeSelect(self.hierarchy, combobox.currentText(), self.alignment)
+        current_annotation_type = self.annotationType()
+        if combobox.currentText() in self.hierarchy.annotation_types or \
+            combobox.currentText() in ['previous','following']:
+            widget = AttributeSelect(self.hierarchy, current_annotation_type, self.alignment)
+            if self.alignment:
+                widget.insertItem(0, '')
+                widget.setCurrentIndex(0)
             widget.currentIndexChanged.connect(self.updateAttribute)
             self.mainLayout.addWidget(widget)
-        annotation = self.to_find
-        if index != 0:
-            annotation = self.mainLayout.itemAt(index -1).widget().label()
-        self.attributeTypeChanged.emit(annotation, combobox.type())
+        self.attributeTypeChanged.emit(current_annotation_type, combobox.type())
+
+    def annotationType(self):
+        index = self.mainLayout.count() - 1
+        if index == 0:
+            return self.to_find
+
+        a = self.mainLayout.itemAt(index - 1).widget().currentText()
+        while a in ['previous', 'following']:
+            index -= 1
+            if index  < 0:
+                a = self.to_find
+            else:
+                a = self.mainLayout.itemAt(index).widget().currentText()
+        return a
 
     def type(self):
         num = self.mainLayout.count()
@@ -104,22 +124,18 @@ class AttributeWidget(QtWidgets.QWidget):
             if not isinstance(widget, AttributeSelect):
                 continue
             text = widget.currentText()
-            if text == 'alignment':
-                continue
             att.append(text)
         return tuple(att)
 
     def setAttribute(self, attribute):
-        print(attribute)
         self.initWidget()
         for a in attribute[1:]:
             ind = self.mainLayout.count() - 1
             widget = self.mainLayout.itemAt(ind).widget()
             widget.setCurrentIndex(widget.findText(a))
-        annotation = self.to_find
-        if self.mainLayout.count() > 1:
-            annotation = self.mainLayout.itemAt(self.mainLayout.count() - 2).widget().label()
-        self.attributeTypeChanged.emit(annotation, self.mainLayout.itemAt(self.mainLayout.count() - 1).widget().type())
+        if a == 'alignment':
+            annotation = self.annotationType()
+            self.attributeTypeChanged.emit(annotation, self.mainLayout.itemAt(self.mainLayout.count() - 1).widget().type())
 
 
 class ValueWidget(QtWidgets.QWidget):
@@ -129,6 +145,7 @@ class ValueWidget(QtWidgets.QWidget):
         super(ValueWidget, self).__init__()
 
         self.mainLayout = QtWidgets.QHBoxLayout()
+        self.mainLayout.setContentsMargins(0,0,0,0)
 
         self.setLayout(self.mainLayout)
 
@@ -136,14 +153,13 @@ class ValueWidget(QtWidgets.QWidget):
         self.valueWidget = None
 
     def changeType(self, annotation, new_type):
-        print(new_type)
         while self.mainLayout.count():
             item = self.mainLayout.takeAt(0)
             if item.widget() is None:
                 continue
             item.widget().deleteLater()
         self.compWidget = QtWidgets.QComboBox()
-        if new_type == 'node' or new_type == 'annotation':
+        if new_type == 'alignment':
             self.compWidget.addItem('Right aligned with')
             self.compWidget.addItem('Left aligned with')
             self.compWidget.addItem('Not right aligned with')
@@ -158,7 +174,6 @@ class ValueWidget(QtWidgets.QWidget):
             if annotation in self.hierarchy.subset_tokens:
                 for s in self.hierarchy.subset_tokens[annotation]:
                     self.valueWidget.addItem(s)
-
 
         elif new_type == 'speaker':
             pass
@@ -199,19 +214,16 @@ class ValueWidget(QtWidgets.QWidget):
 
     def operator(self):
         text = self.compWidget.currentText()
-        if 'aligned' in text:
-            if 'not' in text:
-                operator = '!='
-            else:
-                operator = '=='
-        else:
-            operator = text
+        operator = text
         return operator
 
     def value(self):
         if isinstance(self.valueWidget, AttributeWidget):
             return self.valueWidget.attribute()
-        text = self.valueWidget.text()
+        elif isinstance(self.valueWidget, QtWidgets.QComboBox):
+            text = self.valueWidget.currentText()
+        else:
+            text = self.valueWidget.text()
         if text == 'Null':
             value = None
         elif text == 'True':
@@ -229,7 +241,6 @@ class ValueWidget(QtWidgets.QWidget):
         self.compWidget.setCurrentIndex(self.compWidget.findText(operator))
 
     def setValue(self, value):
-        print(value)
         if isinstance(self.valueWidget, AttributeWidget):
             self.valueWidget.setAttribute(value)
         elif isinstance(self.valueWidget, QtWidgets.QComboBox):
@@ -249,6 +260,8 @@ class FilterWidget(QtWidgets.QWidget):
         super(FilterWidget, self).__init__()
 
         mainLayout = QtWidgets.QHBoxLayout()
+        mainLayout.setSpacing(0)
+        mainLayout.setContentsMargins(0,0,0,0)
 
         self.attributeWidget = AttributeWidget(self.hierarchy, self.to_find)
         mainLayout.addWidget(self.attributeWidget)
@@ -266,8 +279,28 @@ class FilterWidget(QtWidgets.QWidget):
         self.valueWidget.setToFind(to_find)
 
     def toFilter(self):
-        return Filter(self.attributeWidget.attribute(), self.valueWidget.operator(),
-                    self.valueWidget.value())
+        att = self.attributeWidget.attribute()
+        op = self.valueWidget.operator()
+        val = self.valueWidget.value()
+        if att[-1] == 'subset':
+            a = self.attributeWidget.annotationType()
+            if val in self.hierarchy.subset_types[a]:
+                att = tuple(list(att[:-1]) + ['type_subset'])
+            else:
+                att = tuple(list(att[:-1]) + ['token_subset'])
+        elif att[-1] == 'alignment':
+            if op.startswith('Left') or op.startswith('Not left'):
+                a = 'begin'
+            else:
+                a = 'end'
+            att = tuple(list(att)[:-1] + [a])
+
+            if op.startswith('Not'):
+                op = '!='
+            else:
+                op = '=='
+            val = tuple(list(val) + [a])
+        return Filter(att, op, val)
 
     def fromFilter(self, filter):
         if filter.is_alignment:
@@ -300,6 +333,8 @@ class FilterBox(QtWidgets.QGroupBox):
     def __init__(self):
         super(FilterBox, self).__init__('Filters')
         self.mainLayout = QtWidgets.QVBoxLayout()
+        self.mainLayout.setSpacing(0)
+        self.mainLayout.setAlignment(QtCore.Qt.AlignTop)
         self.hierarchy = None
         self.to_find = None
         self.addButton = QtWidgets.QPushButton('+')
@@ -382,8 +417,8 @@ class BasicQuery(QtWidgets.QWidget):
             self.toFindWidget.setCurrentIndex(self.toFindWidget.findText(profile.to_find))
         self.filterWidget.setFilters(profile.filters)
 
-    def generateProfile(self):
+    def profile(self):
         profile = QueryProfile()
-        profile.to_find = self.toFindWidget.text()
+        profile.to_find = self.toFindWidget.currentText()
         profile.filters = self.filterWidget.filters()
         return profile

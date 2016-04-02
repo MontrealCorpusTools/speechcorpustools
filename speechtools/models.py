@@ -18,7 +18,7 @@ def make_safe(data):
 class QueryResultsModel(QtCore.QAbstractTableModel):
     SortRole = 999
     def __init__(self, results, parent = None):
-        self.columns = results.columns
+        self.columns = ['label', 'begin', 'end', 'discourse', 'speaker']
         self.rows = results
         QtCore.QAbstractTableModel.__init__(self, parent)
 
@@ -39,9 +39,10 @@ class QueryResultsModel(QtCore.QAbstractTableModel):
         row = index.row()
         result = self.rows[row]
 
-        return result.Begin, result.End
+        return result.begin, result.end
 
     def markRowAsAnnotated(self, row, value):
+        return
         if value is None:
             current = self.rows[row]['Annotated']
             value = not current
@@ -54,7 +55,7 @@ class QueryResultsModel(QtCore.QAbstractTableModel):
         row = index.row()
         result = self.rows[row]
 
-        return result.Discourse
+        return result.discourse.name
 
     def data(self, index, role = None):
         if not index.isValid():
@@ -65,14 +66,26 @@ class QueryResultsModel(QtCore.QAbstractTableModel):
 
         if role == QtCore.Qt.DisplayRole:
             try:
-                data = self.rows[row][col]
+                data = self.rows[row]
+                if col == 'speaker':
+                    data = data.speaker.name
+                elif col == 'discourse':
+                    data = data.discourse.name
+                else:
+                    data = getattr(data, col)
                 data = make_safe(data)
             except IndexError:
                 data = ''
 
             return data
         elif role == self.SortRole:
-            data = self.rows[row][col]
+            data = self.rows[row]
+            if col == 'speaker':
+                data = data.speaker.name
+            elif col == 'discourse':
+                data = data.discourse.name
+            else:
+                data = getattr(data, col)
             if isinstance(data, (tuple,list)):
                 if len(data):
                     data = data[0]

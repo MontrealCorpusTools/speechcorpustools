@@ -25,13 +25,18 @@ class Filter(object):
 
     def for_polyglot(self, corpus_context):
         att = corpus_context
+        print(self.attribute, self.operator, self.value)
         for a in self.attribute:
+            if a == '':
+                continue
             att = getattr(att, a)
 
         if isinstance(self.value, tuple):
             value = corpus_context
             for a in self.value:
-                att = getattr(att, a)
+                if a == '':
+                    continue
+                value = getattr(value, a)
         else:
             value = self.value
 
@@ -70,8 +75,8 @@ class QueryProfile(object):
             obj = pickle.load(f)
         return obj
 
-    def for_polyglot(self):
-        return [x.for_polyglot() for x in self.filters]
+    def for_polyglot(self, corpus_context):
+        return [x.for_polyglot(corpus_context) for x in self.filters]
 
     def save_profile(self):
         with open(self.path, 'wb') as f:

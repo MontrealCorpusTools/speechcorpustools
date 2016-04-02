@@ -142,45 +142,20 @@ class QueryWorker(FunctionWorker):
         self.dataReady.emit(results)
 
     def run_query(self):
-        a_type = self.kwargs['annotation_type']
+        profile = self.kwargs['profile']
         config = self.kwargs['config']
 
         with CorpusContext(config) as c:
-            a_type = getattr(c, a_type)
+            a_type = getattr(c, profile.to_find)
             query = c.query_graph(a_type)
-            query = query.times().columns(a_type.discourse.column_name('discourse'))
+            query = query.filter(*profile.for_polyglot(c))
+            query = query.preload(getattr(a_type, 'speaker'), getattr(a_type,'discourse'))
+            print(query.cypher())
+
             results = query.all()
+            print(len(results))
         return query, results
 
-class Lab1QueryWorker(QueryWorker):
-    def run_query(self):
-        config = self.kwargs['config']
-        filters = self.kwargs['filters']
-        columns = self.kwargs['columns']
-        try:
-            stops = gp_language_stops[config.corpus_name]
-        except KeyError:
-            print('Couldn\'t find corpus name in stops, defaulting to p, t, k, b, d, g')
-            stops = ['p','t','k','b','d','g']
-        with CorpusContext(config) as c:
-            a_type = c.hierarchy.lowest
-            w_type = c.hierarchy[a_type]
-            utt_type = c.hierarchy.highest
-            a_type = getattr(c, a_type)
-            w_type = getattr(a_type, w_type)
-            utt_type = getattr(w_type, utt_type)
-            q = c.query_graph(a_type)
-            q = q.filter(a_type.label.in_(stops))
-            if self.kwargs['query_type'] in ['Lab 1 stops', 'Lab 2 stops']:
-                q = q.order_by(a_type.discourse.name)
-                q = q.order_by(a_type.begin)
-            if filters:
-                q = q.filter(*filters)
-            if columns:
-                q = q.columns(*columns)
-            #q = q.limit(100)
-            results = q.all()
-        return q, results
 
 class ExportQueryWorker(QueryWorker):
     def run(self):

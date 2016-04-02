@@ -11,7 +11,7 @@ from ...models import QueryResultsModel, ProxyModel
 
 from ...views import ResultsView
 
-from ...workers import (QueryWorker, Lab1QueryWorker, ExportQueryWorker)
+from ...workers import (QueryWorker, ExportQueryWorker)
 
 from .graphical import GraphicalQuery
 
@@ -24,10 +24,7 @@ class QueryProfileWidget(QtWidgets.QWidget):
     def __init__(self, parent = None):
         super(QueryProfileWidget, self).__init__(parent)
         self.querySelect = QtWidgets.QComboBox()
-        self.querySelect.addItem('New query')
-        profiles = available_query_profiles()
-        for p in profiles:
-            self.querySelect.addItem(p)
+        self.refresh()
 
         self.querySelect.currentIndexChanged.connect(self.changeProfile)
 
@@ -36,11 +33,61 @@ class QueryProfileWidget(QtWidgets.QWidget):
         self.setLayout(layout)
 
     def changeProfile(self):
-        name = self.querySelect.currentText()
+        name = self.currentName()
+        if name == '':
+            return
         if name == 'New query':
             self.profileSelected.emit(QueryProfile())
         else:
             self.profileSelected.emit(QueryProfile.load_profile(name))
+
+    def refresh(self):
+        self.querySelect.clear()
+        self.querySelect.addItem('New query')
+        profiles = available_query_profiles()
+        for p in profiles:
+            self.querySelect.addItem(p)
+
+    def currentName(self):
+        return self.querySelect.currentText()
+
+    def select(self, name):
+        self.querySelect.setCurrentIndex(self.querySelect.findText(name))
+
+class SaveDialog(QtWidgets.QDialog):
+    def __init__(self, default_name, parent = None):
+        super(SaveDialog, self).__init__(parent)
+
+        mainlayout = QtWidgets.QFormLayout()
+
+        self.nameEdit = QtWidgets.QLineEdit()
+        self.nameEdit.setText(default_name)
+
+        mainlayout.addRow('Name', self.nameEdit)
+
+        aclayout = QtWidgets.QHBoxLayout()
+
+        self.acceptButton = QtWidgets.QPushButton('Save')
+        self.acceptButton.setDefault(True)
+        self.cancelButton = QtWidgets.QPushButton('Cancel')
+        self.cancelButton.setAutoDefault(False)
+
+        self.acceptButton.clicked.connect(self.accept)
+        self.cancelButton.clicked.connect(self.reject)
+
+        aclayout.addWidget(self.acceptButton)
+        aclayout.addWidget(self.cancelButton)
+
+        acwidget = QtWidgets.QWidget()
+        acwidget.setLayout(aclayout)
+
+        mainlayout.addWidget(acwidget)
+
+        self.setLayout(mainlayout)
+
+
+    def value(self):
+        return self.nameEdit.text()
 
 class QueryForm(QtWidgets.QWidget):
     finishedRunning = QtCore.pyqtSignal(object)
@@ -63,24 +110,44 @@ class QueryForm(QtWidgets.QWidget):
         self.executeButton.setDisabled(True)
         self.exportButton.clicked.connect(self.exportQuery)
         self.exportButton.setDisabled(True)
+        self.saveButton.clicked.connect(self.saveProfile)
+        self.saveButton.setDisabled(True)
 
         mainLayout.addWidget(self.profileWidget)
         mainLayout.addWidget(self.queryWidget)
         headerLayout.addWidget(self.executeButton)
         headerLayout.addWidget(self.exportButton)
+        headerLayout.addWidget(self.saveButton)
         mainLayout.addLayout(headerLayout)
 
         self.setLayout(mainLayout)
 
-        self.worker = QueryWorker()
-        self.worker.dataReady.connect(self.setResults)
-
-        self.lab1Worker = Lab1QueryWorker()
-        self.lab1Worker.dataReady.connect(self.setResults)
-        self.lab1Worker.errorEncountered.connect(self.showError)
+        self.queryWorker = QueryWorker()
+        self.queryWorker.dataReady.connect(self.setResults)
+        self.queryWorker.errorEncountered.connect(self.showError)
 
         self.exportWorker = ExportQueryWorker()
         self.exportWorker.errorEncountered.connect(self.showError)
+
+    def saveProfile(self):
+        default = self.profileWidget.currentName()
+        if default == 'New query':
+            new_default_template = 'New query {}'
+            index = 1
+            while new_default_template.format(index) in available_query_profiles():
+                index += 1
+            default = new_default_template.format(index)
+
+        dialog = SaveDialog(default, self)
+        if dialog.exec_() == QtWidgets.QDialog.Accepted:
+            profile = self.currentProfile()
+            profile.name = dialog.value()
+            profile.save_profile()
+            self.profileWidget.refresh()
+            self.profileWidget.select(dialog.value())
+
+    def currentProfile(self):
+        return self.queryWidget.profile()
 
     def showError(self, e):
         reply = DetailedMessageBox()
@@ -165,100 +232,26 @@ class QueryForm(QtWidgets.QWidget):
 
 
     def runQuery(self):
+        self.queryWorker.stop()
         if self.config is None:
             return
         kwargs = {}
         kwargs['config'] = self.config
-        filters = []
-        columns = []
-        query_type = self.querySelect.currentText()
-        with CorpusContext(self.config) as c:
-            a_type = c.hierarchy.lowest
-            w_type = c.hierarchy[a_type]
-            utt_type = c.hierarchy.highest
-            a_type = getattr(c, a_type)
-            w_type = getattr(a_type, w_type)
-            utt_type = getattr(w_type, utt_type)
-            if query_type in ['Lab 1 stops', 'Lab 2 stops', 'Lab 3 stops']:
-                columns = [a_type.label.column_name('Stop')]
-                if query_type == 'Lab 1 stops':
-                    filters.append(a_type.phon4lab1 == True)
-                    columns.append(a_type.following.label.column_name('Following_segment'))
-                elif query_type == 'Lab 2 stops':
-                    filters.append(a_type.phon4lab2 == True)
-                    columns.extend([a_type.previous.label.column_name('Previous_segment'),
-                                    a_type.following.label.column_name('Following_segment')])
-                elif query_type == 'Lab 3 stops':
-                    filters.append(a_type.phon4lab3 == True)
-                    if ('final_sound', str) in c.hierarchy.type_properties[w_type.type]:
-                        columns.append(w_type.final_sound.column_name('Underlying_sound'))
-                    if ('tense_sound', str) in c.hierarchy.type_properties[w_type.type]:
-                        columns.append(w_type.tense_sound.column_name('Underlying_tense_sound'))
-                    columns.append(a_type.previous.label.column_name('Previous_segment'))
-                columns.extend([a_type.begin.column_name('Begin'),
-                        a_type.end.column_name('End'),
-                        w_type.label.column_name('Word'),
-                        w_type.transcription.column_name('Transcription'),
-                        a_type.checked.column_name('Annotated'),
-                        a_type.speaker.name.column_name('Speaker'),
-                        a_type.discourse.name.column_name('Discourse'),
-                        a_type.id.column_name('Unique_id'),
-                        a_type.notes.column_name('Notes')])
+        kwargs['profile'] = self.currentProfile()
 
-                if 'burst' in c.hierarchy.subannotations[c.hierarchy.lowest]:
-                    columns.extend([a_type.burst.begin.column_name('Burst_begin'),
-                            a_type.burst.end.column_name('Burst_end'),
-                            Sum(a_type.burst.duration).column_name('Burst_duration')])
-                if 'voicing' in c.hierarchy.subannotations[c.hierarchy.lowest]:
-                    columns.extend([a_type.voicing.begin.column_name('Voicing_begin'),
-                                a_type.voicing.end.column_name('Voicing_end'),
-                                Sum(a_type.voicing.duration).column_name('Voicing_duration')])
-                if 'closure' in c.hierarchy.subannotations[c.hierarchy.lowest]:
-                    columns.extend([a_type.closure.begin.column_name('Closure_begin'),
-                                a_type.closure.end.column_name('Closure_end'),
-                                Sum(a_type.closure.duration).column_name('Closure_duration')])
-                if 'preaspiration' in c.hierarchy.subannotations[c.hierarchy.lowest]:
-                    columns.extend([a_type.preaspiration.begin.column_name('Preaspiration_begin'),
-                                a_type.preaspiration.end.column_name('Preaspiration_end'),
-                                Sum(a_type.preaspiration.duration).column_name('Preaspiration_duration')])
-                if 'vowel_duration' in c.hierarchy.subannotations[c.hierarchy.lowest]:
-                    columns.extend([a_type.vowel_duration.begin.column_name('vowel_duration_begin'),
-                                a_type.vowel_duration.end.column_name('vowel_duration_end'),
-                                Sum(a_type.vowel_duration.duration).column_name('vowel_duration')])
-            else:
-                if query_type == 'Lab 1 laryngeal sampling':
-                    filters.extend([a_type.begin == w_type.begin,
-                                    w_type.begin == utt_type.begin,
-                                a_type.following.type_subset == 'syllabic'])
-                elif query_type == 'Lab 2 laryngeal sampling':
-                    filters.extend([a_type.begin != w_type.begin,
-                                a_type.end != w_type.end,
-                            w_type.begin == utt_type.begin,
-                            #qw_type.end != utt_type.end)
-                            a_type.following.type_subset == 'syllabic',
-                            a_type.previous.type_subset == 'syllabic',
-                            w_type.num_syllables == 2,
-                            #w_type.num_syllables <= 3,
-                            ])
-                columns.extend([a_type.speaker.name.column_name('speaker'),
-                            getattr(a_type, 'class').column_name('class'),
-                            a_type.place.column_name('place'),
-                            Count(a_type.label)
-                            ])
-        kwargs['query_type'] = query_type
-        kwargs['filters'] = filters
-        kwargs['columns'] = columns
-        self.lab1Worker.setParams(kwargs)
-        self.lab1Worker.start()
+        self.queryWorker.setParams(kwargs)
+        self.queryWorker.start()
 
     def updateConfig(self, config):
         self.config = config
         if self.config is None or self.config.corpus_name == '':
             self.executeButton.setDisabled(True)
             self.exportButton.setDisabled(True)
+            self.saveButton.setDisabled(True)
             return
         self.executeButton.setDisabled(False)
         self.exportButton.setDisabled(False)
+        self.saveButton.setDisabled(False)
         with CorpusContext(config) as c:
             h = c.hierarchy
         self.queryWidget.setHierarchy(h)

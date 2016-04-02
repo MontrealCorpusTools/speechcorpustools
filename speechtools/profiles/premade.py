@@ -27,10 +27,10 @@ class Lab3QueryProfile(QueryProfile):
     def __init__(self):
         self.name = 'Lab 3 stops'
         self.to_find = 'phones'
-        self.filters = [Filter(('phones.begin'), '!=', ('phones.words.begin')),
+        self.filters = [Filter(('phones','begin'), '!=', ('phones','words','begin')),
                         Filter(('phones','type_subset'), '==', 'stop'),
-                        Filter(('phones.end'), '==', ('phones.words.end')),
-                        Filter(('phones.following.label'), '==', 'sil'),
-                        Filter(('phones.following.duration'), '>=', 0.05),
+                        Filter(('phones', 'end'), '==', ('phones','words','end')),
+                        Filter(('phones', 'following','label'), '==', 'sil'),
+                        Filter(('phones','following','duration'), '>=', 0.05),
                         Filter(('phones','previous','type_subset'), '==', 'syllabic'),
                         ]
