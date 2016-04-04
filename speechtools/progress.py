@@ -37,11 +37,26 @@ class SCTProgressBar(QtWidgets.QWidget):
         self.label.setText('Cancelled')
 
     def detachAll(self):
-        self.worker.updateProgress.disconnect(self.progressBar.setValue)
-        self.worker.updateMaximum.disconnect(self.progressBar.setMaximum)
-        self.worker.updateProgressText.disconnect(self.label.setText)
-        self.worker.dataReady.disconnect(self.detachAll)
-        self.cancel.clicked.disconnect(self.worker.stop)
+        try:
+            self.worker.updateProgress.disconnect(self.progressBar.setValue)
+        except TypeError:
+            pass
+        try:
+            self.worker.updateMaximum.disconnect(self.progressBar.setMaximum)
+        except TypeError:
+            pass
+        try:
+            self.worker.updateProgressText.disconnect(self.label.setText)
+        except TypeError:
+            pass
+        try:
+            self.worker.dataReady.disconnect(self.detachAll)
+        except TypeError:
+            pass
+        try:
+            self.cancelButton.clicked.disconnect(self.worker.stop)
+        except TypeError:
+            pass
         self.worker = None
 
 class ProgressWidget(QtWidgets.QDialog):

@@ -10,6 +10,9 @@ from polyglotdb.exceptions import ConnectionError, NetworkAddressError, Temporar
 from polyglotdb.graph.func import Sum
 
 from polyglotdb import CorpusContext
+from polyglotdb.config import CorpusConfig
+
+from polyglotdb.io import inspect_buckeye
 
 from polyglotdb.utils import update_sound_files, gp_language_stops, gp_speakers
 
@@ -41,7 +44,7 @@ class FunctionWorker(QtCore.QThread):
     def stopCheck(self):
         return self.stopped
 
-    def emitProgress(self,*args):
+    def emitProgress(self, *args):
         if isinstance(args[0],str):
             self.updateProgressText.emit(args[0])
         elif isinstance(args[0],dict):
@@ -51,61 +54,6 @@ class FunctionWorker(QtCore.QThread):
             if len(args) > 1:
                 self.updateMaximum.emit(args[1])
             self.updateProgress.emit(progress)
-
-
-class ImportCorpusWorker(FunctionWorker):
-    def run(self):
-        time.sleep(0.1)
-        textType = self.kwargs.pop('text_type')
-        isDirectory = self.kwargs.pop('isDirectory')
-        logging.info('Importing {} corpus named {}'.format(textType, self.kwargs['corpus_name']))
-        logging.info('Path: '.format(self.kwargs['path']))
-        log_annotation_types(self.kwargs['annotation_types'])
-        try:
-            if textType == 'spelling':
-
-                if isDirectory:
-                    corpus = load_directory_spelling(**self.kwargs)
-                else:
-                    corpus = load_discourse_spelling(**self.kwargs)
-            elif textType == 'transcription':
-
-                if isDirectory:
-                    corpus = load_directory_transcription(**self.kwargs)
-                else:
-                    corpus = load_discourse_transcription(**self.kwargs)
-            elif textType == 'ilg':
-
-                if isDirectory:
-                    corpus = load_directory_ilg(**self.kwargs)
-                else:
-                    corpus = load_discourse_ilg(**self.kwargs)
-            elif textType == 'textgrid':
-                if isDirectory:
-                    corpus = load_directory_textgrid(**self.kwargs)
-                else:
-                    corpus = load_discourse_textgrid(**self.kwargs)
-            elif textType == 'csv':
-                corpus = load_corpus_csv(**self.kwargs)
-            elif textType in ['buckeye', 'timit']:
-                self.kwargs['dialect'] = textType
-                if isDirectory:
-                    corpus = load_directory_multiple_files(**self.kwargs)
-                else:
-                    corpus = load_discourse_multiple_files(**self.kwargs)
-        except PCTError as e:
-            self.errorEncountered.emit(e)
-            return
-        except Exception as e:
-            e = PCTPythonError(e)
-            self.errorEncountered.emit(e)
-            return
-        if self.stopped:
-            time.sleep(0.1)
-            self.finishedCancelling.emit()
-            return
-        self.dataReady.emit(corpus)
-
 
 class QueryWorker(FunctionWorker):
     connectionIssues = QtCore.pyqtSignal()
@@ -133,12 +81,11 @@ class QueryWorker(FunctionWorker):
                                           exc_traceback))
             self.errorEncountered.emit(e)
             return
-        print('finished')
         if self.stopped:
             time.sleep(0.1)
             self.finishedCancelling.emit()
             return
-
+        print('finished')
         self.dataReady.emit(results)
 
     def run_query(self):
@@ -156,6 +103,22 @@ class QueryWorker(FunctionWorker):
             print(len(results))
         return query, results
 
+
+class ImportCorpusWorker(QueryWorker):
+    def run_query(self):
+        time.sleep(0.1)
+        name = self.kwargs['name']
+        directory = self.kwargs['directory']
+        config = CorpusConfig(name, graph_host = 'localhost', graph_port = 7474)
+        with CorpusContext(config) as c:
+            if name == 'buckeye':
+                parser = inspect_buckeye(directory)
+            parser.call_back = self.kwargs['call_back']
+            parser.stop_check = self.kwargs['stop_check']
+            parser.call_back('Resetting corpus...')
+            c.reset()
+            c.load(parser, directory)
+        return True
 
 class ExportQueryWorker(QueryWorker):
     def run(self):

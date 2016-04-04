@@ -12,13 +12,13 @@ from polyglotdb import CorpusContext
 from polyglotdb.utils import gp_speakers
 
 from .widgets import (ViewWidget, HelpWidget, DiscourseWidget, QueryWidget, CollapsibleWidgetPair,
-                        DetailsWidget, ConnectWidget, AcousticDetailsWidget)
+                        DetailsWidget, ConnectWidget, AcousticDetailsWidget, DetailedMessageBox)
 
 from .helper import get_system_font_height
 
 from .progress import ProgressWidget
 
-from .workers import AcousticAnalysisWorker
+from .workers import AcousticAnalysisWorker, ImportCorpusWorker
 
 from .profiles import ensure_existence
 
@@ -94,11 +94,6 @@ class MainWindow(QtWidgets.QMainWindow):
         vispy.sys_info(os.path.join(BASE_DIR, 'vispy.info'), overwrite = True)
         ensure_existence()
         self.corpusConfig = None
-        #self.connectWidget = ConnectWidget(self)
-        #self.connectWidget.configChanged.connect(self.updateConfig)
-        #self.viewWidget = ViewWidget(self)
-        #self.importWidget = ImportWidget(self)
-        #self.exportWidget = ExportWidget(self)
 
         self.leftPane = LeftPane()
         self.configUpdated.connect(self.leftPane.updateConfig)
@@ -140,8 +135,20 @@ class MainWindow(QtWidgets.QMainWindow):
             self.rightPane.connectWidget.connectToServer(ignore=True)
 
         self.acousticWorker = AcousticAnalysisWorker()
+        self.acousticWorker.errorEncountered.connect(self.showError)
 
+        self.importWorker = ImportCorpusWorker()
+        self.importWorker.errorEncountered.connect(self.showError)
+
+        self.rightPane.connectWidget.corporaList.cancelImporter.connect(self.importWorker.stop)
+        self.rightPane.connectWidget.corporaList.corpusToImport.connect(self.importCorpus)
         self.progressWidget = ProgressWidget(self)
+
+
+    def showError(self, e):
+        reply = DetailedMessageBox()
+        reply.setDetailedText(str(e))
+        ret = reply.exec_()
 
     def havingConnectionIssues(self):
         size = get_system_font_height()
@@ -176,10 +183,6 @@ class MainWindow(QtWidgets.QMainWindow):
         super(MainWindow, self).closeEvent(event)
 
     def createActions(self):
-
-        self.importAct = QtWidgets.QAction( "Import a  corpus...",
-                self,
-                statusTip="Import a corpus", triggered=self.importCorpus)
 
         self.specifyAct = QtWidgets.QAction( "Add phonological features...",
                 self,
@@ -216,9 +219,7 @@ class MainWindow(QtWidgets.QMainWindow):
     def createMenus(self):
         self.corpusMenu = self.menuBar().addMenu("Corpus")
 
-        self.corpusMenu.addAction(self.importAct)
         self.corpusMenu.addAction(self.specifyAct)
-        self.corpusMenu.addAction(self.exportAct)
 
         self.enhancementMenu = self.menuBar().addMenu("Enhance corpus")
 
@@ -227,9 +228,6 @@ class MainWindow(QtWidgets.QMainWindow):
         self.enhancementMenu.addAction(self.speechRateAct)
         self.enhancementMenu.addAction(self.utterancePositionAct)
         self.enhancementMenu.addAction(self.analyzeAcousticsAct)
-
-    def importCorpus(self):
-        pass
 
     def specifyCorpus(self):
         pass
@@ -252,13 +250,20 @@ class MainWindow(QtWidgets.QMainWindow):
     def analyzeAcoustics(self):
         if self.corpusConfig is None:
             return
-        if self.corpusConfig.corpus_name not in gp_speakers:
-            return
         kwargs = {'config': self.corpusConfig}
         self.acousticWorker.setParams(kwargs)
         self.progressWidget.createProgressBar('acoustic', self.acousticWorker)
         self.progressWidget.show()
         self.acousticWorker.start()
+
+    def importCorpus(self, name, directory):
+        kwargs = {'name': name,
+                'directory': directory}
+        print(kwargs)
+        self.importWorker.setParams(kwargs)
+        self.progressWidget.createProgressBar('import', self.importWorker)
+        self.progressWidget.show()
+        self.importWorker.start()
 
     def createProgressBar(self, key, worker):
         self.progressWidget.createProgressBar(key, worker)
