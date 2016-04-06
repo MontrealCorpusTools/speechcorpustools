@@ -1,9 +1,6 @@
-import pickle
-import os
 
-from polyglotdb.config import BASE_DIR
 
-PROFILE_DIR = os.path.join(BASE_DIR, 'profiles')
+from .base import BaseProfile
 
 class Filter(object):
     def __init__(self, attribute, operator, value):
@@ -25,7 +22,6 @@ class Filter(object):
 
     def for_polyglot(self, corpus_context):
         att = corpus_context
-        print(self.attribute, self.operator, self.value)
         for a in self.attribute:
             if a == '':
                 continue
@@ -56,28 +52,15 @@ class Filter(object):
             return att.in_(value)
         elif self.operator == 'not in':
             return att.not_in_(value)
+        elif self.operator == 'regex':
+            return att.regex(value)
 
-class QueryProfile(object):
+class QueryProfile(BaseProfile):
     extension = '.queryprofile'
     def __init__(self):
         self.filters = []
         self.name = ''
         self.to_find = None
 
-    @property
-    def path(self):
-        return os.path.join(PROFILE_DIR, self.name.replace(' ', '_') + self.extension)
-
-    @classmethod
-    def load_profile(cls, name):
-        path = os.path.join(PROFILE_DIR, name.replace(' ', '_') + cls.extension)
-        with open(path, 'rb') as f:
-            obj = pickle.load(f)
-        return obj
-
     def for_polyglot(self, corpus_context):
         return [x.for_polyglot(corpus_context) for x in self.filters]
-
-    def save_profile(self):
-        with open(self.path, 'wb') as f:
-            pickle.dump(self, f)

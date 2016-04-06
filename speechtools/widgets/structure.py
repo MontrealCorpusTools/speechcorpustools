@@ -113,14 +113,15 @@ class HierarchyWidget(QtWidgets.QWidget):
             for k, v in sorted(self.hierarchy.subannotations.items()):
                 for s in v:
                     keys.append((k,s))
-            per_sub_type = half_space / len(keys)
-            spacing = (per_sub_type - base_size) / 2
-            for k in sorted(keys):
-                w = QtWidgets.QLabel('{} - {}'.format(*k))
-                w.setSizePolicy(QtWidgets.QSizePolicy.Minimum,QtWidgets.QSizePolicy.Minimum)
-                w.setFixedWidth(w.fontMetrics().width(w.text()))
-                w.setFixedHeight(base_size)
-                #w.clicked.connect(self.updateHierarchyVisibility)
-                self.hierarchyLayout.addSpacing(spacing)
-                self.hierarchyLayout.addWidget(w)
-                self.hierarchyLayout.addSpacing(spacing)
+            if keys:
+                per_sub_type = half_space / len(keys)
+                spacing = (per_sub_type - base_size) / 2
+                for k in sorted(keys):
+                    w = QtWidgets.QLabel('{} - {}'.format(*k))
+                    w.setSizePolicy(QtWidgets.QSizePolicy.Minimum,QtWidgets.QSizePolicy.Minimum)
+                    w.setFixedWidth(w.fontMetrics().width(w.text()))
+                    w.setFixedHeight(base_size)
+                    #w.clicked.connect(self.updateHierarchyVisibility)
+                    self.hierarchyLayout.addSpacing(spacing)
+                    self.hierarchyLayout.addWidget(w)
+                    self.hierarchyLayout.addSpacing(spacing)

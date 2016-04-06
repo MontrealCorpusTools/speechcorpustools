@@ -18,7 +18,10 @@ def make_safe(data):
 class QueryResultsModel(QtCore.QAbstractTableModel):
     SortRole = 999
     def __init__(self, results, parent = None):
-        self.columns = ['label', 'begin', 'end', 'discourse', 'speaker']
+        if len(results) > 0:
+            self.columns = results[0].properties + ['discourse', 'speaker']
+        else:
+            self.columns = ['label', 'begin', 'end', 'discourse', 'speaker']
         self.rows = results
         QtCore.QAbstractTableModel.__init__(self, parent)
 

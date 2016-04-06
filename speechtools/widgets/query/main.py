@@ -17,7 +17,9 @@ from .graphical import GraphicalQuery
 
 from .basic import BasicQuery
 
-from ...profiles import available_query_profiles, QueryProfile
+from .export import NewExportProfileDialog
+
+from ...profiles import available_query_profiles, available_export_profiles, QueryProfile, ExportProfile
 
 class QueryProfileWidget(QtWidgets.QWidget):
     profileSelected = QtCore.pyqtSignal(object)
@@ -53,6 +55,37 @@ class QueryProfileWidget(QtWidgets.QWidget):
 
     def select(self, name):
         self.querySelect.setCurrentIndex(self.querySelect.findText(name))
+
+class ExportWidget(QtWidgets.QWidget):
+    exportQuery = QtCore.pyqtSignal(object)
+    def __init__(self, parent = None):
+        super(ExportWidget, self).__init__(parent)
+
+        layout = QtWidgets.QHBoxLayout()
+
+        self.exportButton = QtWidgets.QToolButton()
+        self.exportButton.setText('Export query results')
+        self.exportButton.setPopupMode(QtWidgets.QToolButton.InstantPopup)
+
+        self.refresh()
+        layout.addWidget(self.exportButton)
+        self.setLayout(layout)
+
+    def refresh(self):
+        menu = QtWidgets.QMenu()
+        newAction = QtWidgets.QAction('New export profile', self)
+        newAction.triggered.connect(lambda x: self.exportQuery.emit('new'))
+        menu.addAction(newAction)
+        basicAction = QtWidgets.QAction('Basic columns', self)
+        basicAction.triggered.connect(lambda x: self.exportQuery.emit('basic'))
+        menu.addAction(basicAction)
+        profiles = available_export_profiles()
+        for p in profiles:
+            act = QtWidgets.QAction(p, self)
+            act.triggered.connect(lambda x: self.exportQuery.emit(p))
+            menu.addAction(act)
+
+        self.exportButton.setMenu(menu)
 
 class SaveDialog(QtWidgets.QDialog):
     def __init__(self, default_name, parent = None):
@@ -104,19 +137,20 @@ class QueryForm(QtWidgets.QWidget):
         self.profileWidget.profileSelected.connect(self.queryWidget.updateProfile)
 
         self.executeButton = QtWidgets.QPushButton('Run query')
-        self.exportButton = QtWidgets.QPushButton('Export query results')
+        self.exportWidget = ExportWidget()
+        self.exportWidget.exportQuery.connect(self.exportQuery)
+
         self.saveButton = QtWidgets.QPushButton('Save query profile')
         self.executeButton.clicked.connect(self.runQuery)
         self.executeButton.setDisabled(True)
-        self.exportButton.clicked.connect(self.exportQuery)
-        self.exportButton.setDisabled(True)
+
         self.saveButton.clicked.connect(self.saveProfile)
         self.saveButton.setDisabled(True)
 
         mainLayout.addWidget(self.profileWidget)
         mainLayout.addWidget(self.queryWidget)
         headerLayout.addWidget(self.executeButton)
-        headerLayout.addWidget(self.exportButton)
+        headerLayout.addWidget(self.exportWidget)
         headerLayout.addWidget(self.saveButton)
         mainLayout.addLayout(headerLayout)
 
@@ -154,79 +188,29 @@ class QueryForm(QtWidgets.QWidget):
         reply.setDetailedText(str(e))
         ret = reply.exec_()
 
-    def exportQuery(self):
+    def exportQuery(self, profile_name):
         if self.config is None:
             return
+
+        if profile_name == 'new':
+
+            dialog = NewExportProfileDialog(self.config, self.currentProfile().to_find, self)
+            if dialog.exec_() == QtWidgets.QDialog.Rejected:
+                return
+            profile_name = dialog.name()
+            self.exportWidget.refresh()
+        elif profile_name == 'basic':
+            return
+        export_profile = ExportProfile.load_profile(profile_name)
         path, _ = QtWidgets.QFileDialog.getSaveFileName(self, "Export data", filter = "CSV (*.txt  *.csv)")
 
         if not path:
             return
-        filters = []
-        columns = []
-        query_type = self.querySelect.currentText()
-        with CorpusContext(self.config) as c:
-            a_type = c.hierarchy.lowest
-            w_type = c.hierarchy[a_type]
-            utt_type = c.hierarchy.highest
-            a_type = getattr(c, a_type)
-            w_type = getattr(a_type, w_type)
-            utt_type = getattr(a_type, utt_type)
-            if query_type in ['Lab 1 stops', 'Lab 2 stops', 'Lab 3 stops']:
-                if query_type == 'Lab 1 stops':
-                    filters.append(a_type.phon4lab1 == True)
-                elif query_type == 'Lab 2 stops':
-                    filters.append(a_type.phon4lab2 == True)
-                elif query_type == 'Lab 3 stops':
-                    filters.append(a_type.phon4lab3 == True)
-                columns = [a_type.label.column_name('Stop'),
-                            a_type.begin.column_name('Begin'),
-                            a_type.end.column_name('End'),
-                            a_type.duration.column_name('Duration')]
-                if 'burst' in c.hierarchy.subannotations[c.hierarchy.lowest]:
-                    columns.extend([a_type.burst.begin.column_name('Burst_begin'),
-                            a_type.burst.end.column_name('Burst_end'),
-                            Sum(a_type.burst.duration).column_name('Burst_duration')])
-                if 'voicing' in c.hierarchy.subannotations[c.hierarchy.lowest]:
-                    columns.extend([a_type.voicing.begin.column_name('Voicing_begin'),
-                                a_type.voicing.end.column_name('Voicing_end'),
-                                Sum(a_type.voicing.duration).column_name('Voicing_duration')])
-                if 'closure' in c.hierarchy.subannotations[c.hierarchy.lowest]:
-                    columns.extend([a_type.closure.begin.column_name('Closure_begin'),
-                                a_type.closure.end.column_name('Closure_end'),
-                                Sum(a_type.closure.duration).column_name('Closure_duration')])
-                if 'preaspiration' in c.hierarchy.subannotations[c.hierarchy.lowest]:
-                    columns.extend([a_type.preaspiration.begin.column_name('Preaspiration_begin'),
-                                a_type.preaspiration.end.column_name('Preaspiration_end'),
-                                Sum(a_type.preaspiration.duration).column_name('Preaspiration_duration')])
-                if 'vowel_duration' in c.hierarchy.subannotations[c.hierarchy.lowest]:
-                    columns.extend([a_type.vowel_duration.begin.column_name('vowel_duration_begin'),
-                                a_type.vowel_duration.end.column_name('vowel_duration_end'),
-                                Sum(a_type.vowel_duration.duration).column_name('vowel_duration')])
-
-                columns.extend([w_type.label.column_name('Word'),
-                            w_type.begin.column_name('Word_begin'),
-                            w_type.end.column_name('Word_end'),
-                            w_type.duration.column_name('Word_duration'),
-                            w_type.transcription.column_name('Word_transcription'),
-                            a_type.following.label.column_name('Following_segment'),
-                            a_type.following.begin.column_name('Following_segment_begin'),
-                            a_type.following.end.column_name('Following_segment_end'),
-                            a_type.following.duration.column_name('Following_segment_duration'),
-                            a_type.following.following.label.column_name('Following_following_segment'),
-                            a_type.following.following.begin.column_name('Following_following_segment_begin'),
-                            a_type.following.following.end.column_name('Following_following_segment_end'),
-                            a_type.following.following.duration.column_name('Following_following_segment_duration'),
-                            a_type.checked.column_name('Annotated'),
-                            a_type.speaker.name.column_name('Speaker'),
-                            a_type.discourse.name.column_name('Discourse'),
-                            w_type.utterance.phones.rate.column_name('Speaking_rate'),
-                            a_type.notes.column_name('Notes')])
-
         kwargs = {}
         kwargs['config'] = self.config
+        kwargs['profile'] = self.currentProfile()
+        kwargs['export_profile'] = export_profile
         kwargs['path'] = path
-        kwargs['filters'] = filters
-        kwargs['columns'] = columns
         self.exportWorker.setParams(kwargs)
         self.exportWorker.start()
 
@@ -246,11 +230,11 @@ class QueryForm(QtWidgets.QWidget):
         self.config = config
         if self.config is None or self.config.corpus_name == '':
             self.executeButton.setDisabled(True)
-            self.exportButton.setDisabled(True)
+            self.exportWidget.setDisabled(True)
             self.saveButton.setDisabled(True)
             return
         self.executeButton.setDisabled(False)
-        self.exportButton.setDisabled(False)
+        self.exportWidget.setDisabled(False)
         self.saveButton.setDisabled(False)
         with CorpusContext(config) as c:
             h = c.hierarchy

@@ -121,47 +121,22 @@ class ImportCorpusWorker(QueryWorker):
         return True
 
 class ExportQueryWorker(QueryWorker):
-    def run(self):
-        time.sleep(0.1)
-        print('beginning export')
-        try:
-            config = self.kwargs['config']
-            export_path = self.kwargs['path']
-            filters = self.kwargs['filters']
-            columns = self.kwargs['columns']
-            try:
-                stops = gp_language_stops[config.corpus_name]
-            except KeyError:
-                print('Couldn\'t find corpus name in stops, defaulting to p, t, k, b, d, g')
-                stops = ['p','t','k','b','d','g']
-            with CorpusContext(config) as c:
-                a_type = c.hierarchy.lowest
-                w_type = c.hierarchy[a_type]
-                utt_type = c.hierarchy.highest
-                a_type = getattr(c, a_type)
-                w_type = getattr(a_type, w_type)
-                utt_type = getattr(a_type, utt_type)
-                q = c.query_graph(a_type)
-                if filters:
-                    q = q.order_by(a_type.discourse.name)
-                    q = q.order_by(a_type.begin)
-                    q = q.filter(*filters)
-                if columns:
-                    q = q.columns(*columns)
+    def run_query(self):
+        profile = self.kwargs['profile']
+        export_profile = self.kwargs['export_profile']
+        config = self.kwargs['config']
+        export_path = self.kwargs['path']
 
-                #q = q.limit(100)
-                results = q.to_csv(export_path)
-        except Exception as e:
-            raise
-            self.errorEncountered.emit(e)
-            return
-        print('finished')
-        if self.stopped:
-            time.sleep(0.1)
-            self.finishedCancelling.emit()
-            return
+        with CorpusContext(config) as c:
+            a_type = getattr(c, profile.to_find)
+            query = c.query_graph(a_type)
+            filters = profile.for_polyglot(c)
+            query = query.filter(*filters)
+            columns = export_profile.for_polyglot(c)
+            query = query.columns(*columns)
 
-        self.dataReady.emit((q, results))
+            results = query.to_csv(export_path)
+        return True
 
 class DiscourseAudioWorker(QueryWorker):
     def run_query(self):
@@ -245,9 +220,107 @@ class AudioCheckerWorker(QueryWorker):
 class AcousticAnalysisWorker(QueryWorker):
     def run_query(self):
         config = self.kwargs['config']
-        speakers = gp_speakers[config.corpus_name]
         with CorpusContext(config) as c:
-            acoustic_analysis(c, speaker_subset = speakers,
+            acoustic_analysis(c,
                             stop_check = self.kwargs['stop_check'],
                             call_back = self.kwargs['call_back'])
+        return True
+
+class PauseEncodingWorker(QueryWorker):
+    def run_query(self):
+        config = self.kwargs['config']
+        pause_words = self.kwargs['pause_words']
+        stop_check = self.kwargs['stop_check']
+        call_back = self.kwargs['call_back']
+        with CorpusContext(config) as c:
+            c.encode_pauses(pause_words,
+                            stop_check = stop_check,
+                            call_back = call_back)
+            if stop_check():
+                call_back('Resetting pauses...')
+                call_back(0, 0)
+                c.reset_pauses()
+                return False
+            h = c.generate_hierarchy()
+            c.hierarchy = h
+            c.save_variables()
+        return True
+
+class UtteranceEncodingWorker(QueryWorker):
+    def run_query(self):
+        config = self.kwargs['config']
+        min_pause_length = self.kwargs['min_pause_length']
+        min_utterance_length = self.kwargs['min_utterance_length']
+        stop_check = self.kwargs['stop_check']
+        call_back = self.kwargs['call_back']
+        with CorpusContext(config) as c:
+            c.encode_utterances(min_pause_length, min_utterance_length,
+                            stop_check = stop_check,
+                            call_back = call_back)
+            if stop_check():
+                call_back('Resetting utterances...')
+                call_back(0, 0)
+                c.reset_utterances()
+                return False
+            h = c.generate_hierarchy()
+            c.hierarchy = h
+            c.save_variables()
+        return True
+
+class SpeechRateWorker(QueryWorker):
+    def run_query(self):
+        config = self.kwargs['config']
+        to_count = self.kwargs['to_count']
+        stop_check = self.kwargs['stop_check']
+        call_back = self.kwargs['call_back']
+        with CorpusContext(config) as c:
+            c.encode_speech_rate(to_count, stop_check = stop_check,
+                            call_back = call_back)
+            if stop_check():
+                call_back('Resetting speech rate...')
+                call_back(0, 0)
+                c.reset_speech_rate()
+                return False
+            h = c.generate_hierarchy()
+            c.hierarchy = h
+            c.save_variables()
+        return True
+
+class UtterancePositionWorker(QueryWorker):
+    def run_query(self):
+        config = self.kwargs['config']
+        stop_check = self.kwargs['stop_check']
+        call_back = self.kwargs['call_back']
+        with CorpusContext(config) as c:
+            c.encode_utterance_position(stop_check = stop_check,
+                            call_back = call_back)
+            if stop_check():
+                call_back('Resetting utterance positions...')
+                call_back(0, 0)
+                c.reset_utterance_position()
+                return False
+            h = c.generate_hierarchy()
+            c.hierarchy = h
+            c.save_variables()
+        return True
+
+class SyllabicEncodingWorker(QueryWorker):
+    def run_query(self):
+        config = self.kwargs['config']
+        segments = self.kwargs['segments']
+        stop_check = self.kwargs['stop_check']
+        call_back = self.kwargs['call_back']
+        call_back('Encoding syllabics...')
+        call_back(0, 0)
+        with CorpusContext(config) as c:
+            c.reset_class('syllabic')
+            c.encode_class(segments, 'syllabic')
+            if stop_check():
+                call_back('Resetting syllabics...')
+                call_back(0, 0)
+                c.reset_class('syllabic')
+                return False
+            h = c.generate_hierarchy()
+            c.hierarchy = h
+            c.save_variables()
         return True

@@ -66,7 +66,6 @@ class CorporaList(QtWidgets.QGroupBox):
                         os.path.expanduser('~'))
         if directory == '':
             return
-        print(directory)
         self.corpusToImport.emit(name, directory)
 
     def importForceAligned(self):

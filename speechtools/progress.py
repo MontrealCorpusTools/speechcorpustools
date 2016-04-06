@@ -4,6 +4,7 @@ from PyQt5 import QtGui, QtCore, QtWidgets
 from .helper import get_system_font_height
 
 class SCTProgressBar(QtWidgets.QWidget):
+    removeThis = QtCore.pyqtSignal()
     def __init__(self, parent, worker):
         super(SCTProgressBar, self).__init__(parent)
         self.progressBar = QtWidgets.QProgressBar()
@@ -27,16 +28,25 @@ class SCTProgressBar(QtWidgets.QWidget):
         pglayout.addWidget(self.cancelButton)
         layout.addLayout(pglayout)
         self.setLayout(layout)
+        self.detached = False
 
     def cancelWorker(self):
-        self.cancelButton.setEnabled(False)
-        self.label.setText('Cancelling...')
-        self.worker.stop()
+        if not self.detached:
+            self.cancelButton.setEnabled(False)
+            self.label.setText('Cancelling...')
+            self.worker.stop()
+        else:
+            self.removeThis.emit()
 
     def finishCancelling(self):
+        self.cancelButton.setEnabled(True)
         self.label.setText('Cancelled')
+        self.detachAll(cancelled = True)
 
-    def detachAll(self):
+    def detachAll(self, *args, cancelled = False):
+        if not cancelled:
+            self.progressBar.setValue(self.progressBar.maximum())
+            self.label.setText('Finished!')
         try:
             self.worker.updateProgress.disconnect(self.progressBar.setValue)
         except TypeError:
@@ -58,6 +68,7 @@ class SCTProgressBar(QtWidgets.QWidget):
         except TypeError:
             pass
         self.worker = None
+        self.detached = True
 
 class ProgressWidget(QtWidgets.QDialog):
     def __init__(self, parent = None):
@@ -72,8 +83,14 @@ class ProgressWidget(QtWidgets.QDialog):
 
     def createProgressBar(self, key, worker):
         pb = SCTProgressBar(self, worker)
-        self.progressBars[key] = pb
+        pb.removeThis.connect(self.cleanup)
+        #self.progressBars[key] = pb
         self.mainLayout.addWidget(pb)
+
+    def cleanup(self):
+        pb = self.sender()
+        self.mainLayout.removeWidget(pb)
+        pb.deleteLater()
 
     def accept(self):
         self.hide()

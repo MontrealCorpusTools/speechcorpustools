@@ -89,7 +89,10 @@ class AttributeWidget(QtWidgets.QWidget):
         current_annotation_type = self.annotationType()
         if combobox.currentText() in self.hierarchy.annotation_types or \
             combobox.currentText() in ['previous','following']:
-            widget = AttributeSelect(self.hierarchy, current_annotation_type, self.alignment)
+            if combobox.currentText() in self.hierarchy.annotation_types:
+                widget = AttributeSelect(self.hierarchy, combobox.currentText(), self.alignment)
+            else:
+                widget = AttributeSelect(self.hierarchy, current_annotation_type, self.alignment)
             if self.alignment:
                 widget.insertItem(0, '')
                 widget.setCurrentIndex(0)

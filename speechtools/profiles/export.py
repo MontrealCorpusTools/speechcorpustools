@@ -1,4 +1,6 @@
 
+from .base import BaseProfile
+
 class Column(object):
     def __init__(self, attribute, name):
         self.attribute = attribute
@@ -11,9 +13,18 @@ class Column(object):
         att = att.column_name(self.name)
         return att
 
-class ExportProfile(object):
+class ExportProfile(BaseProfile):
+    extension = '.exportprofile'
     def __init__(self):
         self.columns = []
+        self.name = ''
+        self.to_find = None
 
-    def for_polyglot(self):
-        return [x.for_polyglot() for x in self.columns]
+    def for_polyglot(self, corpus_context):
+        columns = []
+        for  x in self.columns:
+            try:
+                columns.append(x.for_polyglot(corpus_context))
+            except AttributeError:
+                pass
+        return columns
