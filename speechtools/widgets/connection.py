@@ -55,12 +55,18 @@ class CorporaList(QtWidgets.QGroupBox):
             if reply == QtWidgets.QMessageBox.Cancel:
                 return
             self.cancelImporter.emit()
-        if name in get_corpora_list(CorpusConfig('',graph_host = 'localhost', graph_port=7474)):
-            reply = QtWidgets.QMessageBox.warning(self, "Overwrite corpus?",
-            'The {} corpus appears to be imported already.  Would you like to overwrite it?'.format(name),
-            buttons = QtWidgets.QMessageBox.Ok | QtWidgets.QMessageBox.Cancel)
-            if reply == QtWidgets.QMessageBox.Cancel:
-                return
+        try:
+            if name in get_corpora_list(CorpusConfig('',graph_host = 'localhost', graph_port=7474)):
+                reply = QtWidgets.QMessageBox.warning(self, "Overwrite corpus?",
+                'The {} corpus appears to be imported already.  Would you like to overwrite it?'.format(name),
+                buttons = QtWidgets.QMessageBox.Ok | QtWidgets.QMessageBox.Cancel)
+                if reply == QtWidgets.QMessageBox.Cancel:
+                    return
+        except ConnectionError:
+            reply = QtWidgets.QMessageBox.critical(self,
+                    "Could not connect to local server", 'Please make sure there is a local Neo4j server running.')
+            return
+
         directory = QtWidgets.QFileDialog.getExistingDirectory(self,
                         'Select a directory containing the {} corpus'.format(name),
                         os.path.expanduser('~'))

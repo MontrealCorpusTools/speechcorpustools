@@ -127,6 +127,10 @@ class AttributeWidget(QtWidgets.QWidget):
             if not isinstance(widget, AttributeSelect):
                 continue
             text = widget.currentText()
+            if text == self.hierarchy.lowest:
+                text = 'phone_name'
+            elif text.startswith('word'):
+                text = 'word_name'
             att.append(text)
         return tuple(att)
 

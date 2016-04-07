@@ -9,7 +9,10 @@ class Column(object):
     def for_polyglot(self, corpus_context):
         att = corpus_context
         for a in self.attribute:
-            att = getattr(att, a)
+            if a.endswith('_name'):
+                att = getattr(att, getattr(corpus_context, a))
+            else:
+                att = getattr(att, a)
         att = att.column_name(self.name)
         return att
 
