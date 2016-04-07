@@ -139,10 +139,13 @@ class AttributeWidget(QtWidgets.QWidget):
         for a in attribute[1:]:
             ind = self.mainLayout.count() - 1
             widget = self.mainLayout.itemAt(ind).widget()
+            if a.endswith('name'):
+                a = getattr(self.hierarchy, a)
             widget.setCurrentIndex(widget.findText(a))
-        if a == 'alignment':
-            annotation = self.annotationType()
-            self.attributeTypeChanged.emit(annotation, self.mainLayout.itemAt(self.mainLayout.count() - 1).widget().type())
+        if len(attribute) > 1:
+            if a == 'alignment':
+                annotation = self.annotationType()
+                self.attributeTypeChanged.emit(annotation, self.mainLayout.itemAt(self.mainLayout.count() - 1).widget().type())
 
 
 class ValueWidget(QtWidgets.QWidget):
@@ -421,7 +424,11 @@ class BasicQuery(QtWidgets.QWidget):
         if profile.to_find is None:
             self.toFindWidget.setCurrentIndex(0)
         else:
-            self.toFindWidget.setCurrentIndex(self.toFindWidget.findText(profile.to_find))
+            if profile.to_find.endswith('_name') and self.hierarchy is not None:
+                to_find = getattr(self.hierarchy, profile.to_find)
+            else:
+                to_find = profile.to_find
+            self.toFindWidget.setCurrentIndex(self.toFindWidget.findText(to_find))
         self.filterWidget.setFilters(profile.filters)
 
     def profile(self):

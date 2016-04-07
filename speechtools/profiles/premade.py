@@ -18,11 +18,12 @@ class Lab2QueryProfile(QueryProfile):
         self.to_find = 'phone_name'
         self.filters = [Filter(('phone_name', 'begin'), '!=', ('phone_name','word_name','begin')),
                         Filter(('phone_name','end'), '!=', ('phone_name','word_name','end'),),
-                        Filter(('phone_name','words','end'), '!=', ('phone_name','word_name','utterance','end'),),
+                        Filter(('phone_name','word_name','end'), '!=', ('phone_name','word_name','utterance','end'),),
                         Filter(('phone_name','type_subset'), '==', 'stop'),
                         Filter(('phone_name','following','type_subset'), '==', 'syllabic'),
                         Filter(('phone_name','previous','type_subset'), '==', 'syllabic'),
-                        Filter(('phone_name','word_name','num_syllables'), 'in', [2, 3]),
+                        Filter(('phone_name','word_name','num_syllables'), '>=', '2'),
+                        Filter(('phone_name','word_name','num_syllables'), '<=', '3'),
                         ]
 
 class Lab3QueryProfile(QueryProfile):
