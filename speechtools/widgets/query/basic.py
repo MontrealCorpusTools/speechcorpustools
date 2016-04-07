@@ -19,12 +19,13 @@ class AttributeSelect(QtWidgets.QComboBox):
             self.addItem('subset')
             self.addItem('duration')
             self.types = ['alignment', 'annotation',' annotation','subset', float]
-            for k,t in sorted(hierarchy.token_properties[to_find]):
-                self.addItem(k)
-                self.types.append(t)
-            for k,t in sorted(hierarchy.type_properties[to_find]):
-                self.addItem(k)
-                self.types.append(t)
+            if to_find != '':
+                for k,t in sorted(hierarchy.token_properties[to_find]):
+                    self.addItem(k)
+                    self.types.append(t)
+                for k,t in sorted(hierarchy.type_properties[to_find]):
+                    self.addItem(k)
+                    self.types.append(t)
         else:
             self.types = []
         for k in hierarchy.highest_to_lowest:
@@ -213,9 +214,9 @@ class ValueWidget(QtWidgets.QWidget):
         if new_type != bool:
             self.mainLayout.addWidget(self.compWidget)
         self.mainLayout.addWidget(self.valueWidget)
-        if new_type in [int, float, str, bool]:
-            self.switchWidget = QtWidgets.QPushButton('Switch')
-            self.mainLayout.addWidget(self.switchWidget)
+        #if new_type in [int, float, str, bool]:
+        #    self.switchWidget = QtWidgets.QPushButton('Switch')
+        #    self.mainLayout.addWidget(self.switchWidget)
 
     def setToFind(self, to_find):
         self.to_find = to_find
