@@ -19,7 +19,9 @@ from .basic import BasicQuery
 
 from .export import NewExportProfileDialog
 
-from ...profiles import available_query_profiles, available_export_profiles, QueryProfile, ExportProfile
+from ...profiles import (available_query_profiles, available_export_profiles,
+                        QueryProfile, ExportProfile,
+                        ensure_existence)
 
 class QueryProfileWidget(QtWidgets.QWidget):
     profileSelected = QtCore.pyqtSignal(object)
@@ -44,6 +46,7 @@ class QueryProfileWidget(QtWidgets.QWidget):
             self.profileSelected.emit(QueryProfile.load_profile(name))
 
     def refresh(self):
+        ensure_existence()
         self.querySelect.clear()
         self.querySelect.addItem('New query')
         profiles = available_query_profiles()

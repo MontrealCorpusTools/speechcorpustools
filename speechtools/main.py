@@ -27,8 +27,6 @@ from .workers import (AcousticAnalysisWorker, ImportCorpusWorker,
                     SpeechRateWorker, UtterancePositionWorker,
                     SyllabicEncodingWorker)
 
-from .profiles import ensure_existence
-
 sct_config_pickle_path = os.path.join(BASE_DIR, 'config')
 
 class LeftPane(QtWidgets.QWidget):
@@ -102,7 +100,6 @@ class MainWindow(QtWidgets.QMainWindow):
     def __init__(self, app):
         super(MainWindow, self).__init__()
         vispy.sys_info(os.path.join(BASE_DIR, 'vispy.info'), overwrite = True)
-        ensure_existence()
         self.corpusConfig = None
 
         self.leftPane = LeftPane()
