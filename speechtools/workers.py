@@ -116,7 +116,7 @@ class ImportCorpusWorker(QueryWorker):
             parser.call_back = self.kwargs['call_back']
             parser.stop_check = self.kwargs['stop_check']
             parser.call_back('Resetting corpus...')
-            c.reset()
+            c.reset(call_back = self.kwargs['call_back'], stop_check = self.kwargs['stop_check'])
             c.load(parser, directory)
         return True
 
