@@ -9,7 +9,7 @@ from ..base import NonScrollingComboBox
 
 from ...profiles import QueryProfile, Filter
 
-class AttributeSelect(QtWidgets.QComboBox):
+class AttributeSelect(NonScrollingComboBox):
     def __init__(self, hierarchy, to_find, alignment):
         super(AttributeSelect, self).__init__()
         if not alignment:
@@ -42,12 +42,22 @@ class AttributeSelect(QtWidgets.QComboBox):
                     self.addItem(s)
                     self.types.append('subannotation')
 
+        self.setSizePolicy(QtWidgets.QSizePolicy.Fixed,QtWidgets.QSizePolicy.Fixed)
+
     def type(self):
         index = self.currentIndex()
         return self.types[index]
 
     def label(self):
         return self.currentText()
+
+
+class SpeakerAttributeSelect(AttributeSelect):
+    def __init__(self, hierarchy):
+        QtWidgets.QComboBox.__init__(self)
+        self.addItem('name')
+        self.types = [str]
+
 
 class AttributeWidget(QtWidgets.QWidget):
     attributeTypeChanged = QtCore.pyqtSignal(object, object)
@@ -58,10 +68,11 @@ class AttributeWidget(QtWidgets.QWidget):
         super(AttributeWidget, self).__init__()
 
         self.mainLayout = QtWidgets.QHBoxLayout()
-        self.mainLayout.setContentsMargins(0,5,0,5)
+        self.mainLayout.setContentsMargins(0,10,0,10)
         self.initWidget()
 
         self.setLayout(self.mainLayout)
+        self.setSizePolicy(QtWidgets.QSizePolicy.Fixed,QtWidgets.QSizePolicy.Fixed)
 
     def initWidget(self):
         while self.mainLayout.count():
@@ -99,7 +110,13 @@ class AttributeWidget(QtWidgets.QWidget):
                 widget.setCurrentIndex(0)
             widget.currentIndexChanged.connect(self.updateAttribute)
             self.mainLayout.addWidget(widget)
-        self.attributeTypeChanged.emit(current_annotation_type, combobox.type())
+        elif combobox.currentText() in ['speaker', 'discourse']:
+            widget = SpeakerAttributeSelect(self.hierarchy)
+            widget.currentIndexChanged.connect(self.updateAttribute)
+            self.mainLayout.addWidget(widget)
+            self.attributeTypeChanged.emit('speaker', widget.type())
+        else:
+            self.attributeTypeChanged.emit(current_annotation_type, combobox.type())
 
     def annotationType(self):
         index = self.mainLayout.count() - 1
@@ -156,7 +173,7 @@ class ValueWidget(QtWidgets.QWidget):
         super(ValueWidget, self).__init__()
 
         self.mainLayout = QtWidgets.QHBoxLayout()
-        self.mainLayout.setContentsMargins(0,0,0,0)
+        self.mainLayout.setContentsMargins(0,10,0,10)
 
         self.setLayout(self.mainLayout)
 
@@ -169,7 +186,8 @@ class ValueWidget(QtWidgets.QWidget):
             if item.widget() is None:
                 continue
             item.widget().deleteLater()
-        self.compWidget = QtWidgets.QComboBox()
+        self.compWidget = NonScrollingComboBox()
+        self.compWidget.setSizePolicy(QtWidgets.QSizePolicy.Fixed,QtWidgets.QSizePolicy.Fixed)
         if new_type == 'alignment':
             self.compWidget.addItem('Right aligned with')
             self.compWidget.addItem('Left aligned with')
@@ -178,7 +196,7 @@ class ValueWidget(QtWidgets.QWidget):
             self.valueWidget = AttributeWidget(self.hierarchy, self.to_find, alignment = True)
         elif new_type == 'subset':
             self.compWidget.addItem('==')
-            self.valueWidget = QtWidgets.QComboBox()
+            self.valueWidget = NonScrollingComboBox()
             if annotation in self.hierarchy.subset_types:
                 for s in self.hierarchy.subset_types[annotation]:
                     self.valueWidget.addItem(s)
@@ -186,10 +204,6 @@ class ValueWidget(QtWidgets.QWidget):
                 for s in self.hierarchy.subset_tokens[annotation]:
                     self.valueWidget.addItem(s)
 
-        elif new_type == 'speaker':
-            pass
-        elif new_type == 'discourse':
-            pass
         elif new_type in (int, float):
             self.compWidget.addItem('==')
             self.compWidget.addItem('!=')
@@ -201,8 +215,6 @@ class ValueWidget(QtWidgets.QWidget):
         elif new_type == str:
             self.compWidget.addItem('==')
             self.compWidget.addItem('!=')
-            self.compWidget.addItem('in')
-            self.compWidget.addItem('not in')
             self.compWidget.addItem('regex')
             self.valueWidget = QtWidgets.QLineEdit()
         elif new_type == bool:
@@ -265,13 +277,14 @@ class ValueWidget(QtWidgets.QWidget):
 
 
 class FilterWidget(QtWidgets.QWidget):
+    needsDelete = QtCore.pyqtSignal()
     def __init__(self, hierarchy, to_find):
         self.hierarchy = hierarchy
         self.to_find = to_find
         super(FilterWidget, self).__init__()
 
         mainLayout = QtWidgets.QHBoxLayout()
-        mainLayout.setSpacing(0)
+        mainLayout.setSpacing(10)
         mainLayout.setContentsMargins(0,0,0,0)
 
         self.attributeWidget = AttributeWidget(self.hierarchy, self.to_find)
@@ -279,6 +292,13 @@ class FilterWidget(QtWidgets.QWidget):
 
         self.valueWidget = ValueWidget(self.hierarchy, self.to_find)
         mainLayout.addWidget(self.valueWidget)
+
+        self.deleteButton = QtWidgets.QPushButton()
+        self.deleteButton.setIcon(QtWidgets.qApp.style().standardIcon(QtWidgets.QStyle.SP_DialogCancelButton))
+        self.deleteButton.clicked.connect(self.needsDelete.emit)
+        self.deleteButton.setSizePolicy(QtWidgets.QSizePolicy.Fixed,QtWidgets.QSizePolicy.Fixed)
+        mainLayout.addWidget(self.deleteButton)
+
         self.setLayout(mainLayout)
 
         self.attributeWidget.attributeTypeChanged.connect(self.valueWidget.changeType)
@@ -343,43 +363,67 @@ class FilterWidget(QtWidgets.QWidget):
 class FilterBox(QtWidgets.QGroupBox):
     def __init__(self):
         super(FilterBox, self).__init__('Filters')
+
+        layout = QtWidgets.QVBoxLayout()
         self.mainLayout = QtWidgets.QVBoxLayout()
         self.mainLayout.setSpacing(0)
+        self.mainLayout.setContentsMargins(0,0,0,0)
         self.mainLayout.setAlignment(QtCore.Qt.AlignTop)
+        mainWidget = QtWidgets.QWidget()
+        mainWidget.setLayout(self.mainLayout)
+        scroll = QtWidgets.QScrollArea()
+        scroll.setWidgetResizable(True)
+        scroll.setWidget(mainWidget)
+        scroll.setMinimumHeight(200)
+        policy = scroll.sizePolicy()
+        policy.setVerticalStretch(1)
+        scroll.setSizePolicy(policy)
+        layout.addWidget(scroll)
+
         self.hierarchy = None
         self.to_find = None
         self.addButton = QtWidgets.QPushButton('+')
         self.addButton.clicked.connect(self.addNewFilter)
         self.addButton.setEnabled(False)
-        self.mainLayout.addWidget(self.addButton)
-        self.setLayout(self.mainLayout)
+        layout.addWidget(self.addButton)
+
+        self.setLayout(layout)
+
+    def deleteWidget(self):
+        widget = self.sender()
+        self.mainLayout.removeWidget(widget)
+        widget.deleteLater()
+
+    def clearFilters(self):
+        while self.mainLayout.count() > 0:
+            item = self.mainLayout.takeAt(0)
+            if item.widget() is None:
+                continue
+            item.widget().deleteLater()
 
     def setHierarchy(self, hierarchy):
         self.hierarchy = hierarchy
+        self.clearFilters()
         self.addButton.setEnabled(True)
 
     def setToFind(self, to_find):
         self.to_find = to_find
-        for i in range(self.mainLayout.count() - 1):
+        for i in range(self.mainLayout.count()):
             self.mainLayout.itemAt(i).widget().setToFind(to_find)
 
     def addNewFilter(self):
         if self.hierarchy is None:
             return
         widget = FilterWidget(self.hierarchy, self.to_find)
-        self.mainLayout.insertWidget(self.mainLayout.count() - 1, widget)
+        widget.needsDelete.connect(self.deleteWidget)
+        self.mainLayout.insertWidget(self.mainLayout.count(), widget)
 
     def setFilters(self, filters):
-        #Clear filters somehow
-        while self.mainLayout.count() > 1:
-            item = self.mainLayout.takeAt(self.mainLayout.count() - 2)
-            if item.widget() is None:
-                continue
-            item.widget().deleteLater()
+        self.clearFilters()
         for f in filters:
             widget = FilterWidget(self.hierarchy, self.to_find)
             widget.fromFilter(f)
-            self.mainLayout.insertWidget(0, widget)
+            self.mainLayout.addWidget(widget)
 
     def filters(self):
         filters = []

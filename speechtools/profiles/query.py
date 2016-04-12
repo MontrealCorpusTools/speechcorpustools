@@ -38,10 +38,10 @@ class Filter(object):
             for a in self.value:
                 if a == '':
                     continue
-            if a.endswith('_name'):
-                value = getattr(value, getattr(corpus_context, a))
-            else:
-                value = getattr(value, a)
+                if a.endswith('_name'):
+                    value = getattr(value, getattr(corpus_context, a))
+                else:
+                    value = getattr(value, a)
         else:
             value = self.value
 

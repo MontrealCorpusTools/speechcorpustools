@@ -110,3 +110,24 @@ class EncodeSyllabicsDialog(BaseDialog):
     def value(self):
         return self.phoneSelect.value()
 
+class EncodePhoneSubsetDialog(BaseDialog):
+    def __init__(self, config, parent):
+        super(EncodePhoneSubsetDialog, self).__init__(parent)
+
+        layout = QtWidgets.QFormLayout()
+
+        self.labelEdit = QtWidgets.QLineEdit()
+
+        layout.addRow('Class label', self.labelEdit)
+
+        self.phoneSelect = PhoneSelectWidget(config)
+
+        layout.addRow('Segments', self.phoneSelect)
+
+        self.layout().insertLayout(0, layout)
+
+        self.setWindowTitle('Encode phone subsets')
+
+    def value(self):
+        return self.labelEdit.text(), self.phoneSelect.value()
+

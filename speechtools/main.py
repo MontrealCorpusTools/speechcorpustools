@@ -16,7 +16,8 @@ from .widgets import (ViewWidget, HelpWidget, DiscourseWidget, QueryWidget, Coll
 
 from .widgets.enrich import (EncodePauseDialog, EncodeUtteranceDialog,
                             EncodeSpeechRateDialog, EncodeUtterancePositionDialog,
-                            AnalyzeAcousticsDialog, EncodeSyllabicsDialog)
+                            AnalyzeAcousticsDialog, EncodeSyllabicsDialog,
+                            EncodePhoneSubsetDialog)
 
 from .helper import get_system_font_height
 
@@ -25,7 +26,7 @@ from .progress import ProgressWidget
 from .workers import (AcousticAnalysisWorker, ImportCorpusWorker,
                     PauseEncodingWorker, UtteranceEncodingWorker,
                     SpeechRateWorker, UtterancePositionWorker,
-                    SyllabicEncodingWorker)
+                    SyllabicEncodingWorker, PhoneSubsetEncodingWorker)
 
 sct_config_pickle_path = os.path.join(BASE_DIR, 'config')
 
@@ -99,7 +100,7 @@ class MainWindow(QtWidgets.QMainWindow):
     configUpdated = QtCore.pyqtSignal(object)
     def __init__(self, app):
         super(MainWindow, self).__init__()
-        vispy.sys_info(os.path.join(BASE_DIR, 'vispy.info'), overwrite = True)
+        #vispy.sys_info(os.path.join(BASE_DIR, 'vispy.info'), overwrite = True)
         self.corpusConfig = None
 
         self.leftPane = LeftPane()
@@ -167,6 +168,10 @@ class MainWindow(QtWidgets.QMainWindow):
         self.utterancePositionWorker.errorEncountered.connect(self.showError)
         self.utterancePositionWorker.dataReady.connect(self.updateStatus)
 
+        self.phoneSubsetWorker = PhoneSubsetEncodingWorker()
+        self.phoneSubsetWorker.errorEncountered.connect(self.showError)
+        self.phoneSubsetWorker.dataReady.connect(self.updateStatus)
+
         self.rightPane.connectWidget.corporaList.cancelImporter.connect(self.importWorker.stop)
         self.rightPane.connectWidget.corporaList.corpusToImport.connect(self.importCorpus)
         self.progressWidget = ProgressWidget(self)
@@ -185,11 +190,12 @@ class MainWindow(QtWidgets.QMainWindow):
     def updateConfig(self, config):
         self.corpusConfig = config
         self.updateStatus()
-        self.configUpdated.emit(self.corpusConfig)
 
     def updateStatus(self):
         self.syllabicsAct.setEnabled(False)
         self.syllabicsAct.setText("Encode syllabic segments...")
+        self.phoneSubsetAct.setEnabled(False)
+        self.phoneSubsetAct.setText("Encode phone subsets (classes)...")
         self.pausesAct.setEnabled(False)
         self.pausesAct.setText("Encode non-speech elements...")
         self.utterancesAct.setEnabled(False)
@@ -211,6 +217,7 @@ class MainWindow(QtWidgets.QMainWindow):
                 with CorpusContext(self.corpusConfig) as c:
                     self.pausesAct.setEnabled(True)
                     self.syllabicsAct.setEnabled(True)
+                    self.phoneSubsetAct.setEnabled(True)
                     if c.hierarchy.has_type_subset(c.phone_name, 'syllabic'):
                         self.syllabicsAct.setText("Re-encode syllabic segments...")
                     if c.hierarchy.has_token_subset(c.word_name, 'pause'):
@@ -237,6 +244,7 @@ class MainWindow(QtWidgets.QMainWindow):
             size = get_system_font_height()
             self.connectionStatus.setPixmap(QtWidgets.qApp.style().standardIcon(QtWidgets.QStyle.SP_DialogApplyButton).pixmap(size, size))
             self.connectionStatus.setToolTip('Connected!')
+        self.configUpdated.emit(self.corpusConfig)
 
     def closeEvent(self, event):
         #self.importWorker.stop()
@@ -264,6 +272,11 @@ class MainWindow(QtWidgets.QMainWindow):
                 self,
                 statusTip="Encode syllabic segments", triggered=self.encodeSyllabics)
         self.syllabicsAct.setEnabled(False)
+
+        self.phoneSubsetAct = QtWidgets.QAction( "Encode phone subsets (classes)...",
+                self,
+                statusTip="Create (natural and unnatural) classes of segments", triggered=self.encodePhoneSubset)
+        self.phoneSubsetAct.setEnabled(False)
 
         self.pausesAct = QtWidgets.QAction( "Encode non-speech elements...",
                 self,
@@ -297,6 +310,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.enhancementMenu = self.menuBar().addMenu("Enhance corpus")
 
         self.enhancementMenu.addAction(self.syllabicsAct)
+        self.enhancementMenu.addAction(self.phoneSubsetAct)
         self.enhancementMenu.addAction(self.pausesAct)
         self.enhancementMenu.addAction(self.utterancesAct)
         self.enhancementMenu.addAction(self.speechRateAct)
@@ -319,6 +333,18 @@ class MainWindow(QtWidgets.QMainWindow):
             self.progressWidget.createProgressBar('syllabics', self.syllabicsWorker)
             self.progressWidget.show()
             self.syllabicsWorker.start()
+
+    def encodePhoneSubset(self):
+        dialog = EncodePhoneSubsetDialog(self.corpusConfig, self)
+        if dialog.exec_() == QtWidgets.QDialog.Accepted:
+            label, segments = dialog.value()
+            kwargs = {'config': self.corpusConfig,
+                        'label': label,
+                        'segments': segments}
+            self.phoneSubsetWorker.setParams(kwargs)
+            self.progressWidget.createProgressBar('subset', self.phoneSubsetWorker)
+            self.progressWidget.show()
+            self.phoneSubsetWorker.start()
 
     def encodePauses(self):
         dialog = EncodePauseDialog(self.corpusConfig, self)

@@ -241,9 +241,6 @@ class PauseEncodingWorker(QueryWorker):
                 call_back(0, 0)
                 c.reset_pauses()
                 return False
-            h = c.generate_hierarchy()
-            c.hierarchy = h
-            c.save_variables()
         return True
 
 class UtteranceEncodingWorker(QueryWorker):
@@ -262,9 +259,6 @@ class UtteranceEncodingWorker(QueryWorker):
                 call_back(0, 0)
                 c.reset_utterances()
                 return False
-            h = c.generate_hierarchy()
-            c.hierarchy = h
-            c.save_variables()
         return True
 
 class SpeechRateWorker(QueryWorker):
@@ -281,9 +275,6 @@ class SpeechRateWorker(QueryWorker):
                 call_back(0, 0)
                 c.reset_speech_rate()
                 return False
-            h = c.generate_hierarchy()
-            c.hierarchy = h
-            c.save_variables()
         return True
 
 class UtterancePositionWorker(QueryWorker):
@@ -299,9 +290,6 @@ class UtterancePositionWorker(QueryWorker):
                 call_back(0, 0)
                 c.reset_utterance_position()
                 return False
-            h = c.generate_hierarchy()
-            c.hierarchy = h
-            c.save_variables()
         return True
 
 class SyllabicEncodingWorker(QueryWorker):
@@ -320,7 +308,23 @@ class SyllabicEncodingWorker(QueryWorker):
                 call_back(0, 0)
                 c.reset_class('syllabic')
                 return False
-            h = c.generate_hierarchy()
-            c.hierarchy = h
-            c.save_variables()
+        return True
+
+class PhoneSubsetEncodingWorker(QueryWorker):
+    def run_query(self):
+        config = self.kwargs['config']
+        segments = self.kwargs['segments']
+        label = self.kwargs['label']
+        stop_check = self.kwargs['stop_check']
+        call_back = self.kwargs['call_back']
+        call_back('Resetting {}s...'.format(label))
+        call_back(0, 0)
+        with CorpusContext(config) as c:
+            c.reset_class(label)
+            c.encode_class(segments, label)
+            if stop_check():
+                call_back('Resetting {}s...'.format(label))
+                call_back(0, 0)
+                c.reset_class(label)
+                return False
         return True

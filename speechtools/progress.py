@@ -19,7 +19,7 @@ class SCTProgressBar(QtWidgets.QWidget):
 
         self.cancelButton = QtWidgets.QPushButton()
         size = get_system_font_height()
-        self.cancelButton.setIcon(QtWidgets.qApp.style().standardIcon(QtWidgets.QStyle.SP_DialogCloseButton))
+        self.cancelButton.setIcon(QtWidgets.qApp.style().standardIcon(QtWidgets.QStyle.SP_DialogCancelButton))
         self.cancelButton.clicked.connect(self.cancelWorker)
         self.worker.finishedCancelling.connect(self.finishCancelling)
         layout = QtWidgets.QVBoxLayout()
