@@ -11,6 +11,9 @@ class Filter(object):
         self.operator = operator
         self.value = value
 
+    def __repr__(self):
+        return '<Filter {}, {}, {}>'.format(self.attribute, self.operator, self.value)
+
     @property
     def is_alignment(self):
         if self.attribute[-1] not in ['begin','end']:

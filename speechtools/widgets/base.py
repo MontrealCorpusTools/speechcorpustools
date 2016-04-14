@@ -99,3 +99,74 @@ class DataListWidget(QtWidgets.QListWidget):
     def update_plot(self):
         labels = [i.text() for i in self.selectedItems()]
         self.plot.update_data(labels, self.plot_type)
+
+
+class RadioSelectWidget(QtWidgets.QGroupBox):
+    def __init__(self,title, options, actions=None, enabled=None,parent=None):
+        super(RadioSelectWidget, self).__init__(title, parent)
+        self.is_enabled = True
+        self.actions = None
+        self.enabled = None
+        self.setLayout(QtWidgets.QFormLayout())
+        self.setOptions(options, actions, enabled)
+
+    def initOptions(self):
+        self.widgets = []
+        for key in self.options.keys():
+            w = QtWidgets.QRadioButton(key)
+            if self.actions is not None:
+                w.clicked.connect(self.actions[key])
+            if self.enabled is not None:
+                w.setEnabled(self.enabled[key])
+            if not self.is_enabled:
+                w.setEnabled(False)
+            self.widgets.append(w)
+            self.layout().addRow(w)
+        self.widgets[0].setChecked(True)
+
+    def setOptions(self, options, actions = None, enabled = None):
+        for i in reversed(range(self.layout().count())):
+            w = self.layout().itemAt(i).widget()
+            self.layout().removeWidget(w)
+            w.setParent(None)
+            w.deleteLater()
+        self.options = options
+        if actions is not None:
+            self.actions = actions
+        if enabled is not None:
+            self.enabled = enabled
+        self.initOptions()
+
+
+    def initialClick(self):
+        self.widgets[0].click()
+
+    def click(self,index):
+        if index >= len(self.widgets):
+            return
+        self.widgets[index].click()
+
+    def value(self):
+        for w in self.widgets:
+            if w.isChecked():
+                return self.options[w.text()]
+        return None
+
+    def displayValue(self):
+        for w in self.widgets:
+            if w.isChecked():
+                return w.text()
+        return ''
+
+    def disable(self):
+        self.is_enabled = False
+        for w in self.widgets:
+            w.setEnabled(False)
+
+    def enable(self):
+        self.is_enabled = True
+        for w in self.widgets:
+            if self.enabled is not None:
+                w.setEnabled(self.enabled[key])
+            else:
+                w.setEnabled(True)

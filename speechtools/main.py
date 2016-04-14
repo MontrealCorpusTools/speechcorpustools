@@ -17,7 +17,7 @@ from .widgets import (ViewWidget, HelpWidget, DiscourseWidget, QueryWidget, Coll
 from .widgets.enrich import (EncodePauseDialog, EncodeUtteranceDialog,
                             EncodeSpeechRateDialog, EncodeUtterancePositionDialog,
                             AnalyzeAcousticsDialog, EncodeSyllabicsDialog,
-                            EncodePhoneSubsetDialog)
+                            EncodePhoneSubsetDialog, EncodeSyllablesDialog)
 
 from .helper import get_system_font_height
 
@@ -26,7 +26,8 @@ from .progress import ProgressWidget
 from .workers import (AcousticAnalysisWorker, ImportCorpusWorker,
                     PauseEncodingWorker, UtteranceEncodingWorker,
                     SpeechRateWorker, UtterancePositionWorker,
-                    SyllabicEncodingWorker, PhoneSubsetEncodingWorker)
+                    SyllabicEncodingWorker, PhoneSubsetEncodingWorker,
+                    SyllableEncodingWorker)
 
 sct_config_pickle_path = os.path.join(BASE_DIR, 'config')
 
@@ -152,6 +153,10 @@ class MainWindow(QtWidgets.QMainWindow):
         self.syllabicsWorker.errorEncountered.connect(self.showError)
         self.syllabicsWorker.dataReady.connect(self.updateStatus)
 
+        self.syllablesWorker = SyllableEncodingWorker()
+        self.syllablesWorker.errorEncountered.connect(self.showError)
+        self.syllablesWorker.dataReady.connect(self.updateStatus)
+
         self.pauseWorker = PauseEncodingWorker()
         self.pauseWorker.errorEncountered.connect(self.showError)
         self.pauseWorker.dataReady.connect(self.updateStatus)
@@ -194,6 +199,8 @@ class MainWindow(QtWidgets.QMainWindow):
     def updateStatus(self):
         self.syllabicsAct.setEnabled(False)
         self.syllabicsAct.setText("Encode syllabic segments...")
+        self.syllablesAct.setEnabled(False)
+        self.syllablesAct.setText("Encode syllables...")
         self.phoneSubsetAct.setEnabled(False)
         self.phoneSubsetAct.setText("Encode phone subsets (classes)...")
         self.pausesAct.setEnabled(False)
@@ -217,9 +224,12 @@ class MainWindow(QtWidgets.QMainWindow):
                 with CorpusContext(self.corpusConfig) as c:
                     self.pausesAct.setEnabled(True)
                     self.syllabicsAct.setEnabled(True)
+                    self.syllablesAct.setEnabled(True)
                     self.phoneSubsetAct.setEnabled(True)
                     if c.hierarchy.has_type_subset(c.phone_name, 'syllabic'):
                         self.syllabicsAct.setText("Re-encode syllabic segments...")
+                    if 'syllable' in c.hierarchy.annotation_types:
+                        self.syllablesAct.setText("Re-encode syllables...")
                     if c.hierarchy.has_token_subset(c.word_name, 'pause'):
                         self.pausesAct.setText("Re-encode non-speech elements...")
                     if self.corpusConfig.graph_host == 'localhost':
@@ -273,6 +283,11 @@ class MainWindow(QtWidgets.QMainWindow):
                 statusTip="Encode syllabic segments", triggered=self.encodeSyllabics)
         self.syllabicsAct.setEnabled(False)
 
+        self.syllablesAct = QtWidgets.QAction( "Encode syllables...",
+                self,
+                statusTip="Encode syllables", triggered=self.encodeSyllables)
+        self.syllablesAct.setEnabled(False)
+
         self.phoneSubsetAct = QtWidgets.QAction( "Encode phone subsets (classes)...",
                 self,
                 statusTip="Create (natural and unnatural) classes of segments", triggered=self.encodePhoneSubset)
@@ -305,11 +320,12 @@ class MainWindow(QtWidgets.QMainWindow):
     def createMenus(self):
         self.corpusMenu = self.menuBar().addMenu("Corpus")
 
-        self.corpusMenu.addAction(self.specifyAct)
+        #self.corpusMenu.addAction(self.specifyAct)
 
         self.enhancementMenu = self.menuBar().addMenu("Enhance corpus")
 
         self.enhancementMenu.addAction(self.syllabicsAct)
+        self.enhancementMenu.addAction(self.syllablesAct)
         self.enhancementMenu.addAction(self.phoneSubsetAct)
         self.enhancementMenu.addAction(self.pausesAct)
         self.enhancementMenu.addAction(self.utterancesAct)
@@ -333,6 +349,18 @@ class MainWindow(QtWidgets.QMainWindow):
             self.progressWidget.createProgressBar('syllabics', self.syllabicsWorker)
             self.progressWidget.show()
             self.syllabicsWorker.start()
+        pass
+
+    def encodeSyllables(self):
+        dialog = EncodeSyllablesDialog(self.corpusConfig, self)
+        if dialog.exec_() == QtWidgets.QDialog.Accepted:
+            algorithm = dialog.value()
+            kwargs = {'config': self.corpusConfig,
+                        'algorithm': algorithm}
+            self.syllablesWorker.setParams(kwargs)
+            self.progressWidget.createProgressBar('syllables', self.syllablesWorker)
+            self.progressWidget.show()
+            self.syllablesWorker.start()
 
     def encodePhoneSubset(self):
         dialog = EncodePhoneSubsetDialog(self.corpusConfig, self)

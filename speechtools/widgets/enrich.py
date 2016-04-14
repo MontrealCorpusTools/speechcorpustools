@@ -1,5 +1,9 @@
 
+from collections import OrderedDict
+
 from PyQt5 import QtGui, QtCore, QtWidgets
+
+from .base import RadioSelectWidget
 
 from .lexicon import WordSelectWidget
 
@@ -109,6 +113,26 @@ class EncodeSyllabicsDialog(BaseDialog):
 
     def value(self):
         return self.phoneSelect.value()
+
+class EncodeSyllablesDialog(BaseDialog):
+    def __init__(self, config, parent):
+        super(EncodeSyllablesDialog, self).__init__(parent)
+
+        layout = QtWidgets.QFormLayout()
+
+        self.algorithmWidget = RadioSelectWidget('Syllabification algorithm',
+                                            OrderedDict([
+                                            ('Probabilistic onsets and codas (language-independent)','probabilistic'),
+                                            ('Max attested onset (language-independent)','maxonset'),]))
+
+        layout.addRow(self.algorithmWidget)
+
+        self.layout().insertLayout(0, layout)
+
+        self.setWindowTitle('Encode syllables')
+
+    def value(self):
+        return self.algorithmWidget.value()
 
 class EncodePhoneSubsetDialog(BaseDialog):
     def __init__(self, config, parent):

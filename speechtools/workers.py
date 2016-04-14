@@ -132,9 +132,9 @@ class ExportQueryWorker(QueryWorker):
             query = c.query_graph(a_type)
             filters = profile.for_polyglot(c)
             query = query.filter(*filters)
-            columns = export_profile.for_polyglot(c)
+            columns = export_profile.for_polyglot(c, to_find = profile.to_find)
             query = query.columns(*columns)
-
+            print(query.cypher())
             results = query.to_csv(export_path)
         return True
 
@@ -307,6 +307,23 @@ class SyllabicEncodingWorker(QueryWorker):
                 call_back('Resetting syllabics...')
                 call_back(0, 0)
                 c.reset_class('syllabic')
+                return False
+        return True
+
+class SyllableEncodingWorker(QueryWorker):
+    def run_query(self):
+        config = self.kwargs['config']
+        algorithm = self.kwargs['algorithm']
+        stop_check = self.kwargs['stop_check']
+        call_back = self.kwargs['call_back']
+        call_back('Encoding syllables...')
+        call_back(0, 0)
+        with CorpusContext(config) as c:
+            c.encode_syllables(algorithm = algorithm, call_back = call_back, stop_check = stop_check)
+            if stop_check():
+                call_back('Resetting syllables...')
+                call_back(0, 0)
+                c.reset_syllables()
                 return False
         return True
 
