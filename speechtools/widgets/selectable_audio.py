@@ -506,6 +506,10 @@ class SelectableAudioWidget(QtWidgets.QWidget):
         event.handled = True
 
     def zoom(self, factor, center_time):
+        if self.max_vis_time is None:
+            return
+        if self.max_time is None:
+            return
         if self.max_vis_time == self.max_time and self.min_vis_time == self.min_time and factor > 1:
             return
 
@@ -524,6 +528,10 @@ class SelectableAudioWidget(QtWidgets.QWidget):
         self.updateVisible()
 
     def pan(self, time_delta):
+        if self.max_vis_time is None:
+            return
+        if self.max_time is None:
+            return
         if self.max_vis_time == self.max_time and time_delta > 0:
             return
         if self.min_vis_time == self.min_time and time_delta < 0:
