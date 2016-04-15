@@ -17,7 +17,7 @@ from .graphical import GraphicalQuery
 
 from .basic import BasicQuery
 
-from .export import NewExportProfileDialog
+from .export import ExportProfileDialog
 
 from ...profiles import (available_query_profiles, available_export_profiles,
                         QueryProfile, ExportProfile,
@@ -74,18 +74,28 @@ class ExportWidget(QtWidgets.QWidget):
         layout.addWidget(self.exportButton)
         self.setLayout(layout)
 
+    def beginExport(self, name):
+        self.setDisabled(True)
+        self.exportButton.setText('Exporting...')
+        self.exportQuery.emit(name)
+
+    def readyExport(self):
+        self.setDisabled(False)
+        self.exportButton.setText('Export query results')
+
     def refresh(self):
+        self.readyExport()
         menu = QtWidgets.QMenu()
         newAction = QtWidgets.QAction('New export profile', self)
-        newAction.triggered.connect(lambda x: self.exportQuery.emit('new'))
+        newAction.triggered.connect(lambda x: self.beginExport('new'))
         menu.addAction(newAction)
         basicAction = QtWidgets.QAction('Basic columns', self)
-        basicAction.triggered.connect(lambda x: self.exportQuery.emit('basic'))
+        basicAction.triggered.connect(lambda x: self.beginExport('basic'))
         menu.addAction(basicAction)
         profiles = available_export_profiles()
         for p in profiles:
             act = QtWidgets.QAction(p, self)
-            act.triggered.connect(lambda x: self.exportQuery.emit(p))
+            act.triggered.connect(lambda x: self.beginExport(p))
             menu.addAction(act)
 
         self.exportButton.setMenu(menu)
@@ -165,6 +175,11 @@ class QueryForm(QtWidgets.QWidget):
 
         self.exportWorker = ExportQueryWorker()
         self.exportWorker.errorEncountered.connect(self.showError)
+        self.exportWorker.dataReady.connect(self.finishExport)
+
+    def finishExport(self):
+        self.exportWidget.refresh()
+
 
     def saveProfile(self):
         default = self.profileWidget.currentName()
@@ -195,19 +210,17 @@ class QueryForm(QtWidgets.QWidget):
         if self.config is None:
             return
 
-        if profile_name == 'new':
-
-            dialog = NewExportProfileDialog(self.config, self.currentProfile().to_find, self)
-            if dialog.exec_() == QtWidgets.QDialog.Rejected:
-                return
-            profile_name = dialog.name()
-            self.exportWidget.refresh()
-        elif profile_name == 'basic':
+        dialog = ExportProfileDialog(self.config, self.currentProfile().to_find, self)
+        if profile_name != 'new':
+            dialog.updateProfile(ExportProfile.load_profile(profile_name))
+        if dialog.exec_() == QtWidgets.QDialog.Rejected:
+            self.exportWidget.readyExport()
             return
-        export_profile = ExportProfile.load_profile(profile_name)
+        export_profile = dialog.profile()
         path, _ = QtWidgets.QFileDialog.getSaveFileName(self, "Export data", filter = "CSV (*.txt  *.csv)")
 
         if not path:
+            self.exportWidget.readyExport()
             return
         kwargs = {}
         kwargs['config'] = self.config
@@ -216,7 +229,6 @@ class QueryForm(QtWidgets.QWidget):
         kwargs['path'] = path
         self.exportWorker.setParams(kwargs)
         self.exportWorker.start()
-
 
     def runQuery(self):
         self.queryWorker.stop()

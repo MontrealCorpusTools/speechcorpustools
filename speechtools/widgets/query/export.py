@@ -7,10 +7,11 @@ from polyglotdb import CorpusContext
 
 from ...profiles import available_export_profiles, ExportProfile, Column
 
+from .basic import AttributeSelect as QueryAttributeSelect, SpeakerAttributeSelect
 
-class AttributeSelect(QtWidgets.QComboBox):
+class AttributeSelect(QueryAttributeSelect):
     def __init__(self, hierarchy, to_find):
-        super(AttributeSelect, self).__init__()
+        QtWidgets.QComboBox.__init__(self)
         for k,t in sorted(hierarchy.token_properties[to_find]):
             self.addItem(k)
         for k,t in sorted(hierarchy.type_properties[to_find]):
@@ -27,9 +28,6 @@ class AttributeSelect(QtWidgets.QComboBox):
             for s in sorted(hierarchy.subannotations[to_find]):
                 self.addItem(s)
 
-    def label(self):
-        return self.currentText()
-
 class AttributeWidget(QtWidgets.QWidget):
     finalChanged = QtCore.pyqtSignal(object)
     def __init__(self, hierarchy, to_find):
@@ -39,20 +37,23 @@ class AttributeWidget(QtWidgets.QWidget):
 
         self.mainLayout = QtWidgets.QHBoxLayout()
         self.mainLayout.setContentsMargins(0,5,0,5)
-        self.initWidget()
 
         self.setLayout(self.mainLayout)
+        self.initWidget()
 
     def initWidget(self):
         while self.mainLayout.count():
             item = self.mainLayout.takeAt(0)
             if item.widget() is None:
                 continue
-            item.widget().deleteLater()
-        self.baseSelect = AttributeSelect(self.hierarchy, self.to_find)
-        self.baseSelect.currentIndexChanged.connect(self.updateAttribute)
+            w = item.widget()
+            w.setParent(None)
+            w.deleteLater()
 
-        self.mainLayout.addWidget(self.baseSelect)
+        select = AttributeSelect(self.hierarchy, self.to_find)
+        select.currentIndexChanged.connect(self.updateAttribute)
+
+        self.mainLayout.addWidget(select)
         self.finalChanged.emit(self.mainLayout.itemAt(self.mainLayout.count() - 1).widget().label())
 
     def setToFind(self, to_find):
@@ -66,7 +67,9 @@ class AttributeWidget(QtWidgets.QWidget):
             item = self.mainLayout.takeAt(self.mainLayout.count() - 1)
             if item.widget() is None:
                 continue
-            item.widget().deleteLater()
+            w = item.widget()
+            w.setParent(None)
+            w.deleteLater()
         current_annotation_type = self.annotationType()
         if combobox.currentText() in self.hierarchy.annotation_types:
             widget = AttributeSelect(self.hierarchy, combobox.currentText())
@@ -74,6 +77,10 @@ class AttributeWidget(QtWidgets.QWidget):
             self.mainLayout.addWidget(widget)
         elif combobox.currentText() in ['previous','following']:
             widget = AttributeSelect(self.hierarchy, current_annotation_type)
+            widget.currentIndexChanged.connect(self.updateAttribute)
+            self.mainLayout.addWidget(widget)
+        elif combobox.currentText() in ['speaker', 'discourse']:
+            widget = SpeakerAttributeSelect(self.hierarchy)
             widget.currentIndexChanged.connect(self.updateAttribute)
             self.mainLayout.addWidget(widget)
         self.finalChanged.emit(self.mainLayout.itemAt(self.mainLayout.count() - 1).widget().label())
@@ -96,7 +103,7 @@ class AttributeWidget(QtWidgets.QWidget):
         att = [self.to_find]
         for i in range(self.mainLayout.count()):
             widget = self.mainLayout.itemAt(i).widget()
-            if not isinstance(widget, AttributeSelect):
+            if not isinstance(widget, QueryAttributeSelect):
                 continue
             text = widget.currentText()
             att.append(text)
@@ -104,19 +111,30 @@ class AttributeWidget(QtWidgets.QWidget):
 
     def setAttribute(self, attribute):
         self.initWidget()
-        for a in attribute[1:]:
+        to_iter = []
+        for a in attribute:
+            if a.endswith('_name'):
+                a = getattr(self.hierarchy, a)
+            to_iter.append(a)
+        if to_iter[0] == self.to_find:
+            to_iter = to_iter[1:]
+        for a in to_iter:
             ind = self.mainLayout.count() - 1
             widget = self.mainLayout.itemAt(ind).widget()
-            widget.setCurrentIndex(widget.findText(a))
+            ind = widget.findText(a)
+            if ind == -1:
+                raise(AttributeError)
+            widget.setCurrentIndex(ind)
 
 class ColumnWidget(QtWidgets.QWidget):
+    needsDelete = QtCore.pyqtSignal()
     def __init__(self, hierarchy, to_find):
         self.hierarchy = hierarchy
         self.to_find = to_find
         super(ColumnWidget, self).__init__()
 
         mainLayout = QtWidgets.QHBoxLayout()
-        mainLayout.setSpacing(0)
+        mainLayout.setSpacing(10)
         mainLayout.setContentsMargins(0,0,0,0)
 
         self.attributeWidget = AttributeWidget(self.hierarchy, self.to_find)
@@ -129,6 +147,13 @@ class ColumnWidget(QtWidgets.QWidget):
         self.nameWidget = QtWidgets.QLineEdit()
         self.attributeWidget.setToFind(to_find)
         mainLayout.addWidget(self.nameWidget)
+
+        self.deleteButton = QtWidgets.QPushButton()
+        self.deleteButton.setIcon(QtWidgets.qApp.style().standardIcon(QtWidgets.QStyle.SP_DialogCancelButton))
+        self.deleteButton.clicked.connect(self.needsDelete.emit)
+        self.deleteButton.setSizePolicy(QtWidgets.QSizePolicy.Fixed,QtWidgets.QSizePolicy.Fixed)
+        mainLayout.addWidget(self.deleteButton)
+
         self.setLayout(mainLayout)
 
     def updateColumnName(self, name):
@@ -146,7 +171,10 @@ class ColumnWidget(QtWidgets.QWidget):
 
     def fromColumn(self, column):
         attribute = column.attribute
-        self.attributeWidget.setAttribute(attribute)
+        try:
+            self.attributeWidget.setAttribute(attribute)
+        except AttributeError:
+            self.needsDelete.emit()
         self.nameWidget.setText(column.name)
 
 class ColumnBox(QtWidgets.QGroupBox):
@@ -162,6 +190,12 @@ class ColumnBox(QtWidgets.QGroupBox):
         self.mainLayout.addWidget(self.addButton)
         self.setLayout(self.mainLayout)
 
+    def deleteWidget(self):
+        widget = self.sender()
+        self.mainLayout.removeWidget(widget)
+        widget.setParent(None)
+        widget.deleteLater()
+
     def setToFind(self, to_find):
         self.to_find = to_find
         for i in range(self.mainLayout.count() - 1):
@@ -169,19 +203,21 @@ class ColumnBox(QtWidgets.QGroupBox):
 
     def addNewColumn(self):
         widget = ColumnWidget(self.hierarchy, self.to_find)
+        widget.needsDelete.connect(self.deleteWidget)
         self.mainLayout.insertWidget(self.mainLayout.count() - 1, widget)
 
     def setColumns(self, columns):
         #Clear columns somehow
         while self.mainLayout.count() > 1:
-            item = self.mainLayout.takeAt(self.mainLayout.count() - 2)
+            item = self.mainLayout.takeAt(0)
             if item.widget() is None:
                 continue
             item.widget().deleteLater()
         for c in columns:
             widget = ColumnWidget(self.hierarchy, self.to_find)
+            widget.needsDelete.connect(self.deleteWidget)
+            self.mainLayout.insertWidget(self.mainLayout.count() - 1, widget)
             widget.fromColumn(c)
-            self.mainLayout.insertWidget(0, widget)
 
     def columns(self):
         columns = []
@@ -192,9 +228,9 @@ class ColumnBox(QtWidgets.QGroupBox):
             columns.append(widget.toColumn())
         return columns
 
-class NewExportProfileDialog(QtWidgets.QDialog):
+class ExportProfileDialog(QtWidgets.QDialog):
     def __init__(self, config, to_find, parent):
-        super(NewExportProfileDialog, self).__init__(parent)
+        super(ExportProfileDialog, self).__init__(parent)
 
         self.nameWidget = QtWidgets.QLineEdit()
 
@@ -203,8 +239,6 @@ class NewExportProfileDialog(QtWidgets.QDialog):
         while new_default_template.format(index) in available_export_profiles():
             index += 1
         self.nameWidget.setText(new_default_template.format(index))
-
-
 
         with CorpusContext(config) as c:
             hierarchy = c.hierarchy
@@ -220,7 +254,6 @@ class NewExportProfileDialog(QtWidgets.QDialog):
 
         layout = QtWidgets.QFormLayout()
         mainlayout = QtWidgets.QVBoxLayout()
-        layout.addRow('Profile name', self.nameWidget)
         layout.addRow('Linguistic objects to find', self.toFindWidget)
 
         self.columnWidget = ColumnBox(hierarchy, to_find)
@@ -230,20 +263,23 @@ class NewExportProfileDialog(QtWidgets.QDialog):
 
         aclayout = QtWidgets.QHBoxLayout()
 
-        self.acceptButton = QtWidgets.QPushButton('Save and run')
+        self.acceptButton = QtWidgets.QPushButton('Run')
+        self.saveButton = QtWidgets.QPushButton('Save as...')
         self.cancelButton = QtWidgets.QPushButton('Cancel')
 
         self.acceptButton.clicked.connect(self.accept)
+        self.saveButton.clicked.connect(self.saveAs)
         self.cancelButton.clicked.connect(self.reject)
 
         aclayout.addWidget(self.acceptButton)
+        aclayout.addWidget(self.saveButton)
         aclayout.addWidget(self.cancelButton)
 
         mainlayout.addLayout(aclayout)
 
         self.setLayout(mainlayout)
 
-        self.setWindowTitle('New export profile')
+        self.setWindowTitle('Export profile')
 
     def name(self):
         return self.nameWidget.text()
@@ -262,6 +298,19 @@ class NewExportProfileDialog(QtWidgets.QDialog):
         profile.columns = self.columnWidget.columns()
         return profile
 
-    def accept(self):
-        self.profile().save_profile()
-        super(NewExportProfileDialog, self).accept()
+    def saveAs(self):
+        from .main import SaveDialog
+        dialog = SaveDialog(self.nameWidget.text(), self)
+        if dialog.exec_() == QtWidgets.QDialog.Accepted:
+            profile = self.profile()
+            profile.name = dialog.value()
+            profile.save_profile()
+
+    def updateProfile(self, profile):
+        self.nameWidget.setText(profile.name)
+        if profile.to_find.endswith('_name') and self.hierarchy is not None:
+            to_find = getattr(self.hierarchy, profile.to_find)
+        else:
+            to_find = profile.to_find
+        #self.toFindWidget.setText(to_find)
+        self.columnWidget.setColumns(profile.columns)

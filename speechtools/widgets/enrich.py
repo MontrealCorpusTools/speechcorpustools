@@ -104,6 +104,13 @@ class EncodeSyllabicsDialog(BaseDialog):
         layout = QtWidgets.QFormLayout()
 
         self.phoneSelect = PhoneSelectWidget(config)
+        for i in range(self.phoneSelect.selectWidget.count()):
+            item = self.phoneSelect.selectWidget.item(i)
+            for v in ['a','e','i','o','u']:
+                if v in item.text().lower():
+                    index = self.phoneSelect.selectWidget.model().index(i,0)
+                    self.phoneSelect.selectWidget.selectionModel().select(index, QtCore.QItemSelectionModel.Select)
+                    break
 
         layout.addRow('Syllabic segments', self.phoneSelect)
 
