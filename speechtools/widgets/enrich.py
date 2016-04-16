@@ -162,3 +162,26 @@ class EncodePhoneSubsetDialog(BaseDialog):
     def value(self):
         return self.labelEdit.text(), self.phoneSelect.value()
 
+class EnrichLexiconDialog(BaseDialog):
+    def __init__(self, config, parent):
+        super(EnrichLexiconDialog, self).__init__(parent)
+
+        layout = QtWidgets.QFormLayout()
+
+        self.caseCheck = QtWidgets.QCheckBox()
+
+        layout.addRow('Case sensitive', self.caseCheck)
+
+        self.layout().insertLayout(0, layout)
+
+        self.setWindowTitle('Enrich lexicon')
+        self.path = None
+
+    def accept(self):
+        self.path, _ = QtWidgets.QFileDialog.getOpenFileName(self, "Select lexicon", filter = "CSV (*.txt  *.csv)")
+        if not self.path:
+            return
+        QtWidgets.QDialog.accept(self)
+
+    def value(self):
+        return self.path, self.caseCheck.isChecked()

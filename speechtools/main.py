@@ -17,7 +17,8 @@ from .widgets import (ViewWidget, HelpWidget, DiscourseWidget, QueryWidget, Coll
 from .widgets.enrich import (EncodePauseDialog, EncodeUtteranceDialog,
                             EncodeSpeechRateDialog, EncodeUtterancePositionDialog,
                             AnalyzeAcousticsDialog, EncodeSyllabicsDialog,
-                            EncodePhoneSubsetDialog, EncodeSyllablesDialog)
+                            EncodePhoneSubsetDialog, EncodeSyllablesDialog,
+                            EnrichLexiconDialog)
 
 from .helper import get_system_font_height
 
@@ -27,7 +28,7 @@ from .workers import (AcousticAnalysisWorker, ImportCorpusWorker,
                     PauseEncodingWorker, UtteranceEncodingWorker,
                     SpeechRateWorker, UtterancePositionWorker,
                     SyllabicEncodingWorker, PhoneSubsetEncodingWorker,
-                    SyllableEncodingWorker)
+                    SyllableEncodingWorker, LexiconEnrichmentWorker)
 
 sct_config_pickle_path = os.path.join(BASE_DIR, 'config')
 
@@ -177,6 +178,10 @@ class MainWindow(QtWidgets.QMainWindow):
         self.phoneSubsetWorker.errorEncountered.connect(self.showError)
         self.phoneSubsetWorker.dataReady.connect(self.updateStatus)
 
+        self.enrichLexiconWorker = LexiconEnrichmentWorker()
+        self.enrichLexiconWorker.errorEncountered.connect(self.showError)
+        self.enrichLexiconWorker.dataReady.connect(self.updateStatus)
+
         self.rightPane.connectWidget.corporaList.cancelImporter.connect(self.importWorker.stop)
         self.rightPane.connectWidget.corporaList.corpusToImport.connect(self.importCorpus)
         self.progressWidget = ProgressWidget(self)
@@ -197,6 +202,8 @@ class MainWindow(QtWidgets.QMainWindow):
         self.updateStatus()
 
     def updateStatus(self):
+        self.enrichLexiconAct.setEnabled(False)
+        self.enrichLexiconAct.setText("Enrich lexicon...")
         self.syllabicsAct.setEnabled(False)
         self.syllabicsAct.setText("Encode syllabic segments...")
         self.syllablesAct.setEnabled(False)
@@ -223,6 +230,7 @@ class MainWindow(QtWidgets.QMainWindow):
             else:
                 with CorpusContext(self.corpusConfig) as c:
                     self.pausesAct.setEnabled(True)
+                    self.enrichLexiconAct.setEnabled(True)
                     self.syllabicsAct.setEnabled(True)
                     self.syllablesAct.setEnabled(True)
                     self.phoneSubsetAct.setEnabled(True)
@@ -278,6 +286,11 @@ class MainWindow(QtWidgets.QMainWindow):
                 self,
                 statusTip="Export a corpus", triggered=self.exportCorpus)
 
+        self.enrichLexiconAct = QtWidgets.QAction( "Enrich lexicon...",
+                self,
+                statusTip="Enrich lexicon from a CSV file", triggered=self.enrichLexicon)
+        self.enrichLexiconAct.setEnabled(False)
+
         self.syllabicsAct = QtWidgets.QAction( "Encode syllabic segments...",
                 self,
                 statusTip="Encode syllabic segments", triggered=self.encodeSyllabics)
@@ -324,7 +337,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
         self.enhancementMenu = self.menuBar().addMenu("Enhance corpus")
 
-        self.enhancementMenu.addAction(self.syllabicsAct)
+        self.enhancementMenu.addAction(self.enrichLexiconAct)
         self.enhancementMenu.addAction(self.syllablesAct)
         self.enhancementMenu.addAction(self.phoneSubsetAct)
         self.enhancementMenu.addAction(self.pausesAct)
@@ -339,6 +352,18 @@ class MainWindow(QtWidgets.QMainWindow):
     def exportCorpus(self):
         pass
 
+    def enrichLexicon(self):
+        dialog = EnrichLexiconDialog(self.corpusConfig, self)
+        if dialog.exec_() == QtWidgets.QDialog.Accepted:
+            path, case_sensitive = dialog.value()
+            kwargs = {'config': self.corpusConfig,
+                        'path': path,
+                        'case_sensitive': case_sensitive}
+            self.enrichLexiconWorker.setParams(kwargs)
+            self.progressWidget.createProgressBar('lexicon', self.enrichLexiconWorker)
+            self.progressWidget.show()
+            self.enrichLexiconWorker.start()
+
     def encodeSyllabics(self):
         dialog = EncodeSyllabicsDialog(self.corpusConfig, self)
         if dialog.exec_() == QtWidgets.QDialog.Accepted:
@@ -349,7 +374,6 @@ class MainWindow(QtWidgets.QMainWindow):
             self.progressWidget.createProgressBar('syllabics', self.syllabicsWorker)
             self.progressWidget.show()
             self.syllabicsWorker.start()
-        pass
 
     def encodeSyllables(self):
         dialog = EncodeSyllablesDialog(self.corpusConfig, self)
