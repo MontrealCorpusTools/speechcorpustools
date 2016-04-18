@@ -172,14 +172,20 @@ class QueryForm(QtWidgets.QWidget):
         self.queryWorker = QueryWorker()
         self.queryWorker.dataReady.connect(self.setResults)
         self.queryWorker.errorEncountered.connect(self.showError)
+        self.queryWorker.errorEncountered.connect(self.finishQuery)
+        self.queryWorker.dataReady.connect(self.finishQuery)
 
         self.exportWorker = ExportQueryWorker()
         self.exportWorker.errorEncountered.connect(self.showError)
+        self.exportWorker.errorEncountered.connect(self.finishExport)
         self.exportWorker.dataReady.connect(self.finishExport)
 
     def finishExport(self):
         self.exportWidget.refresh()
 
+    def finishQuery(self):
+        self.executeButton.setText('Run query')
+        self.setEnabled(True)
 
     def saveProfile(self):
         default = self.profileWidget.currentName()
@@ -234,6 +240,8 @@ class QueryForm(QtWidgets.QWidget):
         self.queryWorker.stop()
         if self.config is None:
             return
+        self.executeButton.setText('Query running...')
+        self.setEnabled(False)
         kwargs = {}
         kwargs['config'] = self.config
         kwargs['profile'] = self.currentProfile()
