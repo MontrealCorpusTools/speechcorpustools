@@ -13,7 +13,7 @@ from polyglotdb import CorpusContext
 from polyglotdb.config import CorpusConfig
 
 from polyglotdb.io import inspect_buckeye
-from polyglotdb.io.enrichment import enrich_lexicon_from_csv
+from polyglotdb.io.enrichment import enrich_lexicon_from_csv, enrich_features_from_csv
 
 from polyglotdb.utils import update_sound_files, gp_language_stops, gp_speakers
 
@@ -360,6 +360,23 @@ class LexiconEnrichmentWorker(QueryWorker):
             enrich_lexicon_from_csv(c, path)
             if stop_check():
                 call_back('Resetting lexicon...')
+                call_back(0, 0)
+                c.reset_lexicon()
+                return False
+        return True
+
+class FeatureEnrichmentWorker(QueryWorker):
+    def run_query(self):
+        config = self.kwargs['config']
+        path = self.kwargs['path']
+        stop_check = self.kwargs['stop_check']
+        call_back = self.kwargs['call_back']
+        call_back('Enriching phonological inventory...')
+        call_back(0, 0)
+        with CorpusContext(config) as c:
+            enrich_features_from_csv(c, path)
+            if stop_check():
+                call_back('Resetting phonological inventory...')
                 call_back(0, 0)
                 c.reset_lexicon()
                 return False
