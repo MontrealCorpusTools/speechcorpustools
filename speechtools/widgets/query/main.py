@@ -74,7 +74,13 @@ class ExportWidget(QtWidgets.QWidget):
         layout.addWidget(self.exportButton)
         self.setLayout(layout)
 
-    def beginExport(self, name):
+    def beginExport(self):
+        a = self.sender()
+        name = a.text()
+        if name == 'Basic columns':
+            name = 'basic'
+        elif name == 'New export profile':
+            name = 'new'
         self.setDisabled(True)
         self.exportButton.setText('Exporting...')
         self.exportQuery.emit(name)
@@ -87,15 +93,15 @@ class ExportWidget(QtWidgets.QWidget):
         self.readyExport()
         menu = QtWidgets.QMenu()
         newAction = QtWidgets.QAction('New export profile', self)
-        newAction.triggered.connect(lambda x: self.beginExport('new'))
+        newAction.triggered.connect(self.beginExport)
         menu.addAction(newAction)
         basicAction = QtWidgets.QAction('Basic columns', self)
-        basicAction.triggered.connect(lambda x: self.beginExport('basic'))
+        basicAction.triggered.connect(self.beginExport)
         menu.addAction(basicAction)
         profiles = available_export_profiles()
         for p in profiles:
             act = QtWidgets.QAction(p, self)
-            act.triggered.connect(lambda x: self.beginExport(p))
+            act.triggered.connect(self.beginExport)
             menu.addAction(act)
 
         self.exportButton.setMenu(menu)
@@ -214,6 +220,8 @@ class QueryForm(QtWidgets.QWidget):
 
     def exportQuery(self, profile_name):
         if self.config is None:
+            return
+        if profile_name == 'basic':
             return
 
         dialog = ExportProfileDialog(self.config, self.currentProfile().to_find, self)

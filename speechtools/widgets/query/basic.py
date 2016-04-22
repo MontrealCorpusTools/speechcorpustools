@@ -20,10 +20,14 @@ class AttributeSelect(NonScrollingComboBox):
             self.addItem('duration')
             self.types = ['alignment', 'annotation',' annotation','subset', float]
             if to_find != '':
+                present = []
                 for k,t in sorted(hierarchy.token_properties[to_find]):
                     self.addItem(k)
                     self.types.append(t)
+                    present.append(k)
                 for k,t in sorted(hierarchy.type_properties[to_find]):
+                    if k in present:
+                        continue
                     self.addItem(k)
                     self.types.append(t)
         else:
@@ -101,13 +105,12 @@ class AttributeWidget(QtWidgets.QWidget):
         current_annotation_type = self.annotationType()
         if combobox.currentText() in self.hierarchy.annotation_types or \
             combobox.currentText() in ['previous','following']:
+            if self.alignment:
+                return
             if combobox.currentText() in self.hierarchy.annotation_types:
                 widget = AttributeSelect(self.hierarchy, combobox.currentText(), self.alignment)
             else:
                 widget = AttributeSelect(self.hierarchy, current_annotation_type, self.alignment)
-            if self.alignment:
-                widget.insertItem(0, '')
-                widget.setCurrentIndex(0)
             widget.currentIndexChanged.connect(self.updateAttribute)
             self.mainLayout.addWidget(widget)
         elif combobox.currentText() in ['speaker', 'discourse']:
