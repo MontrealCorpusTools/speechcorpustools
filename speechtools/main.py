@@ -240,15 +240,15 @@ class MainWindow(QtWidgets.QMainWindow):
                     self.enrichLexiconAct.setEnabled(True)
                     self.enrichFeaturesAct.setEnabled(True)
                     self.syllabicsAct.setEnabled(True)
-                    self.syllablesAct.setEnabled(True)
                     self.phoneSubsetAct.setEnabled(True)
                     if c.hierarchy.has_type_subset(c.phone_name, 'syllabic'):
                         self.syllabicsAct.setText("Re-encode syllabic segments...")
+                        self.syllablesAct.setEnabled(True)
                     if 'syllable' in c.hierarchy.annotation_types:
                         self.syllablesAct.setText("Re-encode syllables...")
                     if c.hierarchy.has_token_subset(c.word_name, 'pause'):
                         self.pausesAct.setText("Re-encode non-speech elements...")
-                    if self.corpusConfig.graph_host == 'localhost':
+                    if c.hierarchy.has_token_subset(c.word_name, 'pause') and self.corpusConfig.graph_host == 'localhost':
                         self.utterancesAct.setEnabled(True)
                     else:
                         self.utterancesAct.setEnabled(False)
@@ -352,6 +352,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
         self.enhancementMenu.addAction(self.enrichLexiconAct)
         self.enhancementMenu.addAction(self.enrichFeaturesAct)
+        self.enhancementMenu.addAction(self.syllabicsAct)
         self.enhancementMenu.addAction(self.syllablesAct)
         self.enhancementMenu.addAction(self.phoneSubsetAct)
         self.enhancementMenu.addAction(self.pausesAct)

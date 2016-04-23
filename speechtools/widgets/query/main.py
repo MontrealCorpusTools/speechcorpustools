@@ -267,9 +267,7 @@ class QueryForm(QtWidgets.QWidget):
         self.executeButton.setDisabled(False)
         self.exportWidget.setDisabled(False)
         self.saveButton.setDisabled(False)
-        with CorpusContext(config) as c:
-            h = c.hierarchy
-        self.queryWidget.setHierarchy(h)
+        self.queryWidget.updateConfig(config)
 
 
     def setResults(self, results):

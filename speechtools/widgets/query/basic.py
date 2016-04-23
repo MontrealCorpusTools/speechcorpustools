@@ -22,11 +22,15 @@ class AttributeSelect(NonScrollingComboBox):
             if to_find != '':
                 present = []
                 for k,t in sorted(hierarchy.token_properties[to_find]):
+                    if t in [tuple, list]:
+                        continue
                     self.addItem(k)
                     self.types.append(t)
                     present.append(k)
                 for k,t in sorted(hierarchy.type_properties[to_find]):
                     if k in present:
+                        continue
+                    if t in [tuple, list]:
                         continue
                     self.addItem(k)
                     self.types.append(t)
@@ -64,9 +68,11 @@ class SpeakerAttributeSelect(AttributeSelect):
 
 
 class AttributeWidget(QtWidgets.QWidget):
-    attributeTypeChanged = QtCore.pyqtSignal(object, object)
-    def __init__(self, hierarchy, to_find, alignment = False):
-        self.hierarchy = hierarchy
+    attributeTypeChanged = QtCore.pyqtSignal(object, object, object)
+    def __init__(self, config, to_find, alignment = False):
+        self.config = config
+        with CorpusContext(self.config) as c:
+            self.hierarchy = c.hierarchy
         self.to_find = to_find
         self.alignment = alignment
         super(AttributeWidget, self).__init__()
@@ -88,7 +94,7 @@ class AttributeWidget(QtWidgets.QWidget):
         self.baseSelect.currentIndexChanged.connect(self.updateAttribute)
 
         self.mainLayout.addWidget(self.baseSelect)
-        self.attributeTypeChanged.emit(self.to_find, self.baseSelect.type())
+        self.attributeTypeChanged.emit(self.to_find, self.baseSelect.label(), self.baseSelect.type())
 
     def setToFind(self, to_find):
         self.to_find = to_find
@@ -117,9 +123,9 @@ class AttributeWidget(QtWidgets.QWidget):
             widget = SpeakerAttributeSelect(self.hierarchy)
             widget.currentIndexChanged.connect(self.updateAttribute)
             self.mainLayout.addWidget(widget)
-            self.attributeTypeChanged.emit('speaker', widget.type())
+            self.attributeTypeChanged.emit(combobox.currentText(), widget.label(), widget.type())
         else:
-            self.attributeTypeChanged.emit(current_annotation_type, combobox.type())
+            self.attributeTypeChanged.emit(current_annotation_type, combobox.label(), combobox.type())
 
     def annotationType(self):
         index = self.mainLayout.count() - 1
@@ -140,6 +146,12 @@ class AttributeWidget(QtWidgets.QWidget):
         widget = self.mainLayout.itemAt(num - 1).widget()
 
         return widget.type()
+
+    def label(self):
+        num = self.mainLayout.count()
+        widget = self.mainLayout.itemAt(num - 1).widget()
+
+        return widget.label()
 
     def attribute(self):
         att = [self.to_find]
@@ -166,13 +178,17 @@ class AttributeWidget(QtWidgets.QWidget):
         if len(attribute) > 1:
             if a == 'alignment':
                 annotation = self.annotationType()
-                self.attributeTypeChanged.emit(annotation, self.mainLayout.itemAt(self.mainLayout.count() - 1).widget().type())
+                widget = self.mainLayout.itemAt(self.mainLayout.count() - 1).widget()
+                self.attributeTypeChanged.emit(annotation, widget.label(), widget.type())
 
 
 class ValueWidget(QtWidgets.QWidget):
-    def __init__(self, hierarchy, to_find):
-        self.hierarchy = hierarchy
+    def __init__(self, config, to_find):
+        self.config = config
+        with CorpusContext(self.config) as c:
+            self.hierarchy = c.hierarchy
         self.to_find = to_find
+        self.levels = None
         super(ValueWidget, self).__init__()
 
         self.mainLayout = QtWidgets.QHBoxLayout()
@@ -183,7 +199,7 @@ class ValueWidget(QtWidgets.QWidget):
         self.compWidget = None
         self.valueWidget = None
 
-    def changeType(self, annotation, new_type):
+    def changeType(self, annotation, label, new_type):
         while self.mainLayout.count():
             item = self.mainLayout.takeAt(0)
             if item.widget() is None:
@@ -196,7 +212,7 @@ class ValueWidget(QtWidgets.QWidget):
             self.compWidget.addItem('Left aligned with')
             self.compWidget.addItem('Not right aligned with')
             self.compWidget.addItem('Not left aligned with')
-            self.valueWidget = AttributeWidget(self.hierarchy, self.to_find, alignment = True)
+            self.valueWidget = AttributeWidget(self.config, self.to_find, alignment = True)
         elif new_type == 'subset':
             self.compWidget.addItem('==')
             self.valueWidget = NonScrollingComboBox()
@@ -216,10 +232,28 @@ class ValueWidget(QtWidgets.QWidget):
             self.compWidget.addItem('<=')
             self.valueWidget = QtWidgets.QLineEdit()
         elif new_type == str:
+            self.compWidget.currentIndexChanged.connect(self.updateValueWidget)
             self.compWidget.addItem('==')
             self.compWidget.addItem('!=')
             self.compWidget.addItem('regex')
-            self.valueWidget = QtWidgets.QLineEdit()
+            if self.hierarchy.has_type_property(annotation, label):
+                with CorpusContext(self.config) as c:
+                    if label == 'label':
+                        self.levels = c.lexicon.list_labels(annotation)
+                    else:
+                        self.levels = c.lexicon.get_property_levels(label, annotation)
+                self.updateValueWidget()
+            elif annotation == 'speaker':
+                with CorpusContext(self.config) as c:
+                    self.levels = c.speakers
+                self.updateValueWidget()
+            elif annotation == 'discourse':
+                with CorpusContext(self.config) as c:
+                    self.levels = c.discourses
+                self.updateValueWidget()
+            else:
+                self.valueWidget = QtWidgets.QLineEdit()
+
         elif new_type == bool:
             self.compWidget.addItem('==')
             self.valueWidget = QtWidgets.QComboBox()
@@ -232,6 +266,30 @@ class ValueWidget(QtWidgets.QWidget):
         #if new_type in [int, float, str, bool]:
         #    self.switchWidget = QtWidgets.QPushButton('Switch')
         #    self.mainLayout.addWidget(self.switchWidget)
+
+    def updateValueWidget(self):
+        if self.levels is None:
+            return
+
+        label = self.compWidget.currentText()
+        if self.valueWidget is not None:
+            self.mainLayout.removeWidget(self.valueWidget)
+            self.valueWidget.deleteLater()
+        if label == 'regex' or len(self.levels) == 0:
+            self.valueWidget = QtWidgets.QLineEdit()
+        else:
+            if len(self.levels) < 10:
+                self.valueWidget = QtWidgets.QComboBox()
+                for l in self.levels:
+                    self.valueWidget.addItem(l)
+            else:
+                self.valueWidget = QtWidgets.QLineEdit()
+                completer = QtWidgets.QCompleter(self.levels)
+                completer.setCaseSensitivity(QtCore.Qt.CaseInsensitive)
+                #completer.setWidget(self.valueWidget)
+                self.valueWidget.setCompleter(completer)
+        #self.mainLayout.addWidget(self.valueWidget)
+
 
     def setToFind(self, to_find):
         self.to_find = to_find
@@ -281,8 +339,8 @@ class ValueWidget(QtWidgets.QWidget):
 
 class FilterWidget(QtWidgets.QWidget):
     needsDelete = QtCore.pyqtSignal()
-    def __init__(self, hierarchy, to_find):
-        self.hierarchy = hierarchy
+    def __init__(self, config, to_find):
+        self.config = config
         self.to_find = to_find
         super(FilterWidget, self).__init__()
 
@@ -290,10 +348,10 @@ class FilterWidget(QtWidgets.QWidget):
         mainLayout.setSpacing(10)
         mainLayout.setContentsMargins(0,0,0,0)
 
-        self.attributeWidget = AttributeWidget(self.hierarchy, self.to_find)
+        self.attributeWidget = AttributeWidget(self.config, self.to_find)
         mainLayout.addWidget(self.attributeWidget)
 
-        self.valueWidget = ValueWidget(self.hierarchy, self.to_find)
+        self.valueWidget = ValueWidget(self.config, self.to_find)
         mainLayout.addWidget(self.valueWidget)
 
         self.deleteButton = QtWidgets.QPushButton()
@@ -305,7 +363,7 @@ class FilterWidget(QtWidgets.QWidget):
         self.setLayout(mainLayout)
 
         self.attributeWidget.attributeTypeChanged.connect(self.valueWidget.changeType)
-        self.valueWidget.changeType(self.to_find, self.attributeWidget.type())
+        self.valueWidget.changeType(self.to_find, self.attributeWidget.label(), self.attributeWidget.type())
 
     def setToFind(self, to_find):
         self.to_find = to_find
@@ -383,7 +441,7 @@ class FilterBox(QtWidgets.QGroupBox):
         scroll.setSizePolicy(policy)
         layout.addWidget(scroll)
 
-        self.hierarchy = None
+        self.config = None
         self.to_find = None
         self.addButton = QtWidgets.QPushButton('+')
         self.addButton.clicked.connect(self.addNewFilter)
@@ -404,8 +462,9 @@ class FilterBox(QtWidgets.QGroupBox):
                 continue
             item.widget().deleteLater()
 
-    def setHierarchy(self, hierarchy):
-        self.hierarchy = hierarchy
+    def setConfig(self, config):
+        print('Update filter widget config')
+        self.config = config
         self.clearFilters()
         self.addButton.setEnabled(True)
 
@@ -415,16 +474,16 @@ class FilterBox(QtWidgets.QGroupBox):
             self.mainLayout.itemAt(i).widget().setToFind(to_find)
 
     def addNewFilter(self):
-        if self.hierarchy is None:
+        if self.config is None:
             return
-        widget = FilterWidget(self.hierarchy, self.to_find)
+        widget = FilterWidget(self.config, self.to_find)
         widget.needsDelete.connect(self.deleteWidget)
         self.mainLayout.insertWidget(self.mainLayout.count(), widget)
 
     def setFilters(self, filters):
         self.clearFilters()
         for f in filters:
-            widget = FilterWidget(self.hierarchy, self.to_find)
+            widget = FilterWidget(self.config, self.to_find)
             widget.fromFilter(f)
             self.mainLayout.addWidget(widget)
 
@@ -440,7 +499,7 @@ class FilterBox(QtWidgets.QGroupBox):
 class BasicQuery(QtWidgets.QWidget):
     def __init__(self):
         super(BasicQuery, self).__init__()
-        self.hierarchy = None
+        self.config = None
         mainLayout = QtWidgets.QFormLayout()
         self.toFindWidget = QtWidgets.QComboBox()
         self.toFindWidget.currentIndexChanged.connect(self.updateToFind)
@@ -457,9 +516,11 @@ class BasicQuery(QtWidgets.QWidget):
         to_find = self.toFindWidget.currentText()
         self.filterWidget.setToFind(to_find)
 
-    def setHierarchy(self, hierarchy):
-        self.hierarchy = hierarchy
-        self.filterWidget.setHierarchy(hierarchy)
+    def updateConfig(self, config):
+        self.config = config
+        with CorpusContext(config) as c:
+            hierarchy = c.hierarchy
+        self.filterWidget.setConfig(config)
         self.toFindWidget.clear()
 
         self.toFindWidget.currentIndexChanged.disconnect(self.updateToFind)
