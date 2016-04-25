@@ -236,6 +236,7 @@ class ValueWidget(QtWidgets.QWidget):
             self.compWidget.addItem('==')
             self.compWidget.addItem('!=')
             self.compWidget.addItem('regex')
+            self.mainLayout.addWidget(self.compWidget)
             if self.hierarchy.has_type_property(annotation, label):
                 with CorpusContext(self.config) as c:
                     if label == 'label':
@@ -260,9 +261,11 @@ class ValueWidget(QtWidgets.QWidget):
             self.valueWidget.addItem('True')
             self.valueWidget.addItem('False')
             self.valueWidget.addItem('Null')
-        if new_type != bool:
+        if new_type == str:
+            pass
+        elif new_type != bool:
             self.mainLayout.addWidget(self.compWidget)
-        self.mainLayout.addWidget(self.valueWidget)
+            self.mainLayout.addWidget(self.valueWidget)
         #if new_type in [int, float, str, bool]:
         #    self.switchWidget = QtWidgets.QPushButton('Switch')
         #    self.mainLayout.addWidget(self.switchWidget)
@@ -279,7 +282,7 @@ class ValueWidget(QtWidgets.QWidget):
             self.valueWidget = QtWidgets.QLineEdit()
         else:
             if len(self.levels) < 10:
-                self.valueWidget = QtWidgets.QComboBox()
+                self.valueWidget = NonScrollingComboBox()
                 for l in self.levels:
                     self.valueWidget.addItem(l)
             else:
@@ -288,7 +291,7 @@ class ValueWidget(QtWidgets.QWidget):
                 completer.setCaseSensitivity(QtCore.Qt.CaseInsensitive)
                 #completer.setWidget(self.valueWidget)
                 self.valueWidget.setCompleter(completer)
-        #self.mainLayout.addWidget(self.valueWidget)
+        self.mainLayout.addWidget(self.valueWidget)
 
 
     def setToFind(self, to_find):
@@ -341,6 +344,8 @@ class FilterWidget(QtWidgets.QWidget):
     needsDelete = QtCore.pyqtSignal()
     def __init__(self, config, to_find):
         self.config = config
+        with CorpusContext(self.config) as c:
+            self.hierarchy = c.hierarchy
         self.to_find = to_find
         super(FilterWidget, self).__init__()
 
@@ -431,11 +436,14 @@ class FilterBox(QtWidgets.QGroupBox):
         self.mainLayout.setContentsMargins(0,0,0,0)
         self.mainLayout.setAlignment(QtCore.Qt.AlignTop)
         mainWidget = QtWidgets.QWidget()
+
+        mainWidget.setSizePolicy(QtWidgets.QSizePolicy.MinimumExpanding,QtWidgets.QSizePolicy.MinimumExpanding)
         mainWidget.setLayout(self.mainLayout)
         scroll = QtWidgets.QScrollArea()
         scroll.setWidgetResizable(True)
         scroll.setWidget(mainWidget)
         scroll.setMinimumHeight(200)
+        scroll.setSizePolicy(QtWidgets.QSizePolicy.MinimumExpanding,QtWidgets.QSizePolicy.MinimumExpanding)
         policy = scroll.sizePolicy()
         policy.setVerticalStretch(1)
         scroll.setSizePolicy(policy)
@@ -450,6 +458,8 @@ class FilterBox(QtWidgets.QGroupBox):
 
         self.setLayout(layout)
 
+        self.setSizePolicy(QtWidgets.QSizePolicy.MinimumExpanding,QtWidgets.QSizePolicy.MinimumExpanding)
+
     def deleteWidget(self):
         widget = self.sender()
         self.mainLayout.removeWidget(widget)
@@ -463,7 +473,6 @@ class FilterBox(QtWidgets.QGroupBox):
             item.widget().deleteLater()
 
     def setConfig(self, config):
-        print('Update filter widget config')
         self.config = config
         self.clearFilters()
         self.addButton.setEnabled(True)
@@ -496,10 +505,11 @@ class FilterBox(QtWidgets.QGroupBox):
             filters.append(widget.toFilter())
         return filters
 
-class BasicQuery(QtWidgets.QWidget):
+class BasicQuery(QtWidgets.QGroupBox):
     def __init__(self):
-        super(BasicQuery, self).__init__()
+        super(BasicQuery, self).__init__('form')
         self.config = None
+        self.hierarchy = None
         mainLayout = QtWidgets.QFormLayout()
         self.toFindWidget = QtWidgets.QComboBox()
         self.toFindWidget.currentIndexChanged.connect(self.updateToFind)
@@ -511,6 +521,8 @@ class BasicQuery(QtWidgets.QWidget):
 
         self.setLayout(mainLayout)
 
+        self.setSizePolicy(QtWidgets.QSizePolicy.MinimumExpanding,QtWidgets.QSizePolicy.MinimumExpanding)
+
 
     def updateToFind(self):
         to_find = self.toFindWidget.currentText()
@@ -519,12 +531,12 @@ class BasicQuery(QtWidgets.QWidget):
     def updateConfig(self, config):
         self.config = config
         with CorpusContext(config) as c:
-            hierarchy = c.hierarchy
+            self.hierarchy = c.hierarchy
         self.filterWidget.setConfig(config)
         self.toFindWidget.clear()
 
         self.toFindWidget.currentIndexChanged.disconnect(self.updateToFind)
-        for i, at in enumerate(hierarchy.highest_to_lowest):
+        for i, at in enumerate(self.hierarchy.highest_to_lowest):
             self.toFindWidget.addItem(at)
         self.toFindWidget.currentIndexChanged.connect(self.updateToFind)
         self.updateToFind()
