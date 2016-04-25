@@ -12,7 +12,7 @@ from polyglotdb.graph.func import Sum
 from polyglotdb import CorpusContext
 from polyglotdb.config import CorpusConfig
 
-from polyglotdb.io import inspect_buckeye
+from polyglotdb.io import inspect_buckeye, inspect_textgrid, inspect_timit, inspect_labbcat, inspect_mfa, guess_textgrid_format
 from polyglotdb.io.enrichment import enrich_lexicon_from_csv, enrich_features_from_csv
 
 from polyglotdb.utils import update_sound_files, gp_language_stops, gp_speakers
@@ -114,6 +114,17 @@ class ImportCorpusWorker(QueryWorker):
         with CorpusContext(config) as c:
             if name == 'buckeye':
                 parser = inspect_buckeye(directory)
+            elif name == 'timit':
+                parser = inspect_timit(directory)
+            else:
+                form = guess_textgrid_format(directory)
+                if form == 'labbcat':
+                    parser = inspect_labbcat(directory)
+                elif form == 'mfa':
+                    parser = inspect_mfa(directory)
+                else:
+                    parser = inspect_textgrid(directory)
+
             parser.call_back = self.kwargs['call_back']
             parser.stop_check = self.kwargs['stop_check']
             parser.call_back('Resetting corpus...')
@@ -180,10 +191,9 @@ class FormantsGeneratorWorker(QueryWorker):
     def run(self):
         print('beginning formants work')
         config = self.kwargs['config']
-        algorithm = self.kwargs['algorithm']
         sound_file = self.kwargs['sound_file']
         with CorpusContext(config) as c:
-            formant_list = get_formants(c, sound_file, algorithm)
+            formant_list = get_formants(c, sound_file, calculate = False)
             formant_dict = {'F1': np.array([[x.time, x.F1] for x in formant_list]),
                             'F2': np.array([[x.time, x.F2] for x in formant_list]),
                             'F3': np.array([[x.time, x.F3] for x in formant_list])}
@@ -194,10 +204,9 @@ class PitchGeneratorWorker(QueryWorker):
     def run(self):
         print('beginning pitch work')
         config = self.kwargs['config']
-        algorithm = self.kwargs['algorithm']
         sound_file = self.kwargs['sound_file']
         with CorpusContext(config) as c:
-            pitch_list = get_pitch(c, sound_file, algorithm)
+            pitch_list = get_pitch(c, sound_file, calculate = False)
             pitch_list = np.array([[x.time, x.F0] for x in pitch_list])
         self.dataReady.emit(pitch_list)
         print('finished pitch work')

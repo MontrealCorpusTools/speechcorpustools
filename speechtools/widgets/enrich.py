@@ -129,7 +129,7 @@ class EncodeSyllablesDialog(BaseDialog):
 
         self.algorithmWidget = RadioSelectWidget('Syllabification algorithm',
                                             OrderedDict([
-                                            ('Probabilistic onsets and codas (language-independent)','probabilistic'),
+                                            #('Probabilistic onsets and codas (language-independent)','probabilistic'),
                                             ('Max attested onset (language-independent)','maxonset'),]))
 
         layout.addRow(self.algorithmWidget)
