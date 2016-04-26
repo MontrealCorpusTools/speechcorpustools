@@ -83,7 +83,7 @@ class AttributeWidget(QtWidgets.QWidget):
             widget = SpeakerAttributeSelect(self.hierarchy)
             widget.currentIndexChanged.connect(self.updateAttribute)
             self.mainLayout.addWidget(widget)
-        self.finalChanged.emit(self.mainLayout.itemAt(self.mainLayout.count() - 1).widget().label())
+        self.finalChanged.emit('_'.join(self.attribute()[1:]))
 
     def annotationType(self):
         index = self.mainLayout.count() - 1
@@ -180,15 +180,37 @@ class ColumnWidget(QtWidgets.QWidget):
 class ColumnBox(QtWidgets.QGroupBox):
     def __init__(self, hierarchy, to_find):
         super(ColumnBox, self).__init__('Columns')
-        self.mainLayout = QtWidgets.QVBoxLayout()
-        self.mainLayout.setSpacing(0)
-        self.mainLayout.setAlignment(QtCore.Qt.AlignTop)
         self.hierarchy = hierarchy
         self.to_find = to_find
+        layout = QtWidgets.QVBoxLayout()
+        self.mainLayout = QtWidgets.QVBoxLayout()
+        self.mainLayout.setSpacing(0)
+        self.mainLayout.setContentsMargins(0,0,0,0)
+        self.mainLayout.setAlignment(QtCore.Qt.AlignTop)
+        mainWidget = QtWidgets.QWidget()
+
+        mainWidget.setSizePolicy(QtWidgets.QSizePolicy.MinimumExpanding,QtWidgets.QSizePolicy.MinimumExpanding)
+        mainWidget.setLayout(self.mainLayout)
+        scroll = QtWidgets.QScrollArea()
+        scroll.setWidgetResizable(True)
+        scroll.setWidget(mainWidget)
+        #scroll.setMinimumHeight(200)
+        scroll.setSizePolicy(QtWidgets.QSizePolicy.MinimumExpanding,QtWidgets.QSizePolicy.MinimumExpanding)
+        policy = scroll.sizePolicy()
+        policy.setVerticalStretch(1)
+        scroll.setSizePolicy(policy)
+        layout.addWidget(scroll)
+
         self.addButton = QtWidgets.QPushButton('+')
         self.addButton.clicked.connect(self.addNewColumn)
-        self.mainLayout.addWidget(self.addButton)
-        self.setLayout(self.mainLayout)
+        layout.addWidget(self.addButton)
+
+        self.setLayout(layout)
+
+        self.setSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
+        policy = self.sizePolicy()
+        policy.setVerticalStretch(1)
+        self.setSizePolicy(policy)
 
     def deleteWidget(self):
         widget = self.sender()
@@ -297,6 +319,20 @@ class ExportProfileDialog(QtWidgets.QDialog):
             profile.to_find = self.toFindWidget.text()
         profile.columns = self.columnWidget.columns()
         return profile
+
+    def validate(self):
+        existing = set()
+        for c in self.columnWidget.columns():
+            if c.name in existing:
+                reply = QtWidgets.QMessageBox.critical(self,
+                        "Duplicate column names", 'Multiple columns name \'{}\', please make sure each column has a distinct name.'.format(c.name))
+                return False
+            existing.add(c.name)
+        return True
+
+    def accept(self):
+        if self.validate():
+            super(ExportProfileDialog, self).accept()
 
     def saveAs(self):
         from .main import SaveDialog

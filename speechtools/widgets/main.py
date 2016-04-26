@@ -7,7 +7,7 @@ from ..plot import SCTSummaryWidget
 
 from ..workers import (DiscourseQueryWorker, DiscourseAudioWorker)
 
-from .base import DataListWidget, CollapsibleWidgetPair, DetailedMessageBox
+from .base import DataListWidget, CollapsibleWidgetPair, DetailedMessageBox, CollapsibleTabWidget
 
 from .selectable_audio import SelectableAudioWidget
 
@@ -60,15 +60,11 @@ class DiscourseWidget(QtWidgets.QWidget):
             for d in sorted(c.discourses):
                 self.discourseList.addItem(d)
 
-class ViewWidget(QtWidgets.QWidget):
+class ViewWidget(CollapsibleTabWidget):
     changingDiscourse = QtCore.pyqtSignal()
     connectionIssues = QtCore.pyqtSignal()
     def __init__(self, parent = None):
         super(ViewWidget, self).__init__(parent)
-
-        layout = QtWidgets.QHBoxLayout()
-
-        tabs = QtWidgets.QTabWidget()
 
         self.discourseWidget = SelectableAudioWidget()
 
@@ -87,12 +83,8 @@ class ViewWidget(QtWidgets.QWidget):
 
         summaryTab = CollapsibleWidgetPair(QtCore.Qt.Horizontal, self.summaryWidget.native, self.dataTabs)
 
-        tabs.addTab(self.discourseWidget, 'Discourse')
-        tabs.addTab(summaryTab, 'Summary')
-
-        layout.addWidget(tabs, 1)
-
-        self.setLayout(layout)
+        self.addTab(self.discourseWidget, 'Discourse')
+        #self.addTab(summaryTab, 'Summary')
 
         self.audioWorker = DiscourseAudioWorker()
         self.audioWorker.dataReady.connect(self.discourseWidget.updateAudio)

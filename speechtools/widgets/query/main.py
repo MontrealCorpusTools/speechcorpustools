@@ -5,7 +5,7 @@ from polyglotdb import CorpusContext
 
 from polyglotdb.graph.func import Sum, Count
 
-from ..base import DetailedMessageBox
+from ..base import DetailedMessageBox, CollapsibleTabWidget
 
 from ...models import QueryResultsModel, ProxyModel
 
@@ -33,6 +33,10 @@ class QueryProfileWidget(QtWidgets.QWidget):
         self.querySelect.currentIndexChanged.connect(self.changeProfile)
 
         layout = QtWidgets.QFormLayout()
+        layout.setSpacing(10)
+        layout.setContentsMargins(0,15,25,0)
+        layout.setFieldGrowthPolicy(QtWidgets.QFormLayout.FieldsStayAtSizeHint)
+        layout.setFormAlignment(QtCore.Qt.AlignRight)
         layout.addRow('Query profiles', self.querySelect)
         self.setLayout(layout)
 
@@ -149,6 +153,8 @@ class QueryForm(QtWidgets.QWidget):
 
         mainLayout = QtWidgets.QVBoxLayout()
         headerLayout = QtWidgets.QHBoxLayout()
+        mainLayout.setSpacing(0)
+        mainLayout.setContentsMargins(10,0,10,0)
 
         self.queryWidget = BasicQuery()
 
@@ -295,27 +301,19 @@ class QueryResults(QtWidgets.QWidget):
 
         self.setLayout(layout)
 
-class QueryWidget(QtWidgets.QWidget):
+class QueryWidget(CollapsibleTabWidget):
     viewRequested = QtCore.pyqtSignal(str, float, float)
     def __init__(self):
         super(QueryWidget, self).__init__()
         self.config = None
-        self.tabs = QtWidgets.QTabWidget()
         self.currentIndex = 1
         self.queryForm = QueryForm()
         self.queryForm.finishedRunning.connect(self.updateResults)
 
-        self.tabs.addTab(self.queryForm, 'New query')
-
-        layout = QtWidgets.QVBoxLayout()
-
-        layout.addWidget(self.tabs)
-
-        self.setLayout(layout)
+        self.addTab(self.queryForm, 'New query')
 
     def updateConfig(self, config):
         self.config = config
-
         self.queryForm.updateConfig(config)
 
     def updateResults(self, results):
@@ -323,22 +321,22 @@ class QueryWidget(QtWidgets.QWidget):
         self.currentIndex += 1
         widget = QueryResults(results)
         widget.tableWidget.viewRequested.connect(self.viewRequested.emit)
-        self.tabs.addTab(widget, name)
+        self.addTab(widget, name)
 
     def markAnnotated(self, value):
-        w = self.tabs.currentWidget()
+        w = self.currentWidget()
         if not isinstance(w, QueryResults):
             return
         w.tableWidget.markAnnotated(value)
 
     def requestNext(self):
-        w = self.tabs.currentWidget()
+        w = self.currentWidget()
         if not isinstance(w, QueryResults):
             return
         w.tableWidget.selectNext()
 
     def requestPrevious(self):
-        w = self.tabs.currentWidget()
+        w = self.currentWidget()
         if not isinstance(w, QueryResults):
             return
         w.tableWidget.selectPrevious()

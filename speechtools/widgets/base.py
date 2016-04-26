@@ -170,3 +170,29 @@ class RadioSelectWidget(QtWidgets.QGroupBox):
                 w.setEnabled(self.enabled[key])
             else:
                 w.setEnabled(True)
+
+class CollapsibleTabWidget(QtWidgets.QTabWidget):
+    needsShrinking = QtCore.pyqtSignal()
+    def __init__(self, parent = None):
+        super(CollapsibleTabWidget, self).__init__(parent)
+        self.currentChanged.connect(self.ensureVisible)
+        self.collapseButton = QtWidgets.QPushButton('Collapse')
+        self.collapseButton.clicked.connect(self.collapseAll)
+        self.setCornerWidget(self.collapseButton)
+
+    def ensureVisible(self):
+        self.collapseButton.setText('Collapse')
+        self.currentWidget().show()
+        for i in range(self.count()):
+            self.widget(i).setSizePolicy(QtWidgets.QSizePolicy.Expanding,QtWidgets.QSizePolicy.Expanding)
+
+    def collapseAll(self):
+        if self.currentWidget().isHidden():
+            self.ensureVisible()
+        else:
+            self.collapseButton.setText('Show')
+            self.currentWidget().hide()
+            for i in range(self.count()):
+                self.widget(i).setSizePolicy(QtWidgets.QSizePolicy.Ignored,QtWidgets.QSizePolicy.Ignored)
+            #self.adjustSize()
+            self.needsShrinking.emit()

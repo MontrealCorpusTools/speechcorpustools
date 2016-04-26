@@ -21,16 +21,20 @@ class AttributeSelect(NonScrollingComboBox):
             self.types = ['alignment', 'annotation',' annotation','subset', float]
             if to_find != '':
                 present = []
-                for k,t in sorted(hierarchy.token_properties[to_find]):
+                for k,t in sorted(hierarchy.token_properties[to_find], key = lambda x: x[0]):
                     if t in [tuple, list]:
+                        continue
+                    if k == 'id':
                         continue
                     self.addItem(k)
                     self.types.append(t)
                     present.append(k)
-                for k,t in sorted(hierarchy.type_properties[to_find]):
+                for k,t in sorted(hierarchy.type_properties[to_find], key = lambda x: x[0]):
                     if k in present:
                         continue
                     if t in [tuple, list]:
+                        continue
+                    if k == 'id':
                         continue
                     self.addItem(k)
                     self.types.append(t)
@@ -253,7 +257,8 @@ class ValueWidget(QtWidgets.QWidget):
                     self.levels = c.discourses
                 self.updateValueWidget()
             else:
-                self.valueWidget = QtWidgets.QLineEdit()
+                self.levels = []
+                self.updateValueWidget()
 
         elif new_type == bool:
             self.compWidget.addItem('==')
@@ -289,7 +294,6 @@ class ValueWidget(QtWidgets.QWidget):
                 self.valueWidget = QtWidgets.QLineEdit()
                 completer = QtWidgets.QCompleter(self.levels)
                 completer.setCaseSensitivity(QtCore.Qt.CaseInsensitive)
-                #completer.setWidget(self.valueWidget)
                 self.valueWidget.setCompleter(completer)
         self.mainLayout.addWidget(self.valueWidget)
 
@@ -437,13 +441,13 @@ class FilterBox(QtWidgets.QGroupBox):
         self.mainLayout.setAlignment(QtCore.Qt.AlignTop)
         mainWidget = QtWidgets.QWidget()
 
-        mainWidget.setSizePolicy(QtWidgets.QSizePolicy.MinimumExpanding,QtWidgets.QSizePolicy.MinimumExpanding)
+        mainWidget.setSizePolicy(QtWidgets.QSizePolicy.Preferred,QtWidgets.QSizePolicy.Preferred)
         mainWidget.setLayout(self.mainLayout)
         scroll = QtWidgets.QScrollArea()
         scroll.setWidgetResizable(True)
         scroll.setWidget(mainWidget)
-        scroll.setMinimumHeight(200)
-        scroll.setSizePolicy(QtWidgets.QSizePolicy.MinimumExpanding,QtWidgets.QSizePolicy.MinimumExpanding)
+        scroll.setMinimumHeight(10)
+        scroll.setSizePolicy(QtWidgets.QSizePolicy.Preferred,QtWidgets.QSizePolicy.Preferred)
         policy = scroll.sizePolicy()
         policy.setVerticalStretch(1)
         scroll.setSizePolicy(policy)
@@ -458,7 +462,11 @@ class FilterBox(QtWidgets.QGroupBox):
 
         self.setLayout(layout)
 
-        self.setSizePolicy(QtWidgets.QSizePolicy.MinimumExpanding,QtWidgets.QSizePolicy.MinimumExpanding)
+        self.setSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
+        policy = self.sizePolicy()
+        policy.setVerticalStretch(1)
+        self.setSizePolicy(policy)
+
 
     def deleteWidget(self):
         widget = self.sender()
@@ -505,12 +513,13 @@ class FilterBox(QtWidgets.QGroupBox):
             filters.append(widget.toFilter())
         return filters
 
-class BasicQuery(QtWidgets.QGroupBox):
+class BasicQuery(QtWidgets.QWidget):
     def __init__(self):
-        super(BasicQuery, self).__init__('form')
+        super(BasicQuery, self).__init__()
         self.config = None
         self.hierarchy = None
         mainLayout = QtWidgets.QFormLayout()
+        mainLayout.setFieldGrowthPolicy(QtWidgets.QFormLayout.ExpandingFieldsGrow)
         self.toFindWidget = QtWidgets.QComboBox()
         self.toFindWidget.currentIndexChanged.connect(self.updateToFind)
 

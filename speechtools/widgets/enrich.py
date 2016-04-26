@@ -3,6 +3,8 @@ from collections import OrderedDict
 
 from PyQt5 import QtGui, QtCore, QtWidgets
 
+from polyglotdb import CorpusContext
+
 from .base import RadioSelectWidget
 
 from .lexicon import WordSelectWidget
@@ -28,6 +30,13 @@ class BaseDialog(QtWidgets.QDialog):
         layout.addLayout(aclayout)
 
         self.setLayout(layout)
+
+    def validate(self):
+        return True
+
+    def accept(self):
+        if self.validate():
+            super(BaseDialog, self).accept()
 
 class EncodePauseDialog(BaseDialog):
     def __init__(self, config, parent):
@@ -205,3 +214,99 @@ class EnrichFeaturesDialog(BaseDialog):
 
     def value(self):
         return self.path
+
+class AnnotationTypeSelect(QtWidgets.QComboBox):
+    def __init__(self, hierarchy, subsets = False):
+        super(AnnotationTypeSelect, self).__init__()
+        self.hierarchy = hierarchy
+        self.subsets = subsets
+        self.baseAnnotation = None
+        self.generateItems()
+
+    def setBase(self, base):
+        self.baseAnnotation = base
+        self.generateItems()
+
+    def generateItems(self):
+        self.clear()
+        if self.baseAnnotation is None:
+            toiter = self.hierarchy.highest_to_lowest[:-1]
+        else:
+            toiter = self.hierarchy.get_lower_types(self.baseAnnotation)
+        for at in toiter:
+            self.addItem(at)
+            if self.subsets:
+                subs = []
+                if at in self.hierarchy.subset_types:
+                    subs += self.hierarchy.subset_types[at]
+                if at in self.hierarchy.subset_tokens:
+                    subs += self.hierarchy.subset_tokens[at]
+
+                for s in sorted(subs):
+                    self.addItem(' - '.join([at, s]))
+
+class EncodeHierarchicalPropertiesDialog(BaseDialog):
+    def __init__(self, config, parent):
+        super(EncodeHierarchicalPropertiesDialog, self).__init__(parent)
+        with CorpusContext(config) as c:
+            hierarchy = c.hierarchy
+        layout = QtWidgets.QFormLayout()
+
+        self.higherSelect = AnnotationTypeSelect(hierarchy)
+        self.higherSelect.currentIndexChanged.connect(self.updateBase)
+        self.higherSelect.currentIndexChanged.connect(self.updateName)
+        self.lowerSelect = AnnotationTypeSelect(hierarchy, subsets = True)
+        self.lowerSelect.currentIndexChanged.connect(self.updateName)
+
+        self.typeSelect = QtWidgets.QComboBox()
+        self.typeSelect.addItem('count')
+        self.typeSelect.addItem('rate')
+        self.typeSelect.addItem('position')
+        self.typeSelect.currentIndexChanged.connect(self.updateName)
+
+        self.nameEdit = QtWidgets.QLineEdit()
+        self.updateBase()
+        self.updateName()
+
+        layout.addRow('Higher annotation', self.higherSelect)
+        layout.addRow('Lower annotation', self.lowerSelect)
+        layout.addRow('Type of property', self.typeSelect)
+        layout.addRow('Name of property', self.nameEdit)
+
+        self.layout().insertLayout(0, layout)
+
+        self.setWindowTitle('Enrich hierarchical annotations')
+
+    def updateBase(self):
+        self.lowerSelect.setBase(self.higherSelect.currentText())
+
+    def updateName(self):
+        lower, subset = self.splitLower()
+        if subset is not None:
+            lower = subset
+        to_build = [self.typeSelect.currentText().title(), 'of', lower,
+                    'in', self.higherSelect.currentText()]
+        self.nameEdit.setText('_'.join(to_build))
+
+    def validate(self):
+        if self.nameEdit.text() == '':
+            reply = QtWidgets.QMessageBox.critical(self,
+                    "Missing information", 'Please make sure a name for the new property is specified.')
+            return False
+        ## FIXME add check for whether the name of the property already exists
+        return True
+
+    def splitLower(self):
+        lower_text = self.lowerSelect.currentText()
+        if ' - ' in lower_text:
+            lower, subset = lower_text.split(' - ')
+        else:
+            lower = lower_text
+            subset = None
+        return lower, subset
+
+    def value(self):
+        lower, subset = self.splitLower()
+        return {'higher': self.higherSelect.currentText(), 'type':self.typeSelect.currentText(),
+                'lower': lower, 'subset': subset, 'name': self.nameEdit.text()}
+

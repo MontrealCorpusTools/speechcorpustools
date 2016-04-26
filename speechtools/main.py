@@ -12,13 +12,15 @@ from polyglotdb import CorpusContext
 from polyglotdb.exceptions import ConnectionError
 
 from .widgets import (ViewWidget, HelpWidget, DiscourseWidget, QueryWidget, CollapsibleWidgetPair,
-                        DetailsWidget, ConnectWidget, AcousticDetailsWidget, DetailedMessageBox)
+                        DetailsWidget, ConnectWidget, AcousticDetailsWidget, DetailedMessageBox,
+                        CollapsibleTabWidget)
 
 from .widgets.enrich import (EncodePauseDialog, EncodeUtteranceDialog,
                             EncodeSpeechRateDialog, EncodeUtterancePositionDialog,
                             AnalyzeAcousticsDialog, EncodeSyllabicsDialog,
                             EncodePhoneSubsetDialog, EncodeSyllablesDialog,
-                            EnrichLexiconDialog, EnrichFeaturesDialog)
+                            EnrichLexiconDialog, EnrichFeaturesDialog,
+                            EncodeHierarchicalPropertiesDialog)
 
 from .helper import get_system_font_height
 
@@ -29,21 +31,35 @@ from .workers import (AcousticAnalysisWorker, ImportCorpusWorker,
                     SpeechRateWorker, UtterancePositionWorker,
                     SyllabicEncodingWorker, PhoneSubsetEncodingWorker,
                     SyllableEncodingWorker, LexiconEnrichmentWorker,
-                    FeatureEnrichmentWorker)
+                    FeatureEnrichmentWorker, HierarchicalPropertiesWorker)
 
 sct_config_pickle_path = os.path.join(BASE_DIR, 'config')
 
-class LeftPane(QtWidgets.QWidget):
+class Pane(QtWidgets.QWidget):
+    def __init__(self):
+        super(Pane, self).__init__()
+
+    def growLower(self):
+        self.splitter.setSizes([1, 1000000])
+        self.splitter.widget(1).ensureVisible()
+
+    def growUpper(self):
+        self.splitter.setSizes([1000000, 1])
+        self.splitter.widget(0).ensureVisible()
+
+class LeftPane(Pane):
     def __init__(self):
         super(LeftPane, self).__init__()
 
         self.viewWidget = ViewWidget()
         self.queryWidget = QueryWidget()
+        self.queryWidget.needsShrinking.connect(self.growLower)
+        self.viewWidget.needsShrinking.connect(self.growUpper)
 
-        splitter = CollapsibleWidgetPair(QtCore.Qt.Vertical, self.queryWidget, self.viewWidget, collapsible = 0)
+        self.splitter = CollapsibleWidgetPair(QtCore.Qt.Vertical, self.queryWidget, self.viewWidget, collapsible = 0)
 
         layout = QtWidgets.QVBoxLayout()
-        layout.addWidget(splitter)
+        layout.addWidget(self.splitter)
         self.setLayout(layout)
 
     def updateConfig(self, config):
@@ -53,7 +69,7 @@ class LeftPane(QtWidgets.QWidget):
     def changeDiscourse(self, discourse):
         self.viewWidget.changeDiscourse(discourse)
 
-class RightPane(QtWidgets.QWidget):
+class RightPane(Pane):
     configUpdated = QtCore.pyqtSignal(object)
     discourseChanged = QtCore.pyqtSignal(str)
     def __init__(self):
@@ -80,12 +96,14 @@ class RightPane(QtWidgets.QWidget):
         self.helpWidget = HelpWidget()
         self.detailsWidget = DetailsWidget()
         self.acousticsWidget = AcousticDetailsWidget()
-        upper = QtWidgets.QTabWidget()
+        upper = CollapsibleTabWidget()
+        upper.needsShrinking.connect(self.growLower)
 
         upper.addTab(self.connectWidget,'Connection')
         upper.addTab(self.discourseWidget, 'Discourses')
 
-        lower = QtWidgets.QTabWidget()
+        lower = CollapsibleTabWidget()
+        lower.needsShrinking.connect(self.growUpper)
 
         lower.addTab(self.detailsWidget, 'Details')
 
@@ -93,10 +111,10 @@ class RightPane(QtWidgets.QWidget):
 
         lower.addTab(self.helpWidget, 'Help')
 
-        splitter = CollapsibleWidgetPair(QtCore.Qt.Vertical, upper, lower)
+        self.splitter = CollapsibleWidgetPair(QtCore.Qt.Vertical, upper, lower)
 
         layout = QtWidgets.QVBoxLayout()
-        layout.addWidget(splitter)
+        layout.addWidget(self.splitter)
         self.setLayout(layout)
 
 class MainWindow(QtWidgets.QMainWindow):
@@ -187,6 +205,10 @@ class MainWindow(QtWidgets.QMainWindow):
         self.enrichFeaturesWorker.errorEncountered.connect(self.showError)
         self.enrichFeaturesWorker.dataReady.connect(self.updateStatus)
 
+        self.hierarchicalPropertiesWorker = HierarchicalPropertiesWorker()
+        self.hierarchicalPropertiesWorker.errorEncountered.connect(self.showError)
+        self.hierarchicalPropertiesWorker.dataReady.connect(self.updateStatus)
+
         self.rightPane.connectWidget.corporaList.cancelImporter.connect(self.importWorker.stop)
         self.rightPane.connectWidget.corporaList.corpusToImport.connect(self.importCorpus)
         self.progressWidget = ProgressWidget(self)
@@ -207,6 +229,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.updateStatus()
 
     def updateStatus(self):
+        self.encodeHierarchicalPropertiesAct.setEnabled(False)
         self.enrichLexiconAct.setEnabled(False)
         self.enrichLexiconAct.setText("Enrich lexicon...")
         self.enrichFeaturesAct.setEnabled(False)
@@ -237,6 +260,7 @@ class MainWindow(QtWidgets.QMainWindow):
             else:
                 with CorpusContext(self.corpusConfig) as c:
                     self.pausesAct.setEnabled(True)
+                    self.encodeHierarchicalPropertiesAct.setEnabled(True)
                     self.enrichLexiconAct.setEnabled(True)
                     self.enrichFeaturesAct.setEnabled(True)
                     self.syllabicsAct.setEnabled(True)
@@ -294,6 +318,12 @@ class MainWindow(QtWidgets.QMainWindow):
                 self,
                 statusTip="Export a corpus", triggered=self.exportCorpus)
 
+        self.encodeHierarchicalPropertiesAct = QtWidgets.QAction( "Encode hierarchical properties...",
+                self,
+                statusTip="Encode properties for annotations based on the hierarchy (rate/count/position of lower annotations within higher annotations",
+                triggered=self.encodeHierarchicalProperties)
+        self.encodeHierarchicalPropertiesAct.setEnabled(False)
+
         self.enrichLexiconAct = QtWidgets.QAction( "Enrich lexicon...",
                 self,
                 statusTip="Enrich lexicon from a CSV file", triggered=self.enrichLexicon)
@@ -350,6 +380,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
         self.enhancementMenu = self.menuBar().addMenu("Enhance corpus")
 
+        self.enhancementMenu.addAction(self.encodeHierarchicalPropertiesAct)
         self.enhancementMenu.addAction(self.enrichLexiconAct)
         self.enhancementMenu.addAction(self.enrichFeaturesAct)
         self.enhancementMenu.addAction(self.syllabicsAct)
@@ -357,8 +388,8 @@ class MainWindow(QtWidgets.QMainWindow):
         self.enhancementMenu.addAction(self.phoneSubsetAct)
         self.enhancementMenu.addAction(self.pausesAct)
         self.enhancementMenu.addAction(self.utterancesAct)
-        self.enhancementMenu.addAction(self.speechRateAct)
-        self.enhancementMenu.addAction(self.utterancePositionAct)
+        #self.enhancementMenu.addAction(self.speechRateAct)
+        #self.enhancementMenu.addAction(self.utterancePositionAct)
         self.enhancementMenu.addAction(self.analyzeAcousticsAct)
 
     def specifyCorpus(self):
@@ -434,6 +465,16 @@ class MainWindow(QtWidgets.QMainWindow):
             self.progressWidget.createProgressBar('pauses', self.pauseWorker)
             self.progressWidget.show()
             self.pauseWorker.start()
+
+    def encodeHierarchicalProperties(self):
+        dialog = EncodeHierarchicalPropertiesDialog(self.corpusConfig, self)
+        if dialog.exec_() == QtWidgets.QDialog.Accepted:
+            kwargs = dialog.value()
+            kwargs.update({'config': self.corpusConfig})
+            self.hierarchicalPropertiesWorker.setParams(kwargs)
+            self.progressWidget.createProgressBar('hierarchical', self.hierarchicalPropertiesWorker)
+            self.progressWidget.show()
+            self.hierarchicalPropertiesWorker.start()
 
     def encodeUtterances(self):
         dialog = EncodeUtteranceDialog(self.corpusConfig, self)

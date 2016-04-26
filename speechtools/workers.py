@@ -390,3 +390,24 @@ class FeatureEnrichmentWorker(QueryWorker):
                 c.reset_lexicon()
                 return False
         return True
+
+class HierarchicalPropertiesWorker(QueryWorker):
+    def run_query(self):
+        config = self.kwargs['config']
+        stop_check = self.kwargs['stop_check']
+        call_back = self.kwargs['call_back']
+        call_back('Encoding {}...'.format(self.kwargs['name']))
+        call_back(0, 0)
+        with CorpusContext(config) as c:
+            if self.kwargs['type'] == 'count':
+                c.encode_count(self.kwargs['higher'], self.kwargs['lower'],
+                            self.kwargs['name'], subset = self.kwargs['subset'])
+            elif self.kwargs['type'] == 'position':
+                c.encode_position(self.kwargs['higher'], self.kwargs['lower'],
+                            self.kwargs['name'], subset = self.kwargs['subset'])
+            elif self.kwargs['type'] == 'rate':
+                c.encode_rate(self.kwargs['higher'], self.kwargs['lower'],
+                            self.kwargs['name'], subset = self.kwargs['subset'])
+            if stop_check():
+                return False
+        return True

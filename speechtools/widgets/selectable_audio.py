@@ -23,6 +23,7 @@ class SelectableAudioWidget(QtWidgets.QWidget):
     acousticsSelected = QtCore.pyqtSignal(object)
     def __init__(self, parent = None):
         super(SelectableAudioWidget, self).__init__(parent)
+        #self.setMinimumHeight(600)
         self.signal = None
         self.preemph_signal = None
         self.sr = None
