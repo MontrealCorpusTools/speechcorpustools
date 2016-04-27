@@ -25,6 +25,8 @@ class QueryResultsModel(QtCore.QAbstractTableModel):
         self.rows = results
         QtCore.QAbstractTableModel.__init__(self, parent)
 
+        self.destroyed.connect(self.reset)
+
     def rowCount(self, parent = None):
         return len(self.rows)
 
@@ -37,6 +39,13 @@ class QueryResultsModel(QtCore.QAbstractTableModel):
         if orientation == QtCore.Qt.Vertical and role == QtCore.Qt.DisplayRole:
             return col
         return None
+
+    def reset(self):
+        del self.rows
+        self.rows = []
+        beg = self.index(0, 0)
+        end = self.index(0, len(self.columns) - 1)
+        self.dataChanged.emit(beg, end)
 
     def times(self, index):
         row = index.row()

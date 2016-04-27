@@ -12,9 +12,17 @@ from .basic import AttributeSelect as QueryAttributeSelect, SpeakerAttributeSele
 class AttributeSelect(QueryAttributeSelect):
     def __init__(self, hierarchy, to_find):
         QtWidgets.QComboBox.__init__(self)
+        present = []
         for k,t in sorted(hierarchy.token_properties[to_find]):
+            if k == 'id':
+                continue
+            present.append(k)
             self.addItem(k)
         for k,t in sorted(hierarchy.type_properties[to_find]):
+            if k == 'id':
+                continue
+            if k in present:
+                continue
             self.addItem(k)
         self.addItem('following')
         self.addItem('previous')
@@ -220,13 +228,13 @@ class ColumnBox(QtWidgets.QGroupBox):
 
     def setToFind(self, to_find):
         self.to_find = to_find
-        for i in range(self.mainLayout.count() - 1):
+        for i in range(self.mainLayout.count()):
             self.mainLayout.itemAt(i).widget().setToFind(to_find)
 
     def addNewColumn(self):
         widget = ColumnWidget(self.hierarchy, self.to_find)
         widget.needsDelete.connect(self.deleteWidget)
-        self.mainLayout.insertWidget(self.mainLayout.count() - 1, widget)
+        self.mainLayout.addWidget(widget)
 
     def setColumns(self, columns):
         #Clear columns somehow
@@ -238,7 +246,7 @@ class ColumnBox(QtWidgets.QGroupBox):
         for c in columns:
             widget = ColumnWidget(self.hierarchy, self.to_find)
             widget.needsDelete.connect(self.deleteWidget)
-            self.mainLayout.insertWidget(self.mainLayout.count() - 1, widget)
+            self.mainLayout.addWidget(widget)
             widget.fromColumn(c)
 
     def columns(self):

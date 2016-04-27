@@ -309,8 +309,17 @@ class QueryWidget(CollapsibleTabWidget):
         self.currentIndex = 1
         self.queryForm = QueryForm()
         self.queryForm.finishedRunning.connect(self.updateResults)
-
+        self.setTabsClosable(True)
+        self.tabCloseRequested.connect(self.closeTab)
         self.addTab(self.queryForm, 'New query')
+
+    def closeTab(self, index):
+        if index == 0:
+            return
+        widget = self.widget(index)
+        self.removeTab(index)
+        widget.setParent(None)
+        widget.deleteLater()
 
     def updateConfig(self, config):
         self.config = config
