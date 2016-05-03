@@ -12,7 +12,9 @@ from polyglotdb.graph.func import Sum
 from polyglotdb import CorpusContext
 from polyglotdb.config import CorpusConfig
 
-from polyglotdb.io import inspect_buckeye, inspect_textgrid, inspect_timit, inspect_labbcat, inspect_mfa, guess_textgrid_format
+from polyglotdb.io import (inspect_buckeye, inspect_textgrid, inspect_timit,
+                        inspect_labbcat, inspect_mfa, inspect_fave,
+                        guess_textgrid_format)
 from polyglotdb.io.enrichment import enrich_lexicon_from_csv, enrich_features_from_csv
 
 from polyglotdb.utils import update_sound_files, gp_language_stops, gp_speakers
@@ -122,6 +124,8 @@ class ImportCorpusWorker(QueryWorker):
                     parser = inspect_labbcat(directory)
                 elif form == 'mfa':
                     parser = inspect_mfa(directory)
+                elif form == 'fave':
+                    parser = inspect_fave(directory)
                 else:
                     parser = inspect_textgrid(directory)
 
