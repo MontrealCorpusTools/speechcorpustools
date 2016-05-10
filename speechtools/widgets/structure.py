@@ -94,6 +94,8 @@ class HierarchyWidget(QtWidgets.QWidget):
             item.widget().deleteLater()
         self.hierarchy = hierarchy
         if self.hierarchy is not None:
+            if len(self.hierarchy.keys()) == 0:
+                return
             space = (self.height() / 2) * 0.75
             half_space = space / 2
             per_type = half_space / len(self.hierarchy.keys())

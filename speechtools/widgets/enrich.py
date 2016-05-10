@@ -67,12 +67,29 @@ class EncodeUtteranceDialog(BaseDialog):
         self.minUttEdit = QtWidgets.QLineEdit()
         self.minUttEdit.setText('0')
 
-        layout.addRow('Minimum duration of pause between utterances', self.minPauseEdit)
-        layout.addRow('Minimum duration of utterances', self.minUttEdit)
+        layout.addRow('Minimum duration of pause between utterances (seconds)', self.minPauseEdit)
+        layout.addRow('Minimum duration of utterances (seconds)', self.minUttEdit)
 
         self.layout().insertLayout(0, layout)
 
         self.setWindowTitle('Encode utterances')
+
+    def validate(self):
+        try:
+            val = self.value()
+        except ValueError:
+            reply = QtWidgets.QMessageBox.critical(self,
+                    "Invalid information",
+                    'Please make sure that the durations are properly specified.')
+            return False
+        if val[0] > 10 or val[1] > 10:
+            reply = QtWidgets.QMessageBox.warning(self, "Long duration",
+            'Are you sure that durations are specified in seconds?',
+            buttons = QtWidgets.QMessageBox.Ok | QtWidgets.QMessageBox.Cancel)
+            if reply == QtWidgets.QMessageBox.Cancel:
+                return False
+        return True
+
 
     def value(self):
         return float(self.minPauseEdit.text()), float(self.minUttEdit.text())

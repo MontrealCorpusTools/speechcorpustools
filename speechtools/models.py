@@ -116,3 +116,31 @@ class ProxyModel(QtCore.QSortFilterProxyModel):
         # for other cases, rely on the base implementation
         return super(ProxyModel, self).headerData(section, orientation, role)
 
+class DiscourseModel(object):
+    dataChanged = QtCore.pyqtSignal(object)
+    def __init__(self):
+        self.config = None
+        self.discourse = None
+        self.visible_begin = None
+        self.visible_end = None
+        self.max_begin = None
+        self.max_end
+
+        self.annotation_list = []
+
+        self.queryWorker
+
+    def updateData(self, begin, end):
+        kwargs = {'discourse':self.discourse, 'config': self.config}
+        if self.max_begin is None:
+            kwargs['begin'] = begin
+            kwargs['end'] =  end
+
+    def updateView(self, begin, end):
+        if self.max_begin is not None and begin > self.max_begin and end < self.max_end:
+            self.visible_begin = begin
+            self.visible_end = end
+            self.dataChanged.emit(filter(lambda x: x.end > self.visible_begin and x.begin < self.visible_end,
+                            self.annotationList))
+        else:
+            self.updateData(begin, end)
