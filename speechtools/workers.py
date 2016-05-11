@@ -112,6 +112,7 @@ class ImportCorpusWorker(QueryWorker):
         time.sleep(0.1)
         name = self.kwargs['name']
         directory = self.kwargs['directory']
+        reset = True
         config = CorpusConfig(name, graph_host = 'localhost', graph_port = 7474)
         with CorpusContext(config) as c:
             if name == 'buckeye':
@@ -132,9 +133,10 @@ class ImportCorpusWorker(QueryWorker):
             parser.call_back = self.kwargs['call_back']
             parser.stop_check = self.kwargs['stop_check']
             parser.call_back('Resetting corpus...')
-            c.reset(call_back = self.kwargs['call_back'], stop_check = self.kwargs['stop_check'])
-            c.load(parser, directory)
-        return True
+            if reset:
+                c.reset(call_back = self.kwargs['call_back'], stop_check = self.kwargs['stop_check'])
+            could_not_parse = c.load(parser, directory)
+        return could_not_parse
 
 class ExportQueryWorker(QueryWorker):
     def run_query(self):

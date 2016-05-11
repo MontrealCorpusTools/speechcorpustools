@@ -19,7 +19,7 @@ class DetailedMessageBox(QtWidgets.QMessageBox):
         self.setText("Something went wrong!")
         self.setInformativeText("Please copy the text below and send to Michael.")
 
-        self.setFixedWidth(200)
+        self.setMinimumWidth(200)
 
     def resizeEvent(self, event):
         result = super(DetailedMessageBox, self).resizeEvent(event)

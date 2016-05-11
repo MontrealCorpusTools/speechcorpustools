@@ -168,6 +168,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
         self.importWorker = ImportCorpusWorker()
         self.importWorker.errorEncountered.connect(self.showError)
+        self.importWorker.dataReady.connect(self.checkImport)
 
         self.syllabicsWorker = SyllabicEncodingWorker()
         self.syllabicsWorker.errorEncountered.connect(self.showError)
@@ -212,6 +213,16 @@ class MainWindow(QtWidgets.QMainWindow):
         self.rightPane.connectWidget.corporaList.cancelImporter.connect(self.importWorker.stop)
         self.rightPane.connectWidget.corporaList.corpusToImport.connect(self.importCorpus)
         self.progressWidget = ProgressWidget(self)
+
+    def checkImport(self, could_not_parse):
+        if could_not_parse:
+            reply = DetailedMessageBox()
+            reply.setWindowTitle('Errors during parsing')
+            reply.setIcon(QtWidgets.QMessageBox.Warning)
+            reply.setText("Some files could not be parsed, but those that could be parsed have been successfully loaded.")
+            reply.setInformativeText("Please check the files below for issues.")
+            reply.setDetailedText('\n'.join(could_not_parse))
+            ret = reply.exec_()
 
 
     def showError(self, e):
