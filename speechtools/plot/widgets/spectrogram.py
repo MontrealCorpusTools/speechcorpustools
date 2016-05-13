@@ -59,15 +59,13 @@ class SpectralPlotWidget(SelectablePlotWidget):
             self.pitchplot.set_data(pos = data)
 
     def set_formants(self, formants):
-        if not formants:
-            data = None
-            for k,v in self.formantplots.items():
+        for k,v in self.formantplots.items():
+            if k not in formants or not formants[k]:
                 self.formantplots[k]._bounds = None
                 self.formantplots[k]._changed['pos'] = True
                 self.formantplots[k]._pos = None
                 self.formantplots[k].update()
-        else:
-            for k,v in self.formantplots.items():
+            else:
                 data = []
                 for i,(t, f) in enumerate(formants[k]):
                     if f <= 0:
@@ -78,11 +76,7 @@ class SpectralPlotWidget(SelectablePlotWidget):
                         continue
                     t = t * self.spec.xscale
                     f = f / self.spec.yscale
-                    #prev_f = formants[k][i-1]
-                    #prev_f = [prev_f[0] * self.spec.xscale, prev_f[1]  / self.spec.yscale]
-                    #data.append(prev_f)
                     data.append([t, f])
-                #print(data)
                 data = np.array(data)
                 self.formantplots[k].set_data(pos = data)
 
@@ -94,11 +88,6 @@ class SpectralPlotWidget(SelectablePlotWidget):
         if not self.show_spec:
             self.spec.visible = False
         self.spec.set_signal(data)
-        #self.view.camera.set_range()
-        #max_time = data[:,0].max()
-        #min_time = data[:,0].min()
-        #min_ind = min_time / self.spec.step
-        #max_ind = max_time / self.spec.step
         self.view.camera.rect = (0, 0, self.spec.xmax(), self.spec.ymax())
         self.yaxis.axis.ticker.scale = self.spec.yscale
         #self.xaxis.axis.ticker.scale = 1/ self.spec.xscale

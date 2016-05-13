@@ -4,6 +4,7 @@ from PyQt5 import QtGui, QtCore, QtWidgets
 from .helper import get_system_font_height
 
 class SCTProgressBar(QtWidgets.QWidget):
+    removeThis = QtCore.pyqtSignal()
     def __init__(self, parent, worker):
         super(SCTProgressBar, self).__init__(parent)
         self.progressBar = QtWidgets.QProgressBar()
@@ -17,8 +18,7 @@ class SCTProgressBar(QtWidgets.QWidget):
         pglayout = QtWidgets.QHBoxLayout()
 
         self.cancelButton = QtWidgets.QPushButton()
-        size = get_system_font_height()
-        self.cancelButton.setIcon(QtWidgets.qApp.style().standardIcon(QtWidgets.QStyle.SP_DialogCloseButton))
+        self.cancelButton.setIcon(QtWidgets.qApp.style().standardIcon(QtWidgets.QStyle.SP_DialogCancelButton))
         self.cancelButton.clicked.connect(self.cancelWorker)
         self.worker.finishedCancelling.connect(self.finishCancelling)
         layout = QtWidgets.QVBoxLayout()
@@ -27,22 +27,47 @@ class SCTProgressBar(QtWidgets.QWidget):
         pglayout.addWidget(self.cancelButton)
         layout.addLayout(pglayout)
         self.setLayout(layout)
+        self.detached = False
 
     def cancelWorker(self):
-        self.cancelButton.setEnabled(False)
-        self.label.setText('Cancelling...')
-        self.worker.stop()
+        if not self.detached:
+            self.cancelButton.setEnabled(False)
+            self.label.setText('Cancelling...')
+            self.worker.stop()
+        else:
+            self.removeThis.emit()
 
     def finishCancelling(self):
+        self.cancelButton.setEnabled(True)
         self.label.setText('Cancelled')
+        self.detachAll(cancelled = True)
 
-    def detachAll(self):
-        self.worker.updateProgress.disconnect(self.progressBar.setValue)
-        self.worker.updateMaximum.disconnect(self.progressBar.setMaximum)
-        self.worker.updateProgressText.disconnect(self.label.setText)
-        self.worker.dataReady.disconnect(self.detachAll)
-        self.cancel.clicked.disconnect(self.worker.stop)
+    def detachAll(self, *args, cancelled = False):
+        if not cancelled:
+            self.progressBar.setValue(self.progressBar.maximum())
+            self.label.setText('Finished!')
+        try:
+            self.worker.updateProgress.disconnect(self.progressBar.setValue)
+        except TypeError:
+            pass
+        try:
+            self.worker.updateMaximum.disconnect(self.progressBar.setMaximum)
+        except TypeError:
+            pass
+        try:
+            self.worker.updateProgressText.disconnect(self.label.setText)
+        except TypeError:
+            pass
+        try:
+            self.worker.dataReady.disconnect(self.detachAll)
+        except TypeError:
+            pass
+        try:
+            self.cancelButton.clicked.disconnect(self.worker.stop)
+        except TypeError:
+            pass
         self.worker = None
+        self.detached = True
 
 class ProgressWidget(QtWidgets.QDialog):
     def __init__(self, parent = None):
@@ -57,8 +82,14 @@ class ProgressWidget(QtWidgets.QDialog):
 
     def createProgressBar(self, key, worker):
         pb = SCTProgressBar(self, worker)
-        self.progressBars[key] = pb
+        pb.removeThis.connect(self.cleanup)
+        #self.progressBars[key] = pb
         self.mainLayout.addWidget(pb)
+
+    def cleanup(self):
+        pb = self.sender()
+        self.mainLayout.removeWidget(pb)
+        pb.deleteLater()
 
     def accept(self):
         self.hide()

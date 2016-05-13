@@ -2,7 +2,7 @@ import os
 import sys
 import multiprocessing
 
-from speechtools.gui.main import MainWindow, QtWidgets
+from speechtools.main import MainWindow, QtWidgets
 
 if __name__ == '__main__':
     multiprocessing.freeze_support()

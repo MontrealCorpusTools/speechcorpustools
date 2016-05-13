@@ -23,6 +23,7 @@ class SelectableAudioWidget(QtWidgets.QWidget):
     acousticsSelected = QtCore.pyqtSignal(object)
     def __init__(self, parent = None):
         super(SelectableAudioWidget, self).__init__(parent)
+        #self.setMinimumHeight(600)
         self.signal = None
         self.preemph_signal = None
         self.sr = None
@@ -233,13 +234,6 @@ class SelectableAudioWidget(QtWidgets.QWidget):
                 self.updateVisible()
         else:
             print(event.key())
-
-    #def keyReleaseEvent(self, event):
-    #    """
-    #    Bootstrap the Qt Key release event
-    #    """
-    #    if event.key() == QtCore.Qt.Key_Shift:
-    #        self.rectselect = False
 
     def find_annotation(self, key, time):
         annotation = None
@@ -513,6 +507,10 @@ class SelectableAudioWidget(QtWidgets.QWidget):
         event.handled = True
 
     def zoom(self, factor, center_time):
+        if self.max_vis_time is None:
+            return
+        if self.max_time is None:
+            return
         if self.max_vis_time == self.max_time and self.min_vis_time == self.min_time and factor > 1:
             return
 
@@ -531,6 +529,10 @@ class SelectableAudioWidget(QtWidgets.QWidget):
         self.updateVisible()
 
     def pan(self, time_delta):
+        if self.max_vis_time is None:
+            return
+        if self.max_time is None:
+            return
         if self.max_vis_time == self.max_time and time_delta > 0:
             return
         if self.min_vis_time == self.min_time and time_delta < 0:
@@ -552,9 +554,7 @@ class SelectableAudioWidget(QtWidgets.QWidget):
     def updateVisible(self):
         if self.annotations is None:
             return
-        begin = time.time()
-        min_time, max_time = self.min_vis_time, self.max_vis_time
-        self.audioWidget.update_time_bounds(min_time, max_time)
+        self.audioWidget.update_time_bounds(self.min_vis_time, self.max_vis_time)
         self.drawSignal()
         self.drawAnnotations()
         self.drawFormants()
@@ -709,6 +709,8 @@ class SelectableAudioWidget(QtWidgets.QWidget):
             if self.min_vis_time is None:
                 self.min_vis_time = 0
                 self.max_vis_time = self.max_time
+            if self.max_vis_time - self.min_vis_time > 30:
+                self.max_vis_time = self.min_vis_time + 30
             self.spectrumWidget.update_sampling_rate(self.sr)
             self.audioWidget.update_time_bounds(self.min_vis_time, self.max_vis_time)
             self.drawSignal()
