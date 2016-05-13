@@ -1,5 +1,5 @@
 
-from .base import DetailedMessageBox, CollapsibleWidgetPair
+from .base import DetailedMessageBox, CollapsibleWidgetPair, CollapsibleTabWidget
 
 from .connection import ConnectWidget
 

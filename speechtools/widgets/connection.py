@@ -1,4 +1,4 @@
-
+import os
 from PyQt5 import QtGui, QtCore, QtWidgets
 
 
@@ -13,6 +13,8 @@ from ..workers import AudioFinderWorker, AudioCheckerWorker
 
 class CorporaList(QtWidgets.QGroupBox):
     selectionChanged = QtCore.pyqtSignal(object)
+    cancelImporter = QtCore.pyqtSignal()
+    corpusToImport = QtCore.pyqtSignal(object, object)
     def __init__(self, parent = None):
         super(CorporaList, self).__init__('Available corpora', parent)
         layout = QtWidgets.QVBoxLayout()
@@ -20,7 +22,85 @@ class CorporaList(QtWidgets.QGroupBox):
         self.corporaList = QtWidgets.QListWidget()
         self.corporaList.itemSelectionChanged.connect(self.changed)
         layout.addWidget(self.corporaList)
+
+        self.importButton = QtWidgets.QToolButton()
+        self.importButton.setText('Import local corpus')
+        self.importButton.setPopupMode(QtWidgets.QToolButton.InstantPopup)
+
+        menu = QtWidgets.QMenu()
+        buckeyeAction = QtWidgets.QAction('Buckeye Corpus', self)
+        buckeyeAction.triggered.connect(lambda x: self.importCorpus('buckeye'))
+        menu.addAction(buckeyeAction)
+
+        timitAction = QtWidgets.QAction('TIMIT', self)
+        timitAction.triggered.connect(lambda x: self.importCorpus('timit'))
+        menu.addAction(timitAction)
+
+        faAction = QtWidgets.QAction('Force-aligned TextGrids', self)
+        faAction.triggered.connect(self.importForceAligned)
+        menu.addAction(faAction)
+
+        self.importButton.setMenu(menu)
+
+        layout.addWidget(self.importButton)
         self.setLayout(layout)
+
+        self.importFree = True
+
+    def importCorpus(self, name):
+        if not self.importFree:
+            reply = QtWidgets.QMessageBox.warning(self, "Stop current import?",
+            'There is already an import ongoing, would you like to cancel it and start a new import?',
+            buttons = QtWidgets.QMessageBox.Abort | QtWidgets.QMessageBox.Cancel)
+            if reply == QtWidgets.QMessageBox.Cancel:
+                return
+            self.cancelImporter.emit()
+        try:
+            if name in get_corpora_list(CorpusConfig('',graph_host = 'localhost', graph_port=7474)):
+                reply = QtWidgets.QMessageBox.warning(self, "Overwrite corpus?",
+                'The {} corpus appears to be imported already.  Would you like to overwrite it?'.format(name),
+                buttons = QtWidgets.QMessageBox.Ok | QtWidgets.QMessageBox.Cancel)
+                if reply == QtWidgets.QMessageBox.Cancel:
+                    return
+        except ConnectionError:
+            reply = QtWidgets.QMessageBox.critical(self,
+                    "Could not connect to local server", 'Please make sure there is a local Neo4j server running.')
+            return
+
+        directory = QtWidgets.QFileDialog.getExistingDirectory(self,
+                        'Select a directory containing the {} corpus'.format(name),
+                        os.path.expanduser('~'))
+        if directory == '':
+            return
+        self.corpusToImport.emit(name, directory)
+
+    def importForceAligned(self):
+        if not self.importFree:
+            reply = QtWidgets.QMessageBox.warning(self, "Stop current import?",
+            'There is already an import ongoing, would you like to cancel it and start a new import?',
+            buttons = QtWidgets.QMessageBox.Abort | QtWidgets.QMessageBox.Cancel)
+            if reply == QtWidgets.QMessageBox.Cancel:
+                return
+            self.cancelImporter.emit()
+
+        directory = QtWidgets.QFileDialog.getExistingDirectory(self,
+                        'Select a directory containing the TextGrids',
+                        os.path.expanduser('~'))
+        if directory == '':
+            return
+        name = os.path.basename(directory)
+        try:
+            if name in get_corpora_list(CorpusConfig('',graph_host = 'localhost', graph_port=7474)):
+                reply = QtWidgets.QMessageBox.warning(self, "Overwrite corpus?",
+                'The {} corpus appears to be imported already.  Would you like to overwrite it?'.format(name),
+                buttons = QtWidgets.QMessageBox.Ok | QtWidgets.QMessageBox.Cancel)
+                if reply == QtWidgets.QMessageBox.Cancel:
+                    return
+        except ConnectionError:
+            reply = QtWidgets.QMessageBox.critical(self,
+                    "Could not connect to local server", 'Please make sure there is a local Neo4j server running.')
+            return
+        self.corpusToImport.emit(name, directory)
 
     def clear(self):
         self.corporaList.clear()

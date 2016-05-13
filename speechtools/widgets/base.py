@@ -19,7 +19,7 @@ class DetailedMessageBox(QtWidgets.QMessageBox):
         self.setText("Something went wrong!")
         self.setInformativeText("Please copy the text below and send to Michael.")
 
-        self.setFixedWidth(200)
+        self.setMinimumWidth(200)
 
     def resizeEvent(self, event):
         result = super(DetailedMessageBox, self).resizeEvent(event)
@@ -99,3 +99,100 @@ class DataListWidget(QtWidgets.QListWidget):
     def update_plot(self):
         labels = [i.text() for i in self.selectedItems()]
         self.plot.update_data(labels, self.plot_type)
+
+
+class RadioSelectWidget(QtWidgets.QGroupBox):
+    def __init__(self,title, options, actions=None, enabled=None,parent=None):
+        super(RadioSelectWidget, self).__init__(title, parent)
+        self.is_enabled = True
+        self.actions = None
+        self.enabled = None
+        self.setLayout(QtWidgets.QFormLayout())
+        self.setOptions(options, actions, enabled)
+
+    def initOptions(self):
+        self.widgets = []
+        for key in self.options.keys():
+            w = QtWidgets.QRadioButton(key)
+            if self.actions is not None:
+                w.clicked.connect(self.actions[key])
+            if self.enabled is not None:
+                w.setEnabled(self.enabled[key])
+            if not self.is_enabled:
+                w.setEnabled(False)
+            self.widgets.append(w)
+            self.layout().addRow(w)
+        self.widgets[0].setChecked(True)
+
+    def setOptions(self, options, actions = None, enabled = None):
+        for i in reversed(range(self.layout().count())):
+            w = self.layout().itemAt(i).widget()
+            self.layout().removeWidget(w)
+            w.setParent(None)
+            w.deleteLater()
+        self.options = options
+        if actions is not None:
+            self.actions = actions
+        if enabled is not None:
+            self.enabled = enabled
+        self.initOptions()
+
+
+    def initialClick(self):
+        self.widgets[0].click()
+
+    def click(self,index):
+        if index >= len(self.widgets):
+            return
+        self.widgets[index].click()
+
+    def value(self):
+        for w in self.widgets:
+            if w.isChecked():
+                return self.options[w.text()]
+        return None
+
+    def displayValue(self):
+        for w in self.widgets:
+            if w.isChecked():
+                return w.text()
+        return ''
+
+    def disable(self):
+        self.is_enabled = False
+        for w in self.widgets:
+            w.setEnabled(False)
+
+    def enable(self):
+        self.is_enabled = True
+        for w in self.widgets:
+            if self.enabled is not None:
+                w.setEnabled(self.enabled[key])
+            else:
+                w.setEnabled(True)
+
+class CollapsibleTabWidget(QtWidgets.QTabWidget):
+    needsShrinking = QtCore.pyqtSignal()
+    def __init__(self, parent = None):
+        super(CollapsibleTabWidget, self).__init__(parent)
+        self.currentChanged.connect(self.ensureVisible)
+        self.collapseButton = QtWidgets.QPushButton('Collapse')
+        self.collapseButton.clicked.connect(self.collapseAll)
+        self.setCornerWidget(self.collapseButton)
+
+    def ensureVisible(self):
+        self.collapseButton.setText('Collapse')
+        self.currentWidget().show()
+        for i in range(self.count()):
+            self.widget(i).setSizePolicy(QtWidgets.QSizePolicy.Expanding,QtWidgets.QSizePolicy.Expanding)
+
+    def collapseAll(self):
+        if self.currentWidget().isHidden():
+            self.ensureVisible()
+        else:
+            self.collapseButton.setText('Show')
+            self.currentWidget().hide()
+            for i in range(self.count()):
+                self.widget(i).setSizePolicy(QtWidgets.QSizePolicy.Ignored,QtWidgets.QSizePolicy.Ignored)
+            #self.adjustSize()
+            self.needsShrinking.emit()

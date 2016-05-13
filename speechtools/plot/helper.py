@@ -64,8 +64,8 @@ def generate_boundaries(annotations, hierarchy, min_time, max_time):
         end = a.end
         begin = a.begin
         midpoint = ((end - begin) / 2) + begin
-        if midpoint > max_time or midpoint < min_time:
-            midpoint = vis_mid
+        #if midpoint > max_time or midpoint < min_time:
+        #    midpoint = vis_mid
         text = a.label
         if text is None:
             text = ''
@@ -104,9 +104,12 @@ def generate_boundaries(annotations, hierarchy, min_time, max_time):
                 if begin > max_time:
                     continue
                 midpoint = ((end - begin) /2) + begin
-                if (midpoint > max_time or midpoint < min_time) and (begin < min_time and end > max_time):
-                    midpoint = vis_mid
-                text_labels[t].append(e.label)
+                #if (midpoint > max_time or midpoint < min_time) and (begin < min_time and end > max_time):
+                #    midpoint = vis_mid
+                text = e.label
+                if text is None:
+                    text = ''
+                text_labels[t].append(text)
                 text_pos[t].append((midpoint, vert_mid))
 
                 line_outputs[t].append([begin,vert_min])
