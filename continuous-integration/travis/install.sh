@@ -13,7 +13,7 @@ if [ ! -d "$HOME/miniconda/miniconda/envs/test-environment" ]; then
   source activate test-environment
   which python
   conda install -c mmcauliffe pyqt5
-  pip install -q coveralls coverage py2neo textgrid acousticsim pytest-qt
+  pip install -q coveralls coverage py2neo==2.0.8 textgrid acousticsim pytest-qt
   pip install -q https://github.com/MontrealCorpusTools/PolyglotDB/archive/master.zip
   pip install -q https://github.com/vispy/vispy/archive/master.zip
 else
