@@ -29,19 +29,8 @@ Once a query profile has been constructed, it can be saved ("Save query profile"
 1. **Make a new profile**: Under "Query profiles", select "New Query".  
 
 2. **Find phones**: Select "phone" under "Linguistic objects to find". The screen should now look like:
+
 	.. image:: ex1Fig1.png
-		:width: 450px
-		:align: center
-		:height: 300px
-		:alt: Image cannot be displayed in your browser
-
-
-
-
-3. **Add filters** to the query.  A single filter is added by pressing "+" and constructing it, by making selections from drop-down menus which appear.
-
-The first three filters are: 
-	.. image:: ex1Fig2.png
 		:width: 450px
 		:align: center
 		:height: 300px
@@ -49,6 +38,18 @@ The first three filters are:
 
 	
 
+
+3. **Add filters** to the query.  A single filter is added by pressing "+" and constructing it, by making selections from drop-down menus which appear.
+   
+The first three filters are: 
+
+	.. image:: ex1Fig2.png
+		:width: 450px
+		:align: center
+		:height: 300px
+		:alt: Image cannot be displayed in your browser
+
+	
 
 These do the following:
 

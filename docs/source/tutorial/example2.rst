@@ -28,7 +28,12 @@ For this query profile:
 
 This corresponds to the following query profile, which has been saved (in this screenshot) as "PSS: first syllable" in SCT:
 
-**ex2fig2**
+	.. image:: ex2Fig1.png
+		:width: 450px
+		:align: center
+		:height: 300px
+		:alt: Image cannot be displayed in your browser
+
 
 The first and second filters are similar to those in Example 1:
 
@@ -69,18 +74,34 @@ After you **enter these rows** in the export profile, **run the export** (option
 Step 3: examine the data
 ************************
 
-In R: load in the data:
+In R\: load in the data\:
 
+	
 Exclude a few outliers (must be errors): syllables with durations > 1.5 sec; points from words with duration > 5 sec. We also exclude  points from words with 5 syllables (there are only 2 such points):
 
+	
 
 
 Plot of the duration of the initial stressed syllable as a function of word duration (in syllables):
 
+	.. image:: ex2Fig2.png
+		:width: 450px
+		:align: center
+		:height: 300px
+		:alt: Image cannot be displayed in your browser
+
+	
+
 Here we see a clear polysyllabic shortening effect from 1 to 2 syllables, and possibly one from 2 to 3 syllables. Nothing is clear between 3 and 4 syllables.
 
 This plot suggests that the effect is pretty robust across speakers:
+	.. image:: ex2Fig3.png
+		:width: 450px
+		:align: center
+		:height: 300px
+		:alt: Image cannot be displayed in your browser
 
+	
 **Exercise**: Try to make a plot like the penultimate one, using word duration on the x axis instead of number of syllables.  (You'll need to use ``geom_smooth()`` instead of ``geom_boxplot()``, if you are using ggplot.)  What issues do you run into?  After these are resolved, do you see the expected pattern? 
 
 Initial syllable duration
@@ -89,6 +110,12 @@ Initial syllable duration
 **Exercise**: Try to instead export a CSV like the one just exported, but for all utterance-final words (not just restricting to those with initial stress).  I saved this as ``polysyllabic2.csv``.   
 
 The plot of initial syllable duration as a function of word length (in number of syllables) should now look like:
+
+	.. image:: ex2Fig4.png
+		:width: 450px
+		:align: center
+		:height: 300px
+		:alt: Image cannot be displayed in your browser
 
 
 This plot is quite similar for 1-4 sylalbles to the plot where only initial-stressed words are considered (NB: initial-stressed words make up about 82\% of tokens). For 4-5 syllables, there is no clear change  So at least at this coarse level, it looks like polysyllabic shortening effects for English initial syllables are restricted to relatively short words.
