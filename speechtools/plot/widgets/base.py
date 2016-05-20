@@ -10,6 +10,17 @@ from ..cameras import SCTAudioCamera, BaseCamera
 class SelectablePlotWidget(PlotWidget):
     def __init__(self, *args, **kwargs):
         super(SelectablePlotWidget, self).__init__(*args, **kwargs)
+        self.unfreeze()
+        self.selection_time_line = SelectionLine()
+        self.selection_time_line.visible = False
+        self.selection_rect = SelectionRect()
+        self.selection_rect.visible = False
+        self.play_time_line = PlayLine()
+        self.play_time_line.visible = False
+        self.view.add(self.selection_time_line)
+        self.view.add(self.play_time_line)
+        self.view.add(self.selection_rect)
+        self.freeze()
 
     def _configure_2d(self, fg_color=None):
         if self._configured:
@@ -34,26 +45,13 @@ class SelectablePlotWidget(PlotWidget):
 
         self.xlabel = scene.Label("")
         self.xlabel.stretch = (1, 0.05)
-
-        self.view = self.grid.add_view(row=2, col=4,
-                                       border_color='grey', bgcolor="#efefef")
+        self.grid.add_widget(self.xlabel, row=4, col=3)
 
         self.view.camera = SCTAudioCamera(zoom = None, pan = None)
         self.camera = self.view.camera
 
         self.xaxis.link_view(self.view)
         self.yaxis.link_view(self.view)
-        self.unfreeze()
-        self.selection_time_line = SelectionLine()
-        self.selection_time_line.visible = False
-        self.selection_rect = SelectionRect()
-        self.selection_rect.visible = False
-        self.play_time_line = PlayLine()
-        self.play_time_line.visible = False
-        self.view.add(self.selection_time_line)
-        self.view.add(self.play_time_line)
-        self.view.add(self.selection_rect)
-        self.freeze()
         self._configured = True
 
     def set_selection_time(self, time):
