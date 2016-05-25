@@ -17,9 +17,7 @@ Contents:
    importing.rst
    queries.rst
    apireference.rst
-   
- .. toctree::
- 	tutorial/buckeye.rst
+   tutorial/*
 
 
 Indices and tables
