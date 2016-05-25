@@ -16,6 +16,7 @@ Contents:
    importing.rst
    queries.rst
    apireference.rst
+   
    tutorial/tutorial.rst
    
 

@@ -33,7 +33,7 @@ This document is structured as follows:
 
 * `Installation <http://sct.readthedocs.io/en/latest/tutorial/installation.html>`_: Install necessary software
 
-* `Buckeye database <http://sct.readthedocs.io/en/latest/tutorial/buckeye.hmtl>`_: Obtain a database for the Buckeye Corpus where the *import* and *enrichment* steps have been completed , either by using [pre-made databases](#premade) or doing the import and enrichment steps yourself.
+* `Buckeye database <http://sct.readthedocs.io/en/latest/tutorial/buckeye.hmtl>`_: Obtain a database for the Buckeye Corpus where the *import* and *enrichment* steps have been completed , either by using `premade <http://sct.readthedocs.io/en/latest/tutorial/premade.html>`_ or doing the import and enrichment steps `yourself <http://sct.readthedocs.io/en/latest/tutorial/buildown.html>`_.
 
 * `Vignettes <http://sct.readthedocs.io/en/latest/tutorial/vignetteMain.html>`_: Two worked examples illustrating the *Query* and *Export* steps, including creating "Query profiles" and "Export profiles".
 
