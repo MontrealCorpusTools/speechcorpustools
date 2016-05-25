@@ -119,3 +119,13 @@ The plot of initial syllable duration as a function of word length (in number of
 
 
 This plot is quite similar for 1-4 sylalbles to the plot where only initial-stressed words are considered (NB: initial-stressed words make up about 82\% of tokens). For 4-5 syllables, there is no clear change  So at least at this coarse level, it looks like polysyllabic shortening effects for English initial syllables are restricted to relatively short words.
+
+
+
+
+`Vignette <http://sct.readthedocs.io/en/latest/tutorial/vignetteMain.html>`_
+
+`Previous <http://sct.readthedocs.io/en/latest/tutorial/vignetteMain.html>`_
+
+`Next <http://sct.readthedocs.io/en/latest/tutorial/tutorial.html>`_
+

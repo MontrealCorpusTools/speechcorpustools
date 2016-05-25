@@ -19,3 +19,9 @@ Use pre-made database
 Build your own database
 ***********************
 `<http://sct.readthedocs.io/en/latest/tutorial/buildown.html#build-your-own-database>`_
+
+
+`Previous <http://sct.readthedocs.io/en/latest/tutorial/installation2.html>`_
+
+
+`Next <http://sct.readthedocs.io/en/latest/tutorial/enrichment.html>`_

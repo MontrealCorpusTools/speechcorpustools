@@ -142,3 +142,13 @@ Analyze acoustics
 *****************
 
 Acoustics (pitch and formants) can be encoded to enrich the corpus.  At the moment, such encoding is only relevant for when inspecting the waveform/spectrogram, as their is currently no way to query acoustics.  The encoding for acoustics will also take a while depending on the size of the sound files/corpus, so I do not recommend using this option in the current state of SCT.
+
+
+
+
+`Previous <http://sct.readthedocs.io/en/latest/tutorial/buckeye.html>`_
+
+
+`Next <http://sct.readthedocs.io/en/latest/tutorial/vignetteMain.html>`_
+
+

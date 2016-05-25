@@ -39,3 +39,5 @@ This document is structured as follows:
 
 * `Tutorial <http://sct.readthedocs.io/en/latest/tutorial/tutorial2.html>`_ (??): Demonstration of some of the functionality available in *Query* and *Export* steps, in some common cases, intended to kickstart carrying out your own analyses, or applying SCT to your own corpus.
 
+`Next <http://sct.readthedocs.io/en/latest/tutorial/installation.html>`_
+

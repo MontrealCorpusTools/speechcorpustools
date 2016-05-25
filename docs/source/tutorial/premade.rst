@@ -25,3 +25,5 @@ Some important information about the database (to replicate if you are building 
 
 * Syllabification has been performed using maximal onset.
 
+
+`Previous <http://sct.readthedocs.io/en/latest/tutorial/buckeye.html>`_

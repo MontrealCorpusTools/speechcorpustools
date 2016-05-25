@@ -186,3 +186,8 @@ For example, row 2 TODO. (comes at the end of the utterance "not ever been taugh
 
 
 TODO: R code to load data and see the basic results (big speech rate and frequency effects; small stop voicing effect; no neighborhood density effect).
+
+
+`Previous <http://sct.readthedocs.io/en/latest/tutorial/vignetteMain.html>`_
+
+`Next <http://sct.readthedocs.io/en/latest/tutorial/example2.html>`_
