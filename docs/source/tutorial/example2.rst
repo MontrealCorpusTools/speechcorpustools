@@ -125,7 +125,7 @@ This plot is quite similar for 1-4 sylalbles to the plot where only initial-stre
 
 `Vignette <http://sct.readthedocs.io/en/latest/tutorial/vignetteMain.html>`_
 
-`Previous <http://sct.readthedocs.io/en/latest/tutorial/vignetteMain.html>`_
+`Next <http://sct.readthedocs.io/en/latest/tutorial/tutorial2.html>`_ 			`Previous <http://sct.readthedocs.io/en/latest/tutorial/vignetteMain.html>`_
 
-`Next <http://sct.readthedocs.io/en/latest/tutorial/tutorial2.html>`_
+
 

@@ -17,16 +17,7 @@ Contents:
    queries.rst
    apireference.rst
    tutorial/tutorial.rst
-   tutorial/installation.rst
-   tutorial/installation2.rst
-   tutorial/buckeye.rst
    
-   tutorial/enrichment.rst
-   tutorial/vignetteMain.rst
-   tutorial/example1.rst
-   tutorial/example2.rst
-   tutorial/example3.rst
-   tutorial/tutorial2.rst
 
 Indices and tables
 ==================

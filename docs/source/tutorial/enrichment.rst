@@ -146,9 +146,9 @@ Acoustics (pitch and formants) can be encoded to enrich the corpus.  At the mome
 
 
 
-`Previous <http://sct.readthedocs.io/en/latest/tutorial/buckeye.html>`_
+`Next <http://sct.readthedocs.io/en/latest/tutorial/vignetteMain.html>`_ 			`Previous <http://sct.readthedocs.io/en/latest/tutorial/buckeye.html>`_
 
 
-`Next <http://sct.readthedocs.io/en/latest/tutorial/vignetteMain.html>`_
+
 
 

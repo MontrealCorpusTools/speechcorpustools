@@ -22,7 +22,7 @@ Once those are downloaded, just extract the archive and the executable inside ca
 One possible issue that might arise with Windows computers is related to graphics drivers.  On the Windows version, a console output will pop up in addition to the main SCT window.  If you notice a string of output containing something like "RuntimeError: OpenGL got errors" then your graphics driver is probably a couple of years old.  In which case, please email Michael (michael.e.mcauliffe@gmail.com) to walk you through the process to update it.  Macs tend to be better about keeping the graphics drivers up to date, and shouldn't have this issue.  SCT should run on Windows 7+ and Mac OSX 10.9+.
 
 
-`Previous <http://sct.readthedocs.io/en/latest/tutorial/installation.html>`_
+`Next <http://sct.readthedocs.io/en/latest/tutorial/buckeye.html>`_ 			`Previous <http://sct.readthedocs.io/en/latest/tutorial/installation.html>`_
 
 
-`Next <http://sct.readthedocs.io/en/latest/tutorial/buckeye.html>`_
+
