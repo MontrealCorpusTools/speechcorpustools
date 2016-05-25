@@ -13,9 +13,9 @@ To do the examples below, you will need a SCT database for the Buckeye corpus.  
 
 Use pre-made database
 *********************
-<a name="premade"></a>
+`http://sct.readthedocs.io/en/latest/tutorial/premade.html#premade-database`_
 
 
 Build your own database
 ***********************
-<a name="buildyourown"></a>
+`http://sct.readthedocs.io/en/latest/tutorial/buildown.html#build-your-own-database`_
