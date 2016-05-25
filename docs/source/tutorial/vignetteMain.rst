@@ -15,7 +15,7 @@ Example 1: Factors affecting vowel duration
 **Motivation**:
 a number of factors affect the duration of vowels. One which is said to be much stronger in English than many languages is following consonant voicing: the same vowel is realized as longer before 
 
-Example 1: `<link to example 1>`_
+Example 1: `<http://sct.readthedocs.io/en/latest/tutorial/example1.html>`_
 
 Example 2: Polysyllabic shortening
 **********************************
@@ -33,7 +33,7 @@ Polysyllabic shortening is often -- but not always -- defined as being restricte
 
 We show (1) here, and leave (2) as an exercise.
 
-Example 2: `<link to example 2>`_
+Example 2: `<http://sct.readthedocs.io/en/latest/tutorial/example2.html>`_
 
 Example 3: Menzerath's Law
 **************************

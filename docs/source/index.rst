@@ -20,8 +20,7 @@ Contents:
    tutorial/installation.rst
    tutorial/installation2.rst
    tutorial/buckeye.rst
-   tutorial/premade.rst
-   tutorial/buildown.rst
+   
    tutorial/enrichment.rst
    tutorial/vignetteMain.rst
    tutorial/example1.rst

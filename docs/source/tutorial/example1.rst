@@ -12,7 +12,7 @@ Example 1
 Step 1: Creating a query profile
 ********************************
 
-Based on the motivation in `<linktovignettes>`_, we want to make a query for:
+Based on the motivation in `vignettes <http://sct.readthedocs.io/en/latest/tutorial/vignetteMain.html>`_, we want to make a query for:
 
 * All vowels in CVC words (fixed syllable structure)
 * Only words where the second C is a stop (to examine following C voicing)
