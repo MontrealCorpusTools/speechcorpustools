@@ -9,6 +9,7 @@ Welcome to SpeechCorpusTools's documentation!
 Contents:
 
 .. toctree::
+	:glob:
    :maxdepth: 2
 
    introduction.rst
