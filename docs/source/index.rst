@@ -16,7 +16,7 @@ Contents:
    importing.rst
    queries.rst
    apireference.rst
-
+   buckeye.rst
 
 
 Indices and tables
