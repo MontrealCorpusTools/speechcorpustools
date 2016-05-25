@@ -17,6 +17,7 @@ Contents:
    queries.rst
    apireference.rst
    buckeye.rst
+   tutorial
 
 
 Indices and tables
