@@ -59,3 +59,10 @@ For example, Menzerath's Law predicts that for English:
 * Export word duration (seconds), number of syllables, anything else necessary.
 
 (This exercise should be possible using pieces covered in Examples 1 and 2, or minor extensions.)
+
+
+`Previous <http://sct.readthedocs.io/en/latest/tutorial/enrichment.html>`_
+
+`Next <http://sct.readthedocs.io/en/latest/tutorial/example1.html>`_
+
+
