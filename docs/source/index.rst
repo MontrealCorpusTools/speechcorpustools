@@ -12,11 +12,11 @@ Contents:
       :maxdepth: 3
 
    introduction.rst
-   installation.rst
+   
    importing.rst
    queries.rst
    apireference.rst
-   
+
    tutorial/tutorial.rst
    
 
