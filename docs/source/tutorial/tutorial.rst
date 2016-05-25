@@ -31,11 +31,11 @@ Ideally, the import and enrichment steps are only performed once for a given cor
 
 This document is structured as follows:
 
-* *Installation*: Install necessary software
+* `*Installation* <http://sct.readthedocs.io/en/latest/tutorial/installation.html>`_: Install necessary software
 
-* *Buckeye database*: Obtain a database for the Buckeye Corpus where the *import* and *enrichment* steps have been completed , either by using [pre-made databases](#premade) or doing the import and enrichment steps yourself.
+* `*Buckeye database* <http://sct.readthedocs.io/en/latest/tutorial/buckeye.hmtl>`_: Obtain a database for the Buckeye Corpus where the *import* and *enrichment* steps have been completed , either by using [pre-made databases](#premade) or doing the import and enrichment steps yourself.
 
-* *Vignettes*: Two worked examples illustrating the *Query* and *Export* steps, including creating "Query profiles" and "Export profiles".
+* `*Vignettes* <http://sct.readthedocs.io/en/latest/tutorial/vignetteMain.html>`_: Two worked examples illustrating the *Query* and *Export* steps, including creating "Query profiles" and "Export profiles".
 
-* *Tutorial* (??): Demonstration of some of the functionality available in *Query* and *Export* steps, in some common cases, intended to kickstart carrying out your own analyses, or applying SCT to your own corpus.
+* `*Tutorial* <http://sct.readthedocs.io/en/latest/tutorial/tutorial2.html>`_ (??): Demonstration of some of the functionality available in *Query* and *Export* steps, in some common cases, intended to kickstart carrying out your own analyses, or applying SCT to your own corpus.
 
