@@ -18,8 +18,8 @@ Contents:
    queries.rst
    apireference.rst
    
-   tutorial/buckeye.rst
-   tutorial/buildown.rst
+ .. toctree::
+ 	tutorial/buckeye.rst
 
 
 Indices and tables
