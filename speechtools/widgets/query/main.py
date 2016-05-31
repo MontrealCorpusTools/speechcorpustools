@@ -25,6 +25,7 @@ from ...profiles import (available_query_profiles, available_export_profiles,
 
 class QueryProfileWidget(QtWidgets.QWidget):
     profileSelected = QtCore.pyqtSignal(object)
+
     def __init__(self, parent = None):
         super(QueryProfileWidget, self).__init__(parent)
         self.querySelect = QtWidgets.QComboBox()
@@ -147,6 +148,8 @@ class SaveDialog(QtWidgets.QDialog):
 
 class QueryForm(QtWidgets.QWidget):
     finishedRunning = QtCore.pyqtSignal(object)
+   
+
     def __init__(self):
         super(QueryForm, self).__init__()
         self.config = None
@@ -157,6 +160,7 @@ class QueryForm(QtWidgets.QWidget):
         mainLayout.setContentsMargins(10,0,10,0)
 
         self.queryWidget = BasicQuery()
+
 
         self.profileWidget = QueryProfileWidget()
         self.profileWidget.profileSelected.connect(self.queryWidget.updateProfile)
@@ -303,11 +307,14 @@ class QueryResults(QtWidgets.QWidget):
 
 class QueryWidget(CollapsibleTabWidget):
     viewRequested = QtCore.pyqtSignal(str, float, float)
+    needsHelp = QtCore.pyqtSignal(object)
     def __init__(self):
         super(QueryWidget, self).__init__()
         self.config = None
         self.currentIndex = 1
         self.queryForm = QueryForm()
+
+        self.queryForm.queryWidget.needsHelp.connect(self.needsHelp.emit)
         self.queryForm.finishedRunning.connect(self.updateResults)
         self.setTabsClosable(True)
         self.tabCloseRequested.connect(self.closeTab)
@@ -321,6 +328,11 @@ class QueryWidget(CollapsibleTabWidget):
         widget.setParent(None)
         widget.deleteLater()
 
+
+
+    def needHelp(self):
+        print("I need some help please")
+        
     def updateConfig(self, config):
         self.config = config
         self.queryForm.updateConfig(config)

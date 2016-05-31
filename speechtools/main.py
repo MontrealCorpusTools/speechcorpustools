@@ -68,6 +68,8 @@ class LeftPane(Pane):
 
     def changeDiscourse(self, discourse):
         self.viewWidget.changeDiscourse(discourse)
+    def printHelp(self):
+        print("help me!")
 
 class RightPane(Pane):
     configUpdated = QtCore.pyqtSignal(object)
@@ -140,7 +142,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.leftPane.viewWidget.discourseWidget.selectionChanged.connect(self.rightPane.detailsWidget.showDetails)
         self.leftPane.viewWidget.discourseWidget.acousticsSelected.connect(self.rightPane.acousticsWidget.showDetails)
         self.mainWidget = CollapsibleWidgetPair(QtCore.Qt.Horizontal, self.leftPane,self.rightPane)
-
+        self.leftPane.queryWidget.needsHelp.connect(self.rightPane.helpWidget.getHelpInfo)
         #self.mainWidget.setStretchFactor(0, 1)
 
 
