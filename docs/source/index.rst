@@ -18,7 +18,7 @@ Contents:
    apireference.rst
 
    tutorial/tutorial.rst
-   
+   additional/*
 
 Indices and tables
 ==================

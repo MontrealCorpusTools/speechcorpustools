@@ -60,7 +60,7 @@ To do so:
 1. Go to the "Enhance corpus" menu
 2. Select the "Encode syllables..." option
 3. Select the desired algorithm
-  *  At the moment only a Maximum attested onset algorithm is implemented
+  *  At the moment only a "maximum attested onset" algorithm is implemented
     *  This algorithm finds all the onsets at the beginnings of words
     *  Any consonantal string between two vowels is split up in such a way that as many segments are put into the onset as possible given the attested onsets at the beginnings of words
   *  Other algorithms will be implemented in the future
@@ -83,7 +83,7 @@ To encode a hierarchical property:
   
 4. Select the lower annotation
 
-  * For both speech rate word, this would be ``syllable``
+  * For both speech rate and word, this would be ``syllable``
   * For a word's position in its utterance, this would be ``word``
   
 5. Select the type of property
