@@ -12,29 +12,37 @@ from .basic import AttributeSelect as QueryAttributeSelect, SpeakerAttributeSele
 class AttributeSelect(QueryAttributeSelect):
     def __init__(self, hierarchy, to_find):
         QtWidgets.QComboBox.__init__(self)
-        present = []
-        for k,t in sorted(hierarchy.token_properties[to_find]):
-            if k == 'id':
-                continue
-            present.append(k)
-            self.addItem(k)
-        for k,t in sorted(hierarchy.type_properties[to_find]):
-            if k == 'id':
-                continue
-            if k in present:
-                continue
-            self.addItem(k)
-        self.addItem('following')
-        self.addItem('previous')
-        self.addItem('duration')
-        for k in hierarchy.highest_to_lowest:
-            if k != to_find:
+        if to_find != 'pause':
+
+            present = []
+            for k,t in sorted(hierarchy.token_properties[to_find]):
+                if k == 'id':
+                    continue
+                present.append(k)
                 self.addItem(k)
-        self.addItem('speaker')
-        self.addItem('discourse')
-        if to_find in hierarchy.subannotations:
-            for s in sorted(hierarchy.subannotations[to_find]):
-                self.addItem(s)
+            for k,t in sorted(hierarchy.type_properties[to_find]):
+                if k == 'id':
+                    continue
+                if k in present:
+                    continue
+                self.addItem(k)
+            self.addItem('following')
+            self.addItem('previous')
+            self.addItem('duration')
+            if to_find == 'word':
+                self.addItem('pause')
+            for k in hierarchy.highest_to_lowest:
+                if k != to_find:
+                    self.addItem(k)
+            self.addItem('speaker')
+            self.addItem('discourse')
+            if to_find in hierarchy.subannotations:
+                for s in sorted(hierarchy.subannotations[to_find]):
+                    self.addItem(s)
+        else:
+            self.addItem('following')
+            self.addItem('previous')
+            self.addItem('duration')
 
 class AttributeWidget(QtWidgets.QWidget):
     finalChanged = QtCore.pyqtSignal(object)
@@ -79,7 +87,7 @@ class AttributeWidget(QtWidgets.QWidget):
             w.setParent(None)
             w.deleteLater()
         current_annotation_type = self.annotationType()
-        if combobox.currentText() in self.hierarchy.annotation_types:
+        if combobox.currentText() in self.hierarchy.annotation_types or combobox.currentText() == 'pause':
             widget = AttributeSelect(self.hierarchy, combobox.currentText())
             widget.currentIndexChanged.connect(self.updateAttribute)
             self.mainLayout.addWidget(widget)

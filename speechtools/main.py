@@ -55,6 +55,7 @@ class LeftPane(Pane):
         self.queryWidget = QueryWidget()
         self.queryWidget.needsShrinking.connect(self.growLower)
         self.viewWidget.needsShrinking.connect(self.growUpper)
+        self.queryWidget.viewRequested.connect(self.changeDiscourse)
 
         self.splitter = CollapsibleWidgetPair(QtCore.Qt.Vertical, self.queryWidget, self.viewWidget, collapsible = 0)
 
@@ -66,8 +67,8 @@ class LeftPane(Pane):
         self.viewWidget.updateConfig(config)
         self.queryWidget.updateConfig(config)
 
-    def changeDiscourse(self, discourse):
-        self.viewWidget.changeDiscourse(discourse)
+    def changeDiscourse(self, discourse, begin = None, end = None):
+        self.viewWidget.changeDiscourse(discourse, begin, end)
 
 class RightPane(Pane):
     configUpdated = QtCore.pyqtSignal(object)
@@ -132,8 +133,6 @@ class MainWindow(QtWidgets.QMainWindow):
         self.rightPane.configUpdated.connect(self.updateConfig)
         self.rightPane.discourseChanged.connect(self.leftPane.changeDiscourse)
 
-        self.leftPane.queryWidget.viewRequested.connect(self.rightPane.discourseWidget.changeView)
-        self.rightPane.discourseWidget.viewRequested.connect(self.leftPane.viewWidget.discourseWidget.changeView)
         self.leftPane.viewWidget.discourseWidget.nextRequested.connect(self.leftPane.queryWidget.requestNext)
         self.leftPane.viewWidget.discourseWidget.previousRequested.connect(self.leftPane.queryWidget.requestPrevious)
         self.leftPane.viewWidget.discourseWidget.markedAsAnnotated.connect(self.leftPane.queryWidget.markAnnotated)

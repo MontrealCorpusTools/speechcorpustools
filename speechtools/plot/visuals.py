@@ -17,6 +17,19 @@ from vispy.visuals.shaders import Function
 from vispy.visuals import collections
 from vispy.color import Color, ColorArray, get_colormap
 
+class WaveformLineVisual(visuals.LineVisual):
+    def __init__(self):
+        super(WaveformLineVisual, self).__init__(method = 'gl', color = 'k')
+
+    def set_data(self, data):
+        if data is not None:
+            scene.visuals.Line.set_data(self, pos = data)
+        else:
+            color = None
+            self._bounds = None
+            self._changed['pos'] = True
+            self._pos = None
+            self.update()
 
 
 class SCTLineVisual(visuals.LineVisual):
@@ -315,6 +328,7 @@ PlayLine = scene.visuals.create_visual_node(PlayLineVisual)
 
 Spectrogram = scene.visuals.create_visual_node(SCTSpectrogramVisual)
 SCTLinePlot = scene.visuals.create_visual_node(SCTLineVisual)
+WaveformPlot = scene.visuals.create_visual_node(WaveformLineVisual)
 
 class TierRectangle(scene.Rectangle):
     def __init__(self, tier_index, num_types, num_sub_types):
