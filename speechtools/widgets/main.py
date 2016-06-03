@@ -61,10 +61,16 @@ class DiscourseWidget(QtWidgets.QWidget):
                 self.discourseList.addItem(d)
 
 class ViewWidget(CollapsibleTabWidget):
+    
     changingDiscourse = QtCore.pyqtSignal()
     connectionIssues = QtCore.pyqtSignal()
     def __init__(self, parent = None):
         super(ViewWidget, self).__init__(parent)
+       
+        #self.addTab(self.helpWidget(),"help")
+        #self.setTabPosition(1)
+
+
 
         self.discourseWidget = SelectableAudioWidget()
 
@@ -96,6 +102,7 @@ class ViewWidget(CollapsibleTabWidget):
         self.changingDiscourse.connect(self.discourseWidget.clearDiscourse)
         self.worker.errorEncountered.connect(self.showError)
         self.worker.connectionIssues.connect(self.connectionIssues.emit)
+
 
     def showError(self, e):
         reply = DetailedMessageBox()

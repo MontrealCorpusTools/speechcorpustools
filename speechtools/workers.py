@@ -74,9 +74,11 @@ class QueryWorker(FunctionWorker):
                 except (ConnectionError, NetworkAddressError, TemporaryConnectionError):
                     tries += 1
                     if tries == 2:
-                        self.connectionIssues.emit()
+                        self.connectionIssues.emit()             
+
             if not success:
                 raise(ConnectionError('The query could not be completed.  Please check your internet connectivity.'))
+                
         except Exception as e:
             if not isinstance(e, PGError):
                 exc_type, exc_value, exc_traceback = sys.exc_info()

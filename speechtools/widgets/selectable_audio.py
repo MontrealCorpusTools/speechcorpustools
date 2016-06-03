@@ -16,6 +16,7 @@ from ..workers import PitchGeneratorWorker, FormantsGeneratorWorker
 from ..plot import AnnotationWidget, SpectralWidget
 
 class SelectableAudioWidget(QtWidgets.QWidget):
+    discourseHelpBroadcast = QtCore.pyqtSignal()
     previousRequested = QtCore.pyqtSignal()
     nextRequested = QtCore.pyqtSignal()
     markedAsAnnotated = QtCore.pyqtSignal(bool)
@@ -50,6 +51,8 @@ class SelectableAudioWidget(QtWidgets.QWidget):
         toplayout = QtWidgets.QHBoxLayout()
         bottomlayout = QtWidgets.QHBoxLayout()
 
+        helpLayout = QtWidgets.QHBoxLayout()
+
         self.setFocusPolicy(QtCore.Qt.StrongFocus)
 
         self.audioWidget = AnnotationWidget()
@@ -73,10 +76,25 @@ class SelectableAudioWidget(QtWidgets.QWidget):
         w.setFocusPolicy(QtCore.Qt.NoFocus)
         bottomlayout.addWidget(w)
 
+
+
+
+
+        self.helpButton = QtWidgets.QPushButton()
+        self.helpButton.setText("help")
+        self.helpButton.clicked.connect(self.discourseHelpBroadcast.emit)
+        self.helpButton.setSizePolicy(QtWidgets.QSizePolicy.Fixed,QtWidgets.QSizePolicy.Fixed)
+      
+        helpLayout.addWidget(self.helpButton)      
+
+
         layout.addLayout(bottomlayout)
+
+        
 
         mainlayout = QtWidgets.QHBoxLayout()
         mainlayout.addLayout(layout)
+        mainlayout.addLayout(helpLayout)
 
         self.hierarchyWidget = HierarchyWidget()
         self.hierarchyWidget.toggleSpectrogram.connect(self.spectrumWidget.toggle_spectrogram)

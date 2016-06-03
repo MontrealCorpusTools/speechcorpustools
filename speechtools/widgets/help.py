@@ -47,4 +47,30 @@ class HelpWidget(QtWidgets.QWidget):
     	self.information.setWordWrap(True)
     	self.scroll.setWidget(self.information)
     	self.layout.addWidget(self.scroll)
-    	
+    
+    def getEnrichHelp(self):
+        for i in reversed(range(self.layout.count())):
+            self.layout.itemAt(i).widget().setParent(None)
+        self.scroll = QtWidgets.QScrollArea()
+
+        infoString = "Encode non-speech elements: this allows the user to specify for a given database what should not count as speech\nEncode utterances: After encoding non-speech elements, we can use them to define utterances (segments of speech separated by a .15-.5 second pause)\nEncode syllabic segments: This allows the user to specify which segments in the corpus are  counted as syllabic\nowEncode syllables: if the user has encoded syllabic segments, syllables can now be encoded using maximum attested onset\nEncode hierarchical properties: These allow the user to encode such properties as number of syllables in each utterance, or rate of syllables per second\nEnrich lexicon: This allows the user to assign certain properties to specific words. For example the user might want to encode word frequency. This can be done by having words in one column and corresponding frequencies in the other column of a column-delimited text file.\nEnrich phonological inventory: Similar to lexical enrichment, this allows the user to add certain helpful features to phonological properties -- for example, adding 'fricative' to 'manner_of_articulation' for some phones\nEncode subsets: Similar to how syllabic phones were encoded into subsets, the user can encode other phones in the corpus into subsets as well\nAnalyze acousticcs: This will encode pitch and formants into the corpus. This is necessary to view the waveforms and spectrogram. "
+        self.information = QtWidgets.QLabel(infoString)
+        #information.setMinimumSize(200, 200)
+        self.information.setWordWrap(True)
+        self.scroll.setWidget(self.information)
+        self.layout.addWidget(self.scroll)
+
+    def getDiscourseHelp(self):
+        for i in reversed(range(self.layout.count())):
+            self.layout.itemAt(i).widget().setParent(None)
+
+        self.scroll = QtWidgets.QScrollArea()
+
+        infoString="This is discourse help"
+        self.information = QtWidgets.QLabel(infoString)
+        #information.setMinimumSize(200, 200)
+        self.information.setWordWrap(True)
+        self.scroll.setWidget(self.information)
+        self.layout.addWidget(self.scroll)
+
+

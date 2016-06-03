@@ -120,6 +120,7 @@ class RightPane(Pane):
         self.setLayout(layout)
 
 class MainWindow(QtWidgets.QMainWindow):
+    enrichHelpBroadcast= QtCore.pyqtSignal()
     configUpdated = QtCore.pyqtSignal(object)
     def __init__(self, app):
         super(MainWindow, self).__init__()
@@ -143,6 +144,8 @@ class MainWindow(QtWidgets.QMainWindow):
         self.leftPane.viewWidget.discourseWidget.acousticsSelected.connect(self.rightPane.acousticsWidget.showDetails)
         self.mainWidget = CollapsibleWidgetPair(QtCore.Qt.Horizontal, self.leftPane,self.rightPane)
         self.leftPane.queryWidget.needsHelp.connect(self.rightPane.helpWidget.getHelpInfo)
+        self.enrichHelpBroadcast.connect(self.rightPane.helpWidget.getEnrichHelp)
+        self.leftPane.viewWidget.discourseWidget.discourseHelpBroadcast.connect(self.rightPane.helpWidget.getDiscourseHelp)
         #self.mainWidget.setStretchFactor(0, 1)
 
 
@@ -302,8 +305,8 @@ class MainWindow(QtWidgets.QMainWindow):
 
                     if c.hierarchy.has_token_property(c.word_name, 'position_in_utterance'):
                         self.utterancePositionAct.setText("Re-encode position in utterance...")
-            self.enrichHelpAct.setEnabled(False)
-            self.enrichHelpAct.setText("Help!")
+            self.enrichHelpAct.setEnabled(True)
+            self.enrichHelpAct.setText("Help")
             self.status.setText('Connected to {} ({})'.format(self.corpusConfig.graph_hostname, c_name))
             size = get_system_font_height()
             self.connectionStatus.setPixmap(QtWidgets.qApp.style().standardIcon(QtWidgets.QStyle.SP_DialogApplyButton).pixmap(size, size))
@@ -387,11 +390,12 @@ class MainWindow(QtWidgets.QMainWindow):
                 self,
                 statusTip="Batch analysis of formants and pitch for the current corpus", triggered=self.analyzeAcoustics)
 
-        self.enrichHelpAct = QtWidgets.QAction( "HELP",
+        self.enrichHelpAct = QtWidgets.QAction( "Help",
                 self,
-                statusTip="getHelp") #, triggered=self.encodeUtterances
-        self.enrichHelpAct.setEnabled(False)
+                statusTip="getHelp", triggered = self.getEnrichHelp) #, triggered=self.encodeUtterances
+        self.enrichHelpAct.setEnabled(True)
     def createMenus(self):
+
         self.corpusMenu = self.menuBar().addMenu("Corpus")
 
         #self.corpusMenu.addAction(self.specifyAct)
@@ -406,9 +410,11 @@ class MainWindow(QtWidgets.QMainWindow):
         self.enhancementMenu.addAction(self.phoneSubsetAct)
         self.enhancementMenu.addAction(self.pausesAct)
         self.enhancementMenu.addAction(self.utterancesAct)
+        
         #self.enhancementMenu.addAction(self.speechRateAct)
         #self.enhancementMenu.addAction(self.utterancePositionAct)
         self.enhancementMenu.addAction(self.analyzeAcousticsAct)
+        self.enhancementMenu.addAction(self.enrichHelpAct)
 
     def specifyCorpus(self):
         pass
@@ -505,6 +511,10 @@ class MainWindow(QtWidgets.QMainWindow):
             self.progressWidget.createProgressBar('utterances', self.utteranceWorker)
             self.progressWidget.show()
             self.utteranceWorker.start()
+
+    def getEnrichHelp(self):
+        
+        self.enrichHelpBroadcast.emit()
 
     def speechRate(self):
         dialog = EncodeSpeechRateDialog(self.corpusConfig, self)
