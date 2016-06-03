@@ -302,7 +302,8 @@ class MainWindow(QtWidgets.QMainWindow):
 
                     if c.hierarchy.has_token_property(c.word_name, 'position_in_utterance'):
                         self.utterancePositionAct.setText("Re-encode position in utterance...")
-
+            self.enrichHelpAct.setEnabled(False)
+            self.enrichHelpAct.setText("Help!")
             self.status.setText('Connected to {} ({})'.format(self.corpusConfig.graph_hostname, c_name))
             size = get_system_font_height()
             self.connectionStatus.setPixmap(QtWidgets.qApp.style().standardIcon(QtWidgets.QStyle.SP_DialogApplyButton).pixmap(size, size))
@@ -386,6 +387,10 @@ class MainWindow(QtWidgets.QMainWindow):
                 self,
                 statusTip="Batch analysis of formants and pitch for the current corpus", triggered=self.analyzeAcoustics)
 
+        self.enrichHelpAct = QtWidgets.QAction( "HELP",
+                self,
+                statusTip="getHelp") #, triggered=self.encodeUtterances
+        self.enrichHelpAct.setEnabled(False)
     def createMenus(self):
         self.corpusMenu = self.menuBar().addMenu("Corpus")
 
