@@ -7,7 +7,11 @@ Viewing Results
 Having run a query, a user will want to make sense of the results. These can be found in the "Query \#" that will appear as soon as the query has finished running. 
 
 
-image query # tab
+	.. image:: querynum.png
+		:width: 650px
+		:width: 263px
+		:align: center
+		:alt: Image cannot be displayed in your browser
 
 
 Within this tab, based on the linguistic objects the user was searching for (utterance, word, phone, or syllable) there will be different columns\*. 
