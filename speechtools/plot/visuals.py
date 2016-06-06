@@ -6,9 +6,7 @@ import scipy
 from scipy.signal import gaussian
 from librosa.core.spectrum import stft
 
-from vispy import scene
-from vispy import visuals
-from vispy import gloo
+from vispy import scene, visuals, gloo
 
 from vispy.geometry import Rect
 
