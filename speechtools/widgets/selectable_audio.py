@@ -51,7 +51,7 @@ class SelectableAudioWidget(QtWidgets.QWidget):
         toplayout = QtWidgets.QHBoxLayout()
         bottomlayout = QtWidgets.QHBoxLayout()
 
-        helpLayout = QtWidgets.QHBoxLayout()
+        
 
         self.setFocusPolicy(QtCore.Qt.StrongFocus)
 
@@ -77,6 +77,8 @@ class SelectableAudioWidget(QtWidgets.QWidget):
         bottomlayout.addWidget(w)
 
 
+        """FIX THIS LAYOUT CRAP"""
+        
 
 
 
@@ -85,8 +87,13 @@ class SelectableAudioWidget(QtWidgets.QWidget):
         self.helpButton.clicked.connect(self.discourseHelpBroadcast.emit)
         self.helpButton.setSizePolicy(QtWidgets.QSizePolicy.Fixed,QtWidgets.QSizePolicy.Fixed)
       
-        helpLayout.addWidget(self.helpButton)      
-
+        vhelpLayout = QtWidgets.QHBoxLayout()
+        vhelpLayout.addStretch(1)
+        vhelpLayout.addWidget(self.helpButton)      
+        
+        helpLayout = QtWidgets.QVBoxLayout()
+        helpLayout.addStretch(1)
+        helpLayout.addLayout(vhelpLayout)        
 
         layout.addLayout(bottomlayout)
 
@@ -94,6 +101,7 @@ class SelectableAudioWidget(QtWidgets.QWidget):
 
         mainlayout = QtWidgets.QHBoxLayout()
         mainlayout.addLayout(layout)
+        mainlayout.setStretchFactor(helpLayout, 2)
         mainlayout.addLayout(helpLayout)
 
         self.hierarchyWidget = HierarchyWidget()

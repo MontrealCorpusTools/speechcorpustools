@@ -135,6 +135,8 @@ class MainWindow(QtWidgets.QMainWindow):
         self.rightPane.configUpdated.connect(self.updateConfig)
         self.rightPane.discourseChanged.connect(self.leftPane.changeDiscourse)
 
+        self.rightPane.connectWidget.corporaHelpBroadcast.connect(self.rightPane.helpWidget.getConnectionHelp)
+
         self.leftPane.queryWidget.viewRequested.connect(self.rightPane.discourseWidget.changeView)
         self.rightPane.discourseWidget.viewRequested.connect(self.leftPane.viewWidget.discourseWidget.changeView)
         self.leftPane.viewWidget.discourseWidget.nextRequested.connect(self.leftPane.queryWidget.requestNext)
