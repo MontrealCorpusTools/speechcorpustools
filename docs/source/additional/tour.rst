@@ -4,10 +4,18 @@
 Navigation Tour
 *****************
 
-This is a tour to get you familiarized with the SCT layout and its functions. 
+This is a tour to get you familiarized with the SCT layout and its functions. This is the entire window
+	
+	.. image:: fullscreen.png
+		:width: 799px
+		:height: 474px
+		:alt: Image cannot be displayed in your browser
 
-Queries
-#######
+
+The numbers of the panels surrounded by red rectangles correspond to:
+
+Queries (1)
+###########
 In the upper left corner, you will find the query panel
 
 .. image:: query.png
@@ -20,10 +28,18 @@ You will begin by selecting a target type in the dropdown menu next to "Lingusti
 You can add filters by pressing the long "+" bar at the bottom of the panel.
 If you want to used a saved query, you can do so by selecting it from the dropdown menu on the top right of the panel.
 
-Running, exporting, and saving a query are all done using the respective buttons along the bottom of the panel.
+Running, exporting, and saving a query are all done using the respective buttons along the bottom of the panel. \*
 
-Discourse
-#########
+\* **NB** Running, exporting, and saving a query are all different functions. Running a query simply executes the query on the database and returns a default set of results to an in-app tab. Exporting a query runs the query on the database but allows the user to choose what information is returned, in the form of a file written to the computer. Saving a query allows the user to save a query profile and re-use it later. 
+
+For more information see the following pages:
+
+`Building Queries <http://sct.readthedocs.io/en/latest/additional/buildingqueries.html>`_
+
+`Exporting Queries <http://sct.readthedocs.io/en/latest/additional/exporting.html>`_
+
+Discourse (2)
+#############
 
 The discourse panel shows the waveform and spectrogram views of the audio for a given file (if there is audio) as well as an overlayed text-grid. 
 
@@ -33,19 +49,10 @@ The discourse panel shows the waveform and spectrogram views of the audio for a 
 		:height: 296px
 		:alt: Image cannot be displayed in your browser
 
-Details/Acoustics/Help
-########
 
-This panel will give you details about your file, as well as precise acoustic information and help with queries
 
-.. image:: details.png
-		:width: 604px 	
-		:align: center
-		:height: 212px
-		:alt: Image cannot be displayed in your browser
-
-Connection
-##########
+Connection (3)
+##############
 
 This panel is used to establish connections with databases and import corpora from local folders.
 
@@ -53,4 +60,18 @@ This panel is used to establish connections with databases and import corpora fr
 		:width: 602px
 		:align: center
 		:height: 714px
+		:alt: Image cannot be displayed in your browser
+
+
+
+
+Details/Acoustics/Help (4)
+##########################
+
+This panel will give you details about your file, as well as precise acoustic information and help for a selected feature in the program
+
+.. image:: details.png
+		:width: 604px 	
+		:align: center
+		:height: 212px
 		:alt: Image cannot be displayed in your browser

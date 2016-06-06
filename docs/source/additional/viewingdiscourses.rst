@@ -9,12 +9,12 @@ After completing a query, it might be useful to take a closer look at the discou
 
 	.. image:: discourseempty.png
 		:width: 650px
-		:width: 349px
+		:height: 349px
 		:align: center
 		:alt: Image cannot be displayed in your browser
 
 
-The user is presented with two windows inside of the 'Discourse' window. The top one shows the waveform of the file as well as the transcriptions of word, phone, and utterance(?)
+The user is presented with two windows inside of the 'Discourse' window. The top one shows the waveform of the file as well as the transcriptions of words and phones. 
 
 
 image top empty
@@ -23,25 +23,24 @@ The bottom window is a spectrogram. This maps time and frequency on the X and Y 
 
 	.. image:: discoursebotempty.png
 		:width: 589px
-		:width: 150px
+		:height: 150px
 		:align: center
 		:alt: Image cannot be displayed in your browser
 
 
-Right now they are both blank, since we haven't analyzed the acoustics yet.
-All this will become available by first selecting "Analyze acoustics" in the enrichment menu, and then clicking on a discourse either in the "Discourse" tab of the top right window (right next to "Connection"),
+Pitch and formants will only become available by first selecting "Analyze acoustics" in the enrichment menu. Viewing one of the discourses' acoustic information can be done by clicking on a discourse either in the "Discourse" tab of the top right window (right next to "Connection"),
 
 	.. image:: discoursetab.png
 		:width: 378px
-		:width: 430px
+		:height: 430px
 		:align: center
 		:alt: Image cannot be displayed in your browser
 
-or by double-clicking on a result from a query in the "Query \#" tab\*. 
+or by double-clicking on a result from a query in the "Query \#" tab\*. (This will allow you to see detailed information in the `Details <>`_ tab)
 
 	.. image:: querynum.png
 		:width: 650px
-		:width: 263px
+		:height: 263px
 		:align: center
 		:alt: Image cannot be displayed in your browser
 
@@ -52,11 +51,13 @@ Now something like this should be displayed:
 
 image full full
 
-The waveform is displayed, with annotations that can be toggled on and off by clicking the text
+The waveform is displayed, with annotations 
 
-image top full
-
-image top no annotations
+	.. image:: topfull.png
+		:width: 676px
+		:height: 227px
+		:align: center
+		:alt: Image cannot be displayed in your browser
 
 as well as the spectrogram, whose features can similarly be toggled on and off.
 

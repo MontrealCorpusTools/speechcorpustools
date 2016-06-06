@@ -17,7 +17,20 @@ Linguistic Objects
 
 Filters
 #######
+Filters are conditions that must be satisfied for data to pass through. For example
+	.. image:: filter.png
+		:width: 910px
+		:height: 31px
+		:alt: Image cannot be displayed in your browser
+		:align: center
+is a filter
 
+Many filters have dropdown menus. These look like this:
+	.. image:: dropdown.png
+		:width: 926px
+		:height: 232px
+		:alt: Image cannot be displayed in your browser
+		:align: center
 Generally speaking, the first dropdown menu is used to target a property. Possible properties are:
 
 * **alignment** The position of the object in a super-object (i.e. a word in an utterance, a phone in a word...) 

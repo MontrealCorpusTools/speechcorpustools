@@ -22,6 +22,9 @@ Contents:
    additional/connecting.rst
    additional/buildingqueries.rst
    additional/exporting.rst
+   additional/viewingdiscourses.rst
+   additional/viewingresults.rst
+
 
 Indices and tables
 ==================
