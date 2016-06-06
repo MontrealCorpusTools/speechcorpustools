@@ -112,7 +112,6 @@ class SelectableAudioWidget(QtWidgets.QWidget):
     def updateAudio(self, audio):
         self.audio = audio
         if self.audio is not None:
-            print('got new audio!')
             p = QtCore.QUrl.fromLocalFile(self.audio.path)
             self.m_audioOutput.setMedia(QtMultimedia.QMediaContent(p))
             self.spectrumWidget.update_sampling_rate(self.audio.sr)
@@ -121,13 +120,11 @@ class SelectableAudioWidget(QtWidgets.QWidget):
     def cachePreceding(self):
         if self.precedingCacheWorker.isRunning():
             return
-        print('cached begin:', self.discourse_model.cached_begin)
         if self.discourse_model.cached_begin != 0 and self.view_begin < self.discourse_model.cached_begin + self.cache_window:
             kwargs = {'config': self.config,
                         'begin': self.discourse_model.cached_begin - 2 * self.cache_window,
                         'end': self.discourse_model.cached_begin,
-                        'discourse': self.discourse_model.name,
-                        'speaker': self.discourse_model.cache[0].speaker.name}
+                        'discourse': self.discourse_model.name}
             self.precedingCacheWorker.setParams(kwargs)
             self.precedingCacheWorker.start()
 
@@ -146,8 +143,7 @@ class SelectableAudioWidget(QtWidgets.QWidget):
             kwargs = {'config': self.config,
                         'begin': self.discourse_model.cached_end,
                         'end': end,
-                        'discourse': self.discourse_model.name,
-                        'speaker': self.discourse_model.cache[-1].speaker.name}
+                        'discourse': self.discourse_model.name}
             self.followingCacheWorker.setParams(kwargs)
             self.followingCacheWorker.start()
 
@@ -641,11 +637,9 @@ class SelectableAudioWidget(QtWidgets.QWidget):
             data = np.array((t, sig)).T
             begin = time.time()
             self.audioWidget.update_signal(data)
-            print('updated waveform in {} seconds'.format(time.time() - begin))
             begin = time.time()
             self.spectrumWidget.update_sampling_rate(self.audio.sr)
             self.spectrumWidget.update_signal(preemph_signal)
-            print('updated spectrogram in {} seconds'.format(time.time() - begin))
             self.updatePlayTime(self.view_begin)
 
     def updateDiscourseModel(self, discourse_model):

@@ -34,7 +34,6 @@ class FunctionWorker(QtCore.QThread):
     def __init__(self):
         super(FunctionWorker, self).__init__()
         self.stopped = False
-        self.finished = False
 
     def setParams(self, kwargs):
         self.kwargs = kwargs
@@ -92,7 +91,6 @@ class QueryWorker(FunctionWorker):
             return
         print('finished')
         self.dataReady.emit(results)
-        self.finished = True
 
     def run_query(self):
         profile = self.kwargs['profile']
@@ -375,7 +373,6 @@ class PrecedingCacheWorker(QueryWorker):
         print('starting to cache preceding')
         config = self.kwargs['config']
         discourse = self.kwargs['discourse']
-        speaker = self.kwargs['speaker']
         begin = self.kwargs['begin']
         end = self.kwargs['end']
         with CorpusContext(config) as c:
@@ -383,7 +380,6 @@ class PrecedingCacheWorker(QueryWorker):
             highest = getattr(c, h_type)
             q = c.query_graph(highest)
             q = q.filter(highest.discourse.name == discourse)
-            #q = q.filter(highest.speaker.name == speaker)
             q = q.filter(highest.begin < end)
             q = q.filter(highest.end > begin)
             preloads = []
@@ -396,7 +392,6 @@ class PrecedingCacheWorker(QueryWorker):
             preloads.append(highest.discourse)
             q = q.preload(*preloads)
             q = q.order_by(highest.begin)
-            print(q.cypher(), q.cypher_params())
             results = [x for x in q.all()]
         print('finished query')
         return results
@@ -406,7 +401,6 @@ class FollowingCacheWorker(QueryWorker):
         print('starting to cache following')
         config = self.kwargs['config']
         discourse = self.kwargs['discourse']
-        speaker = self.kwargs['speaker']
         begin = self.kwargs['begin']
         end = self.kwargs['end']
         with CorpusContext(config) as c:
@@ -414,10 +408,8 @@ class FollowingCacheWorker(QueryWorker):
             highest = getattr(c, h_type)
             q = c.query_graph(highest)
             q = q.filter(highest.discourse.name == discourse)
-            #q = q.filter(highest.speaker.name == speaker)
             q = q.filter(highest.begin < end)
             q = q.filter(highest.end > begin)
-            print('setting preloads')
             preloads = []
             if h_type in c.hierarchy.subannotations:
                 for s in c.hierarchy.subannotations[h_type]:
@@ -428,8 +420,6 @@ class FollowingCacheWorker(QueryWorker):
             preloads.append(highest.discourse)
             q = q.preload(*preloads)
             q = q.order_by(highest.begin)
-            print('done preloading')
-            #print(q.cypher(), q.cypher_params())
             print('getting results')
             results = [x for x in q.all()]
         print('finished query')
@@ -441,8 +431,6 @@ class AudioCacheWorker(QueryWorker):
         sound_file = self.kwargs['sound_file']
         begin = self.kwargs['begin']
         end = self.kwargs['end']
-        print(self.kwargs)
         f = LongSoundFile(sound_file, begin, end)
-        print(f.mode)
         print('finished audio caching')
         return f
