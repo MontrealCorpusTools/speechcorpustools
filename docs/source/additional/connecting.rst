@@ -4,7 +4,7 @@
 Connection
 **********
 
-To see an example connection, go to `Connection example <>`_
+To see an example connection, go to `Connection example <http://sct.readthedocs.io/en/latest/additional/exconnecting.html>`_
 
 In the connection tab, there are various features.
 	.. image:: connection.png

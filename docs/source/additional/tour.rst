@@ -41,7 +41,7 @@ For more information see the following pages:
 Discourse (2)
 #############
 
-The discourse panel shows the waveform and spectrogram views of the audio for a given file (if there is audio) as well as the alignment of words, phones, and utterances (if they have been encoded) overlaid onto the waveform. 
+The discourse panel shows the waveform and spectrogram views of the audio for a given file (if there is audio) as well as the alignment of words, phones, and utterances (if they have been encoded) overlaid onto the waveform. For more information on viewing discourses, see `Viewing discourses <http://sct.readthedocs.io/en/latest/additional/viewingdiscourses.html>`_
 
 .. image:: discourse.png
 		:width: 1058px

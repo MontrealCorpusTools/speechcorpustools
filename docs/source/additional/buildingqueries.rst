@@ -75,7 +75,7 @@ These are available after enrichment:
 * **position_in_utterance** Only available for words, specifies the word's index in the utterance
 
 
-These are only available for the __ database:
+These are only available for force-aligned database:
 
 * **manner_of_articulation** Only available for phones
 * **place_of_articulation** Only available for phones
