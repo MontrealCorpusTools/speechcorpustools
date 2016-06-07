@@ -4,9 +4,12 @@
 Exporting Queries
 *****************
 
-To begin customizing your export profile, click on "Export query results". 
-Much like while building a query, you can add filters indicating what you would like to export. Please note that these filters do not have to be the same as the ones you used to search for your data. The idea of this customization is to give the user more control over which data are shown, depending on the desired application. 
+While getting in-app results can be a quick way to visualize data, most often the user will want to further manipulate the data (i.e. in R, MatLab, etc.) To this end, there is the "Export query results" feature. It allows the user to specify the information that is exported by adding columns to the final output file. This is somewhat similar to `building queries <http://sct.readthedocs.io/en/latest/additional/buildingqueries.html>`_ , but not quite the same. Insttead of filters, pressing the "+" button will add a column to the exported file. 
 
-Exporting queries uses the same dropdown options as were available while `building queries <http://sct.readthedocs.io/en/latest/additional/buildingqueries.html>`_, so they will not be covered again. 
+While many of the column options are the same as ones available for `building queries <http://sct.readthedocs.io/en/latest/additional/buildingqueries.html>`_ there are some differences :
+	
+* "alignment" and "subset" are not valid column options
+* column options do not change depending on the linguistic object that was chosen earlier
+	* instead, you can select "word" and then "label" (or some other option) or "phone" + options, etc.
+* you can edit the column name by typing what you would like to call it in the "Output name:" box. These names are by default very descriptive, but perhaps too long for the user's purposes.
 
-As before, simply click on the "+" bar to begin adding filters. Each filter you add will be a column in the file that is exported. When you are done, you can either save your export profile for future use by pressing "Save as...", or you can run your export profile without saving. You will be prompted to provide a filename and destination for the file to be written. 
