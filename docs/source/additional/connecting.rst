@@ -4,6 +4,8 @@
 Connection
 **********
 
+To see an example connection, go to `Connection example <>`_
+
 In the connection tab, there are various features.
 	.. image:: connection.png
 		:width: 602px

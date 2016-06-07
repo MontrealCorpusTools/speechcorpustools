@@ -36,8 +36,7 @@ Pitch and formants will only become available by first selecting "Analyze acoust
 		:align: center
 		:alt: Image cannot be displayed in your browser
 
-or by double-clicking on a result from a query in the "Query \#" tab\*. (This will allow you to see detailed information in the `Details <>`_ tab)
-
+or by double-clicking on a result from a query in the "Query \#" tab\*. 
 	.. image:: querynum.png
 		:width: 650px
 		:height: 263px

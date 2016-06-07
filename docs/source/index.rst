@@ -24,6 +24,7 @@ Contents:
    additional/exporting.rst
    additional/viewingdiscourses.rst
    additional/viewingresults.rst
+   additional/exconnecting.rst
 
 
 Indices and tables

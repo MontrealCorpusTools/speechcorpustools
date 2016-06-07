@@ -15,36 +15,36 @@ Having run a query, a user will want to make sense of the results. These can be 
 
 
 Within this tab, based on the linguistic objects the user was searching for (utterance, word, phone, or syllable) there will be different columns\*. 
-Here is a list of the possible options
+Here is a list of the default columns
 
 Utterance
 #########
-* ** **
-* ** ** 
-* ** ** 
-* ** ** 
-* ** ** 
-* ** ** 
+* **begin**
+* **end** 
+* **discourse** 
+* **speaker** 
+
 
 Word
 ####
-* ** **
-* ** ** 
-* ** ** 
-* ** ** 
-* ** ** 
-* ** ** 
+* **begin**
+* **category** \* only in buckeye
+* **end** 
+* **label**
+* **surface_transcription** \* only in buckeye
+* **transcription**
+* **discourse** 
+* **speaker** 
 
 
 
 Phone
 #####
-* ** **
-* ** ** 
-* ** ** 
-* ** ** 
-* ** ** 
-* ** ** 
+* **begin**
+* **end** 
+* **label**
+* **discourse** 
+* **speaker**
 
 
 

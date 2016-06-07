@@ -54,7 +54,7 @@ The discourse panel shows the waveform and spectrogram views of the audio for a 
 Connection (3)
 ##############
 
-This panel is used to establish connections with existing databases, or to construct a new database by 'importing' a corpus from the hard drive. Connect to a Neo4j server by filling in the host and port information and pressing "Connect". Import a database from the hard drive by pressing "Import Local Corpus". If a database has already been used in SCT it does not need to be imported again. Select a corpus by clicking on it (it will then be highlighed in blue or grey). For more information, see `Connecting to servers <>`_ 
+This panel is used to establish connections with existing databases, or to construct a new database by 'importing' a corpus from the hard drive. Connect to a Neo4j server by filling in the host and port information and pressing "Connect". Import a database from the hard drive by pressing "Import Local Corpus". If a database has already been used in SCT it does not need to be imported again. Select a corpus by clicking on it (it will then be highlighed in blue or grey). For more information, see `Connecting to servers <http://sct.readthedocs.io/en/latest/additional/connecting.html>`_ 
 
 .. image:: connection.png
 		:width: 602px
@@ -70,8 +70,29 @@ Details/Acoustics/Help (4)
 
 This panel will give you details about your file, as well as precise acoustic information and help for a selected feature in the program
 
-.. image:: details.png
+	.. image:: details.png
 		:width: 604px 	
 		:align: center
 		:height: 212px
 		:alt: Image cannot be displayed in your browser
+
+	.. image:: detailsfull.png
+		:width: 604px 	
+		:align: center
+		:height: 212px
+		:alt: Image cannot be displayed in your browser
+
+	.. image:: acoustics.png
+		:width: 604px 	
+		:align: center
+		:height: 212px
+		:alt: Image cannot be displayed in your browser
+
+	.. image:: help.png
+		:width: 604px 	
+		:align: center
+		:height: 212px
+		:alt: Image cannot be displayed in your browser	
+
+
+
