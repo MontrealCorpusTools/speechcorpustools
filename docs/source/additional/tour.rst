@@ -41,7 +41,7 @@ For more information see the following pages:
 Discourse (2)
 #############
 
-The discourse panel shows the waveform and spectrogram views of the audio for a given file (if there is audio) as well as an overlayed text-grid. 
+The discourse panel shows the waveform and spectrogram views of the audio for a given file (if there is audio) as well as the alignment of words, phones, and utterances (if they have been encoded) overlaid onto the waveform. 
 
 .. image:: discourse.png
 		:width: 1058px
@@ -54,7 +54,7 @@ The discourse panel shows the waveform and spectrogram views of the audio for a 
 Connection (3)
 ##############
 
-This panel is used to establish connections with databases and import corpora from local folders.
+This panel is used to establish connections with existing databases, or to construct a new database by 'importing' a corpus from the hard drive. Connect to a Neo4j server by filling in the host and port information and pressing "Connect". Import a database from the hard drive by pressing "Import Local Corpus". If a database has already been used in SCT it does not need to be imported again. Select a corpus by clicking on it (it will then be highlighed in blue or grey). For more information, see `Connecting to servers <>`_ 
 
 .. image:: connection.png
 		:width: 602px
