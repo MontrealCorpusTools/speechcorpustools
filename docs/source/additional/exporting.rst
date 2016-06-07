@@ -6,6 +6,13 @@ Exporting Queries
 
 While getting in-app results can be a quick way to visualize data, most often the user will want to further manipulate the data (i.e. in R, MatLab, etc.) To this end, there is the "Export query results" feature. It allows the user to specify the information that is exported by adding columns to the final output file. This is somewhat similar to `building queries <http://sct.readthedocs.io/en/latest/additional/buildingqueries.html>`_ , but not quite the same. Insttead of filters, pressing the "+" button will add a column to the exported file. 
 
+For example, if the user wanted the timing information (begin/end) and lables for the object found and the object before it, the export profile would look like:
+	. image:: exprofile.png
+		:width: 656px
+		:align: center
+		:height: 240px
+		:alt: Image cannot be displayed in your browser
+
 While many of the column options are the same as ones available for `building queries <http://sct.readthedocs.io/en/latest/additional/buildingqueries.html>`_ there are some differences :
 	
 * "alignment" and "subset" are not valid column options
