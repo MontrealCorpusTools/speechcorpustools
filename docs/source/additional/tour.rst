@@ -71,27 +71,33 @@ Details/Acoustics/Help (4)
 This panel will give you details about your file, as well as precise acoustic information and help for a selected feature in the program
 
 	.. image:: details.png
-		:width: 604px 	
+		:width: 440px 	
 		:align: center
-		:height: 212px
+		:height: 175px
 		:alt: Image cannot be displayed in your browser
+
+
 
 	.. image:: detailsfull.png
-		:width: 604px 	
+		:width: 440px 	
 		:align: center
-		:height: 212px
+		:height: 175px
 		:alt: Image cannot be displayed in your browser
+
+
 
 	.. image:: acoustics.png
-		:width: 604px 	
+		:width: 440px 	
 		:align: center
-		:height: 212px
+		:height: 175px
 		:alt: Image cannot be displayed in your browser
 
+
+
 	.. image:: help.png
-		:width: 604px 	
+		:width: 440px 	
 		:align: center
-		:height: 212px
+		:height: 175px
 		:alt: Image cannot be displayed in your browser	
 
 
