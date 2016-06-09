@@ -146,6 +146,8 @@ class MainWindow(QtWidgets.QMainWindow):
         self.leftPane.viewWidget.discourseWidget.acousticsSelected.connect(self.rightPane.acousticsWidget.showDetails)
         self.mainWidget = CollapsibleWidgetPair(QtCore.Qt.Horizontal, self.leftPane,self.rightPane)
         self.leftPane.queryWidget.needsHelp.connect(self.rightPane.helpWidget.getHelpInfo)
+
+        self.leftPane.queryWidget.exportHelpBroadcast.connect(self.rightPane.helpWidget.exportHelp)
         self.enrichHelpBroadcast.connect(self.rightPane.helpWidget.getEnrichHelp)
         self.leftPane.viewWidget.discourseWidget.discourseHelpBroadcast.connect(self.rightPane.helpWidget.getDiscourseHelp)
         #self.mainWidget.setStretchFactor(0, 1)

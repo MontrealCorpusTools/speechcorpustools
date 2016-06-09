@@ -102,6 +102,9 @@ class HelpWidget(QtWidgets.QWidget):
         
         self.layout.setCurrentIndex(self.layout.currentIndex()+1)
 
+    def exportHelp(self, options):
+        print("connected to exportHelp")        
+
     def switchLayouts(self, direction):
         
         if direction is 'back':
