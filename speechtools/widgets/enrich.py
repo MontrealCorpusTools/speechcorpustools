@@ -123,6 +123,20 @@ class AnalyzeAcousticsDialog(BaseDialog):
 
         self.setWindowTitle('Analyze acoustics')
 
+        layout = QtWidgets.QFormLayout()
+
+        self.acousticsWidget = RadioSelectWidget('Acoustics to encode',
+                                            OrderedDict([
+                                            #('Probabilistic onsets and codas (language-independent)','probabilistic'),
+                                            ('Pitch','pitch'),]))
+
+        layout.addRow(self.acousticsWidget)
+
+        self.layout().insertLayout(0, layout)
+
+    def value(self):
+        return self.acousticsWidget.value()
+
 class EncodeSyllabicsDialog(BaseDialog):
     def __init__(self, config, parent):
         super(EncodeSyllabicsDialog, self).__init__(parent)

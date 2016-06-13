@@ -34,12 +34,13 @@ class SpectralPlotWidget(SelectablePlotWidget):
         self.play_time_line.visible = True
 
     def set_pitch(self, pitch):
-        if not pitch:
+        if pitch is None or not len(pitch):
             self.pitchplot._bounds = None
             self.pitchplot._changed['pos'] = True
             self.pitchplot._pos = None
             self.pitchplot.update()
         else:
+            print(pitch)
             factor = 125 / 600
             data = []
             for i,(t, p) in enumerate(pitch):
@@ -60,7 +61,7 @@ class SpectralPlotWidget(SelectablePlotWidget):
 
     def set_formants(self, formants):
         for k,v in self.formantplots.items():
-            if k not in formants or not formants[k]:
+            if formants is None or k not in formants or not formants[k]:
                 self.formantplots[k]._bounds = None
                 self.formantplots[k]._changed['pos'] = True
                 self.formantplots[k]._pos = None

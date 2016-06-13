@@ -118,7 +118,11 @@ class SelectableAudioWidget(QtWidgets.QWidget):
             self.hierarchyWidget.setNumChannels(self.audio.num_channels)
 
     def cachePreceding(self):
-        if self.precedingCacheWorker.isRunning():
+        if self.audio is not None:
+            if self.view_begin < self.audio.cached_begin + self.cache_window:
+                self.audioCacheWorker.setParams({'sound_file':self.discourse_model.sound_file, 'begin': self.view_begin, 'end': self.view_end})
+                self.audioCacheWorker.start()
+        if not self.precedingCacheWorker.finished:
             return
         if self.discourse_model.cached_begin != 0 and self.view_begin < self.discourse_model.cached_begin + self.cache_window:
             kwargs = {'config': self.config,
@@ -134,7 +138,7 @@ class SelectableAudioWidget(QtWidgets.QWidget):
             if self.view_end > self.audio.cached_end - self.cache_window:
                 self.audioCacheWorker.setParams({'sound_file':self.discourse_model.sound_file, 'begin': self.view_begin, 'end': self.view_end})
                 self.audioCacheWorker.start()
-        if self.followingCacheWorker.isRunning():
+        if not self.followingCacheWorker.finished:
             return
         if self.view_end > self.discourse_model.cached_end - self.cache_window:
             end = self.discourse_model.cached_end + 2 * self.cache_window

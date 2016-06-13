@@ -521,7 +521,9 @@ class MainWindow(QtWidgets.QMainWindow):
     def analyzeAcoustics(self):
         dialog = AnalyzeAcousticsDialog(self.corpusConfig, self)
         if dialog.exec_() == QtWidgets.QDialog.Accepted:
-            kwargs = {'config': self.corpusConfig}
+            acoustics = dialog.value()
+            kwargs = {'config': self.corpusConfig,
+                    'acoustics': acoustics}
             self.acousticWorker.setParams(kwargs)
             self.progressWidget.createProgressBar('acoustic', self.acousticWorker)
             self.progressWidget.show()

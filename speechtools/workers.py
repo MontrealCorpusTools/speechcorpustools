@@ -34,6 +34,7 @@ class FunctionWorker(QtCore.QThread):
     def __init__(self):
         super(FunctionWorker, self).__init__()
         self.stopped = False
+        self.finished = False
 
     def setParams(self, kwargs):
         self.kwargs = kwargs
@@ -83,14 +84,17 @@ class QueryWorker(FunctionWorker):
                 exc_type, exc_value, exc_traceback = sys.exc_info()
                 e = ''.join(traceback.format_exception(exc_type, exc_value,
                                           exc_traceback))
+            self.finished = True
             self.errorEncountered.emit(e)
             return
         if self.stopped:
             time.sleep(0.1)
+            self.finished = True
             self.finishedCancelling.emit()
             return
         print('finished')
         self.dataReady.emit(results)
+        self.finished = True
 
     def run_query(self):
         profile = self.kwargs['profile']
@@ -186,10 +190,12 @@ class AudioCheckerWorker(QueryWorker):
 class AcousticAnalysisWorker(QueryWorker):
     def run_query(self):
         config = self.kwargs['config']
+        acoustics = self.kwargs['acoustics']
         with CorpusContext(config) as c:
             acoustic_analysis(c,
                             stop_check = self.kwargs['stop_check'],
-                            call_back = self.kwargs['call_back'])
+                            call_back = self.kwargs['call_back'],
+                            acoustics = acoustics)
         return True
 
 class PauseEncodingWorker(QueryWorker):

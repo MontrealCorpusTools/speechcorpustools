@@ -9,6 +9,20 @@ from ...profiles import available_export_profiles, ExportProfile, Column
 
 from .basic import AttributeSelect as QueryAttributeSelect, SpeakerAttributeSelect
 
+class PauseSelect(QueryAttributeSelect):
+    def __init__(self):
+        QtWidgets.QComboBox.__init__(self)
+        self.addItem('following')
+        self.addItem('previous')
+        self.addItem('duration')
+
+class AcousticSelect(QueryAttributeSelect):
+    def __init__(self):
+        QtWidgets.QComboBox.__init__(self)
+        self.addItem('mean')
+        self.addItem('max')
+        self.addItem('min')
+
 class AttributeSelect(QueryAttributeSelect):
     def __init__(self, hierarchy, to_find):
         QtWidgets.QComboBox.__init__(self)
@@ -39,10 +53,7 @@ class AttributeSelect(QueryAttributeSelect):
             if to_find in hierarchy.subannotations:
                 for s in sorted(hierarchy.subannotations[to_find]):
                     self.addItem(s)
-        else:
-            self.addItem('following')
-            self.addItem('previous')
-            self.addItem('duration')
+            self.addItem('pitch')
 
 class AttributeWidget(QtWidgets.QWidget):
     finalChanged = QtCore.pyqtSignal(object)
@@ -87,8 +98,16 @@ class AttributeWidget(QtWidgets.QWidget):
             w.setParent(None)
             w.deleteLater()
         current_annotation_type = self.annotationType()
-        if combobox.currentText() in self.hierarchy.annotation_types or combobox.currentText() == 'pause':
+        if combobox.currentText() in self.hierarchy.annotation_types:
             widget = AttributeSelect(self.hierarchy, combobox.currentText())
+            widget.currentIndexChanged.connect(self.updateAttribute)
+            self.mainLayout.addWidget(widget)
+        elif current_annotation_type == 'pause':
+            widget = PauseSelect()
+            widget.currentIndexChanged.connect(self.updateAttribute)
+            self.mainLayout.addWidget(widget)
+        elif combobox.currentText() == 'pitch':
+            widget = AcousticSelect()
             widget.currentIndexChanged.connect(self.updateAttribute)
             self.mainLayout.addWidget(widget)
         elif combobox.currentText() in ['previous','following']:
@@ -173,6 +192,10 @@ class ColumnWidget(QtWidgets.QWidget):
         self.setLayout(mainLayout)
 
     def updateColumnName(self, name):
+        if any(name.endswith(x) for x in ['_mean', '_min', '_max']):
+            self.nameWidget.setEnabled(False)
+        else:
+            self.nameWidget.setEnabled(True)
         self.nameWidget.setText(name)
 
     def setToFind(self, to_find):
