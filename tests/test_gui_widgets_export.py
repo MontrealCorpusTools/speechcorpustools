@@ -6,6 +6,7 @@ import collections
 
 def test_export_basiccolumnbox(acoustic_config, qtbot):
     w = ExportProfileDialog(acoustic_config, 'phone', None)
+    w.show()
     qtbot.addWidget(w)
     widget = w.BasicColumnBox.grid.itemAt(2).widget()
     qtbot.addWidget(widget)
