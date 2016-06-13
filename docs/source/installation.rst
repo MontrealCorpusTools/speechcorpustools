@@ -1,36 +1,43 @@
+******************************************
+Speech Corpus Tools: Tutorial and examples
+******************************************
+
+
+
 .. _installation:
 
-************
-Installation
-************
+Installation Setup
+##################
 
-.. _prerequisites:
+.. _PGDB website: http://montrealcorpustools.github.io/PolyglotDB/
 
-Prerequisites
-=============
+.. _GitHub repository: https://https://github.com/mmcauliffe/speechcorpustools
 
-Speech Corpus Tools relies primarily on PolyglotDB to function.  Please refer
-to installation instructions for PolyglotDB
-(http://polyglotdb.readthedocs.org/en/latest/installation.html).
+This document assumes the following:
+ 
+ * Neo4j is installed
+ * Speech Corpus Tools is installed
+ * You have a database for the Buckeye Corpus on your local machine.
 
-Additionally, Speech Corpus Tools makes use of Numpy and Scipy, so please
-ensure that those packages are installed, either through pip, Anaconda or
-precompiled binaries.
+Installing Neo4j
+*********************
 
-If you want to use the graphical interface, installation of PyQt5 is required.
-Binaries are available at https://riverbankcomputing.com/software/pyqt/download5.
-Anaconda packages are available for some operating systems.
+SCT currently requires that Neo4j version 2.3.3 be installed locally and running.  To install Neo4j, please use the following links.
 
-Speech Corpus Tools makes heavy use of the signal processing functions in
-`python-acoustic-similarity` (https://github.com/mmcauliffe/python-acoustic-similarity),
- which will be installed automatically during installation.
+Mac version: `Mac <http://info.neotechnology.com/download-thanks.html?edition=community&release=2.3.3&flavour=dmg>`_
 
-.. _actual_install:
+Windows version: `Windows <http://info.neotechnology.com/download-thanks.html?edition=community&release=2.3.3&flavour=winstall64>`_
 
-Installation
-============
+Once downloaded, just run the installer and it'll install the database software that SCT uses locally.
 
-Clone or download the Git repository
-(https://github.com/MontrealCorpusTools/speechcorpustools).  Navigate to
-the diretory via command line and install via :code:`python setup.py install`.
+To ease initial set up, it's helpful to turn off authentication for Neo4j.  If you run the server software, it'll pop up a window with a button that says "Options..." down in the lower left.  Click on that and hit the button "Edit..." for "Server configuration".  That will pop open a text editor, and you just have to change the line near the top that says:
 
+``dbms.security.auth_enabled=true``
+
+to:
+
+``dbms.security.auth_enabled=false``
+
+and save the file.  Neo4j should be ready to use.
+
+If security is enabled, you'll first have to click on the link in the Neo4j server (when it's running) that says ``localhost:7474`` which will take you to a browser page where you can set a password for the ``neo4j`` user.  If you leave it enabled, remember your password for when you connect via Speech Corpus Tools.
