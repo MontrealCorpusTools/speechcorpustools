@@ -44,5 +44,5 @@ def acoustic_config(graph_db, textgrid_test_dir):
         c.reset()
         parser = inspect_textgrid(acoustic_path)
         c.load(parser, acoustic_path)
-        c.analyze_acoustics()
+        #c.analyze_acoustics()
     return config

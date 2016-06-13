@@ -1,5 +1,5 @@
 language: python
-sudo: required
+sudo: true
 dist: trusty
 
 python:
@@ -45,6 +45,8 @@ jdk:
   - oraclejdk7
 
 before_install:
+  - sudo rm -rf /dev/shm
+  - sudo ln -s /run/shm /dev/shm
   - sudo apt-get update
   - sudo apt-get install -y xvfb
   # install Neo4j locally:
@@ -73,6 +75,8 @@ after_success:
   - coveralls
 
 cache:
+  apt: true
   pip: true
   directories:
     - $HOME/miniconda
+    - $HOME/neo4j
