@@ -1,12 +1,9 @@
 import pytest
 from PyQt5 import QtCore
-​
 from speechtools.widgets.query.export import BasicColumnBox, ColumnWidget, ExportProfileDialog
-​
 from polyglotdb import CorpusContext
-​
 import collections
-​
+
 def test_export_basiccolumnbox(acoustic_config, qtbot):
     w = ExportProfileDialog(acoustic_config, 'phone', None)
     qtbot.addWidget(w)
@@ -23,5 +20,3 @@ def test_export_basiccolumnbox(acoustic_config, qtbot):
     print (w.columnWidget.columns())
     assert w.columnWidget.columns()[0].attribute == ('phone','end')
     assert len(w.columnWidget.columns()) == 1
-
-
