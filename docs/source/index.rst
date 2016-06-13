@@ -26,6 +26,7 @@ Contents:
    additional/viewingresults.rst
    additional/exconnecting.rst
    additional/enrichment.rst
+   additional/filters.rst
    
 
 

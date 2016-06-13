@@ -4,7 +4,6 @@
 Connection
 **********
 
-blah blah blah blah
 
 To see an example connection, go to `Connection example <http://sct.readthedocs.io/en/latest/additional/exconnecting.html>`_
 
