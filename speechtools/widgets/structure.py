@@ -64,6 +64,8 @@ class HierarchyWidget(QtWidgets.QWidget):
         self.hWidget = QtWidgets.QWidget()
         self.hWidget.setLayout(self.hierarchyLayout)
 
+        
+        
         layout.addWidget(self.hWidget)
 
         layout.addLayout(self.spectrumLayout)
