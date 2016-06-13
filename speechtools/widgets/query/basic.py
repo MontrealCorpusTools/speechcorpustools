@@ -387,16 +387,10 @@ class FilterWidget(QtWidgets.QWidget):
         self.setLayout(mainLayout)
 
         self.attributeWidget.attributeTypeChanged.connect(self.valueWidget.changeType)
-
-       # self.attributeWidget.attributeTypeChanged2.connect()
         self.valueWidget.changeType(self.to_find, self.attributeWidget.label(), self.attributeWidget.type())
 
     def needHelp(self, to_find):
-       # print("i need help")
-      #  print(self.attributeWidget.label())
-        options = [self.attributeWidget.attribute(), self.valueWidget.operator(), self.valueWidget.value()]
-        
-        
+        options = [self.attributeWidget.attribute(), self.valueWidget.operator(), self.valueWidget.value()]   
         self.needsHelp.emit(options)
 
     def setToFind(self, to_find):

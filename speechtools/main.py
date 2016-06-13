@@ -14,6 +14,7 @@ from polyglotdb.exceptions import ConnectionError
 from .widgets import (ViewWidget, HelpWidget, DiscourseWidget, QueryWidget, CollapsibleWidgetPair,
                         DetailsWidget, ConnectWidget, AcousticDetailsWidget, DetailedMessageBox,
                         CollapsibleTabWidget)
+from .widgets.help import ExportHelpWidget
 
 from .widgets.enrich import (EncodePauseDialog, EncodeUtteranceDialog,
                             EncodeSpeechRateDialog, EncodeUtterancePositionDialog,
@@ -68,8 +69,7 @@ class LeftPane(Pane):
 
     def changeDiscourse(self, discourse):
         self.viewWidget.changeDiscourse(discourse)
-    def printHelp(self):
-        print("help me!")
+
 
 class RightPane(Pane):
     configUpdated = QtCore.pyqtSignal(object)
@@ -96,6 +96,7 @@ class RightPane(Pane):
         self.configUpdated.connect(self.discourseWidget.updateConfig)
         self.discourseWidget.discourseChanged.connect(self.discourseChanged.emit)
         self.helpWidget = HelpWidget()
+        self.helpPopup = ExportHelpWidget()
         self.detailsWidget = DetailsWidget()
         self.acousticsWidget = AcousticDetailsWidget()
         upper = CollapsibleTabWidget()
@@ -147,10 +148,10 @@ class MainWindow(QtWidgets.QMainWindow):
         self.mainWidget = CollapsibleWidgetPair(QtCore.Qt.Horizontal, self.leftPane,self.rightPane)
         self.leftPane.queryWidget.needsHelp.connect(self.rightPane.helpWidget.getHelpInfo)
 
-        self.leftPane.queryWidget.exportHelpBroadcast.connect(self.rightPane.helpWidget.exportHelp)
+        self.leftPane.queryWidget.exportHelpBroadcast.connect(self.rightPane.helpPopup.exportHelp)
         self.enrichHelpBroadcast.connect(self.rightPane.helpWidget.getEnrichHelp)
         self.leftPane.viewWidget.discourseWidget.discourseHelpBroadcast.connect(self.rightPane.helpWidget.getDiscourseHelp)
-        #self.mainWidget.setStretchFactor(0, 1)
+
 
 
         self.wrapper = QtWidgets.QWidget()

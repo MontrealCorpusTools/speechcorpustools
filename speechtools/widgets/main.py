@@ -66,12 +66,7 @@ class ViewWidget(CollapsibleTabWidget):
     connectionIssues = QtCore.pyqtSignal()
     def __init__(self, parent = None):
         super(ViewWidget, self).__init__(parent)
-       
-        #self.addTab(self.helpWidget(),"help")
-        #self.setTabPosition(1)
-
-
-
+   
         self.discourseWidget = SelectableAudioWidget()
 
         self.summaryWidget = SCTSummaryWidget(self)

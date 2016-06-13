@@ -196,8 +196,6 @@ class ColumnWidget(QtWidgets.QWidget):
 
     def sendForHelp(self, to_find):
         options = self.attributeWidget.attribute()
-        print("sending for help1")
-        #self.exportHelpBroadcast.emit(options)
         self.exportHelpBroadcast.emit(options)
 
 class ColumnBox(QtWidgets.QGroupBox):
@@ -251,11 +249,10 @@ class ColumnBox(QtWidgets.QGroupBox):
         widget = ColumnWidget(self.hierarchy, self.to_find)
         widget.needsDelete.connect(self.deleteWidget)
         widget.exportHelpBroadcast.connect(self.exportHelpBroadcast.emit)
-        widget.exportHelpBroadcast.connect(self.printTest)
+
         self.mainLayout.addWidget(widget)
 
-    def printTest(self):
-        print("made it to columnBox")
+
         
     def setColumns(self, columns):
         #Clear columns somehow
@@ -324,7 +321,7 @@ class ExportProfileDialog(QtWidgets.QDialog):
         self.cancelButton.clicked.connect(self.reject)
 
         self.columnWidget.exportHelpBroadcast.connect(self.exportHelpBroadcast.emit)
-        self.columnWidget.exportHelpBroadcast.connect(self.printTest)
+     
 
         aclayout.addWidget(self.acceptButton)
         aclayout.addWidget(self.saveButton)
@@ -336,10 +333,6 @@ class ExportProfileDialog(QtWidgets.QDialog):
 
         self.setWindowTitle('Export profile')
 
-
-
-    def printTest(self):
-        print("made it to export profile") 
     def name(self):
         return self.nameWidget.text()
 

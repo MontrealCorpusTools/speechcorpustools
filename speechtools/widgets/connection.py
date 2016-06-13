@@ -197,7 +197,6 @@ class ConnectWidget(QtWidgets.QWidget):
 
         self.helpButton.clicked.connect(self.getHelp)
 
-        #self.helpButton.setSizePolicy(QtWidgets.QSizePolicy.Fixed,QtWidgets.QSizePolicy.Fixed)
         self.formlayout.addRow(self.helpButton)
 
         layout.addLayout(self.formlayout)

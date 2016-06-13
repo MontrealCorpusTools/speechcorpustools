@@ -76,12 +76,6 @@ class SelectableAudioWidget(QtWidgets.QWidget):
         w.setFocusPolicy(QtCore.Qt.NoFocus)
         bottomlayout.addWidget(w)
 
-
-        """FIX THIS LAYOUT CRAP"""
-        
-
-
-
         self.helpButton = QtWidgets.QPushButton()
         self.helpButton.setText("help")
         self.helpButton.clicked.connect(self.discourseHelpBroadcast.emit)

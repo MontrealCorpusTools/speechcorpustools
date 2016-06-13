@@ -66,7 +66,6 @@ class QueryProfileWidget(QtWidgets.QWidget):
 
 class ExportWidget(QtWidgets.QWidget):
     exportQuery = QtCore.pyqtSignal(object)
-    exportHelpBroadcast = QtCore.pyqtSignal(object)
     def __init__(self, parent = None):
         super(ExportWidget, self).__init__(parent)
 
@@ -239,8 +238,7 @@ class QueryForm(QtWidgets.QWidget):
 
         dialog = ExportProfileDialog(self.config, self.currentProfile().to_find, self)
 
-
-        self.exportHelpBroadcast.connect(dialog.exportHelpBroadcast.emit)
+        dialog.exportHelpBroadcast.connect(self.exportHelpBroadcast.emit)
 
         if profile_name != 'new':
             dialog.updateProfile(ExportProfile.load_profile(profile_name))
@@ -260,6 +258,7 @@ class QueryForm(QtWidgets.QWidget):
         kwargs['path'] = path
         self.exportWorker.setParams(kwargs)
         self.exportWorker.start()
+
 
     def runQuery(self):
         self.queryWorker.stop()
@@ -329,10 +328,7 @@ class QueryWidget(CollapsibleTabWidget):
         self.addTab(self.queryForm, 'New query')
 
         self.queryForm.exportHelpBroadcast.connect(self.exportHelpBroadcast.emit)
-        self.queryForm.exportHelpBroadcast.connect(self.printTest)
 
-    def printTest(self):
-        print("got to Query Widget")
     def closeTab(self, index):
         if index == 0:
             return
@@ -341,10 +337,6 @@ class QueryWidget(CollapsibleTabWidget):
         widget.setParent(None)
         widget.deleteLater()
 
-
-
-    def needHelp(self):
-        print("I need some help please")
         
     def updateConfig(self, config):
         self.config = config
