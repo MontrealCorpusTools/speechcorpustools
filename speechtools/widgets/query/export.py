@@ -196,7 +196,6 @@ class ColumnWidget(QtWidgets.QWidget):
             self.needsDelete.emit()
         self.nameWidget.setText(column.name)
 
-<<<<<<< HEAD
 class BasicColumnBox(QtWidgets.QGroupBox):
     columnToAdd = QtCore.pyqtSignal(object)
 
@@ -429,7 +428,6 @@ class BasicColumnBox(QtWidgets.QGroupBox):
             label.append('delete2')
             self.columnToAdd.emit(label)
 
-
     def checkAll(self):
         unchecked = []
         for i in range(len(self.grid)):
@@ -485,7 +483,6 @@ class BasicColumnBox(QtWidgets.QGroupBox):
                 wcheckbox = self.grid2.itemAt(i).widget()
                 if wcheckbox.text() == 'duration of the second syllable after the current one':
                     wcheckbox.setChecked(False)
-
 
 class ColumnBox(QtWidgets.QGroupBox):
     checkboxToUncheck = QtCore.pyqtSignal(object)
