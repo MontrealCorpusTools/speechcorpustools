@@ -72,7 +72,7 @@ Finally, in our query we wanted to specify only **utterance-intial** words. This
 
 	.. image:: finalfilter.png 
 		:width: 609px
-		:height: 170px
+		:height: 204px
 		:align: center
 		:alt: Image cannot be displayed in your browser
 
@@ -109,6 +109,5 @@ This is where the "following" and "previous" options come into play. We can use 
 
 
 
-
-
+For a full list of filters and their uses, see the section on `building queries <http://sct.readthedocs.io/en/latest/additional/buildingqueries.html>`_
 
