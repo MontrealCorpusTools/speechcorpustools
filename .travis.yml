@@ -75,6 +75,8 @@ after_success:
   - coveralls
 
 cache:
+  apt: true
   pip: true
   directories:
     - $HOME/miniconda
+    - $HOME/neo4j

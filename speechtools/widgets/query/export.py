@@ -196,6 +196,10 @@ class ColumnWidget(QtWidgets.QWidget):
             self.needsDelete.emit()
         self.nameWidget.setText(column.name)
 
+    def sendForHelp(self, to_find):
+        options = self.attributeWidget.attribute()
+        self.exportHelpBroadcast.emit(options)
+
 class BasicColumnBox(QtWidgets.QGroupBox):
     columnToAdd = QtCore.pyqtSignal(object)
 
