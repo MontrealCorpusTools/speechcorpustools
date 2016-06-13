@@ -38,6 +38,7 @@ class AttributeSelect(QueryAttributeSelect):
 
 class AttributeWidget(QtWidgets.QWidget):
     finalChanged = QtCore.pyqtSignal(object)
+
     def __init__(self, hierarchy, to_find):
         self.hierarchy = hierarchy
         self.to_find = to_find
@@ -136,6 +137,7 @@ class AttributeWidget(QtWidgets.QWidget):
 
 class ColumnWidget(QtWidgets.QWidget):
     needsDelete = QtCore.pyqtSignal()
+    exportHelpBroadcast = QtCore.pyqtSignal(object)
     def __init__(self, hierarchy, to_find):
         self.hierarchy = hierarchy
         self.to_find = to_find
@@ -162,6 +164,13 @@ class ColumnWidget(QtWidgets.QWidget):
         self.deleteButton.setSizePolicy(QtWidgets.QSizePolicy.Fixed,QtWidgets.QSizePolicy.Fixed)
         mainLayout.addWidget(self.deleteButton)
 
+        self.helpButton = QtWidgets.QPushButton()
+        self.helpButton.setText("help")
+        self.helpButton.clicked.connect(self.sendForHelp)
+        self.helpButton.setSizePolicy(QtWidgets.QSizePolicy.Fixed,QtWidgets.QSizePolicy.Fixed)
+        
+        mainLayout.addWidget(self.helpButton)
+
         self.setLayout(mainLayout)
 
     def updateColumnName(self, name):
@@ -185,7 +194,12 @@ class ColumnWidget(QtWidgets.QWidget):
             self.needsDelete.emit()
         self.nameWidget.setText(column.name)
 
+    def sendForHelp(self, to_find):
+        options = self.attributeWidget.attribute()
+        self.exportHelpBroadcast.emit(options)
+
 class ColumnBox(QtWidgets.QGroupBox):
+    exportHelpBroadcast = QtCore.pyqtSignal(object)
     def __init__(self, hierarchy, to_find):
         super(ColumnBox, self).__init__('Columns')
         self.hierarchy = hierarchy
@@ -234,8 +248,12 @@ class ColumnBox(QtWidgets.QGroupBox):
     def addNewColumn(self):
         widget = ColumnWidget(self.hierarchy, self.to_find)
         widget.needsDelete.connect(self.deleteWidget)
+        widget.exportHelpBroadcast.connect(self.exportHelpBroadcast.emit)
+
         self.mainLayout.addWidget(widget)
 
+
+        
     def setColumns(self, columns):
         #Clear columns somehow
         while self.mainLayout.count() > 1:
@@ -259,6 +277,7 @@ class ColumnBox(QtWidgets.QGroupBox):
         return columns
 
 class ExportProfileDialog(QtWidgets.QDialog):
+    exportHelpBroadcast = QtCore.pyqtSignal(object)
     def __init__(self, config, to_find, parent):
         super(ExportProfileDialog, self).__init__(parent)
 
@@ -300,6 +319,9 @@ class ExportProfileDialog(QtWidgets.QDialog):
         self.acceptButton.clicked.connect(self.accept)
         self.saveButton.clicked.connect(self.saveAs)
         self.cancelButton.clicked.connect(self.reject)
+
+        self.columnWidget.exportHelpBroadcast.connect(self.exportHelpBroadcast.emit)
+     
 
         aclayout.addWidget(self.acceptButton)
         aclayout.addWidget(self.saveButton)

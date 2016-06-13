@@ -25,6 +25,7 @@ from ...profiles import (available_query_profiles, available_export_profiles,
 
 class QueryProfileWidget(QtWidgets.QWidget):
     profileSelected = QtCore.pyqtSignal(object)
+
     def __init__(self, parent = None):
         super(QueryProfileWidget, self).__init__(parent)
         self.querySelect = QtWidgets.QComboBox()
@@ -78,6 +79,7 @@ class ExportWidget(QtWidgets.QWidget):
         layout.addWidget(self.exportButton)
         self.setLayout(layout)
 
+       
     def beginExport(self):
         a = self.sender()
         name = a.text()
@@ -147,6 +149,8 @@ class SaveDialog(QtWidgets.QDialog):
 
 class QueryForm(QtWidgets.QWidget):
     finishedRunning = QtCore.pyqtSignal(object)
+    exportHelpBroadcast = QtCore.pyqtSignal(object)
+
     def __init__(self):
         super(QueryForm, self).__init__()
         self.config = None
@@ -158,12 +162,14 @@ class QueryForm(QtWidgets.QWidget):
 
         self.queryWidget = BasicQuery()
 
+
         self.profileWidget = QueryProfileWidget()
         self.profileWidget.profileSelected.connect(self.queryWidget.updateProfile)
 
         self.executeButton = QtWidgets.QPushButton('Run query')
         self.exportWidget = ExportWidget()
         self.exportWidget.exportQuery.connect(self.exportQuery)
+       
 
         self.saveButton = QtWidgets.QPushButton('Save query profile')
         self.executeButton.clicked.connect(self.runQuery)
@@ -231,6 +237,9 @@ class QueryForm(QtWidgets.QWidget):
             return
 
         dialog = ExportProfileDialog(self.config, self.currentProfile().to_find, self)
+
+        dialog.exportHelpBroadcast.connect(self.exportHelpBroadcast.emit)
+
         if profile_name != 'new':
             dialog.updateProfile(ExportProfile.load_profile(profile_name))
         if dialog.exec_() == QtWidgets.QDialog.Rejected:
@@ -249,6 +258,7 @@ class QueryForm(QtWidgets.QWidget):
         kwargs['path'] = path
         self.exportWorker.setParams(kwargs)
         self.exportWorker.start()
+
 
     def runQuery(self):
         self.queryWorker.stop()
@@ -303,15 +313,21 @@ class QueryResults(QtWidgets.QWidget):
 
 class QueryWidget(CollapsibleTabWidget):
     viewRequested = QtCore.pyqtSignal(str, float, float)
+    needsHelp = QtCore.pyqtSignal(object)
+    exportHelpBroadcast = QtCore.pyqtSignal(object)
     def __init__(self):
         super(QueryWidget, self).__init__()
         self.config = None
         self.currentIndex = 1
         self.queryForm = QueryForm()
+
+        self.queryForm.queryWidget.needsHelp.connect(self.needsHelp.emit)
         self.queryForm.finishedRunning.connect(self.updateResults)
         self.setTabsClosable(True)
         self.tabCloseRequested.connect(self.closeTab)
         self.addTab(self.queryForm, 'New query')
+
+        self.queryForm.exportHelpBroadcast.connect(self.exportHelpBroadcast.emit)
 
     def closeTab(self, index):
         if index == 0:
@@ -321,6 +337,7 @@ class QueryWidget(CollapsibleTabWidget):
         widget.setParent(None)
         widget.deleteLater()
 
+        
     def updateConfig(self, config):
         self.config = config
         self.queryForm.updateConfig(config)
