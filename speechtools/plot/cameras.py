@@ -1,7 +1,6 @@
 import numpy as np
 
 from vispy.scene.cameras.panzoom import PanZoomCamera
-from vispy.scene.cameras.base_camera import BaseCamera
 from vispy.geometry import Rect
 
 from .helper import rescale

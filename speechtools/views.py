@@ -38,7 +38,6 @@ class ResultsView(QtWidgets.QTableView):
         super(ResultsView, self).setModel(model)
 
     def mouseDoubleClickEvent(self, event):
-        print ('hello')
         pos = event.pos()
         index = self.indexAt(pos)
         if index is None:

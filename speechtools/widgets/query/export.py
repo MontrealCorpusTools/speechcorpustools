@@ -1,5 +1,6 @@
 
 
+import collections
 
 from PyQt5 import QtGui, QtCore, QtWidgets
 
@@ -9,37 +10,62 @@ from ...profiles import available_export_profiles, ExportProfile, Column
 
 from .basic import AttributeSelect as QueryAttributeSelect, SpeakerAttributeSelect
 
+<<<<<<< HEAD
 import collections
 
 class AttributeSelect(QueryAttributeSelect):
     def __init__(self, hierarchy, to_find):
+=======
+class PauseSelect(QueryAttributeSelect):
+    def __init__(self):
+>>>>>>> MontrealCorpusTools/master
         QtWidgets.QComboBox.__init__(self)
-        present = []
-        for k,t in sorted(hierarchy.token_properties[to_find]):
-            if k == 'id':
-                continue
-            present.append(k)
-            self.addItem(k)
-        for k,t in sorted(hierarchy.type_properties[to_find]):
-            if k == 'id':
-                continue
-            if k in present:
-                continue
-            self.addItem(k)
         self.addItem('following')
         self.addItem('previous')
         self.addItem('duration')
-        for k in hierarchy.highest_to_lowest:
-            if k != to_find:
+
+class AcousticSelect(QueryAttributeSelect):
+    def __init__(self):
+        QtWidgets.QComboBox.__init__(self)
+        self.addItem('mean')
+        self.addItem('max')
+        self.addItem('min')
+
+class AttributeSelect(QueryAttributeSelect):
+    def __init__(self, hierarchy, to_find):
+        QtWidgets.QComboBox.__init__(self)
+        if to_find != 'pause':
+
+            present = []
+            for k,t in sorted(hierarchy.token_properties[to_find]):
+                if k == 'id':
+                    continue
+                present.append(k)
                 self.addItem(k)
-        self.addItem('speaker')
-        self.addItem('discourse')
-        if to_find in hierarchy.subannotations:
-            for s in sorted(hierarchy.subannotations[to_find]):
-                self.addItem(s)
+            for k,t in sorted(hierarchy.type_properties[to_find]):
+                if k == 'id':
+                    continue
+                if k in present:
+                    continue
+                self.addItem(k)
+            self.addItem('following')
+            self.addItem('previous')
+            self.addItem('duration')
+            if to_find == 'word':
+                self.addItem('pause')
+            for k in hierarchy.highest_to_lowest:
+                if k != to_find:
+                    self.addItem(k)
+            self.addItem('speaker')
+            self.addItem('discourse')
+            if to_find in hierarchy.subannotations:
+                for s in sorted(hierarchy.subannotations[to_find]):
+                    self.addItem(s)
+            self.addItem('pitch')
 
 class AttributeWidget(QtWidgets.QWidget):
     finalChanged = QtCore.pyqtSignal(object)
+
     def __init__(self, hierarchy, to_find):
         self.hierarchy = hierarchy
         self.to_find = to_find
@@ -83,6 +109,14 @@ class AttributeWidget(QtWidgets.QWidget):
         current_annotation_type = self.annotationType()
         if combobox.currentText() in self.hierarchy.annotation_types:
             widget = AttributeSelect(self.hierarchy, combobox.currentText())
+            widget.currentIndexChanged.connect(self.updateAttribute)
+            self.mainLayout.addWidget(widget)
+        elif current_annotation_type == 'pause':
+            widget = PauseSelect()
+            widget.currentIndexChanged.connect(self.updateAttribute)
+            self.mainLayout.addWidget(widget)
+        elif combobox.currentText() == 'pitch':
+            widget = AcousticSelect()
             widget.currentIndexChanged.connect(self.updateAttribute)
             self.mainLayout.addWidget(widget)
         elif combobox.currentText() in ['previous','following']:
@@ -138,6 +172,7 @@ class AttributeWidget(QtWidgets.QWidget):
 
 class ColumnWidget(QtWidgets.QWidget):
     needsDelete = QtCore.pyqtSignal()
+    exportHelpBroadcast = QtCore.pyqtSignal(object)
     def __init__(self, hierarchy, to_find):
         self.hierarchy = hierarchy
         self.to_find = to_find
@@ -164,9 +199,20 @@ class ColumnWidget(QtWidgets.QWidget):
         self.deleteButton.setSizePolicy(QtWidgets.QSizePolicy.Fixed,QtWidgets.QSizePolicy.Fixed)
         mainLayout.addWidget(self.deleteButton)
 
+        self.helpButton = QtWidgets.QPushButton()
+        self.helpButton.setText("help")
+        self.helpButton.clicked.connect(self.sendForHelp)
+        self.helpButton.setSizePolicy(QtWidgets.QSizePolicy.Fixed,QtWidgets.QSizePolicy.Fixed)
+
+        mainLayout.addWidget(self.helpButton)
+
         self.setLayout(mainLayout)
 
     def updateColumnName(self, name):
+        if any(name.endswith(x) for x in ['_mean', '_min', '_max']):
+            self.nameWidget.setEnabled(False)
+        else:
+            self.nameWidget.setEnabled(True)
         self.nameWidget.setText(name)
 
     def setToFind(self, to_find):
@@ -187,6 +233,13 @@ class ColumnWidget(QtWidgets.QWidget):
             self.needsDelete.emit()
         self.nameWidget.setText(column.name)
 
+<<<<<<< HEAD
+=======
+    def sendForHelp(self, to_find):
+        options = self.attributeWidget.attribute()
+        self.exportHelpBroadcast.emit(options)
+
+>>>>>>> MontrealCorpusTools/master
 class BasicColumnBox(QtWidgets.QGroupBox):
     columnToAdd = QtCore.pyqtSignal(object)
 
@@ -324,7 +377,11 @@ class BasicColumnBox(QtWidgets.QGroupBox):
             if name == '':
                 continue
             labelposition = self.names.index(name)/self.numcolumns
+<<<<<<< HEAD
             if labelposition != int(labelposition) and name != 'discourse' and name != 'speaker': 
+=======
+            if labelposition != int(labelposition) and name != 'discourse' and name != 'speaker':
+>>>>>>> MontrealCorpusTools/master
                 widget = QtWidgets.QCheckBox(name)
                 widget.setMinimumSize(175, 35)
                 widget.toggled.connect(self.addColumn)
@@ -419,7 +476,10 @@ class BasicColumnBox(QtWidgets.QGroupBox):
             label.append('delete2')
             self.columnToAdd.emit(label)
 
+<<<<<<< HEAD
 
+=======
+>>>>>>> MontrealCorpusTools/master
     def checkAll(self):
         unchecked = []
         for i in range(len(self.grid)):
@@ -476,9 +536,15 @@ class BasicColumnBox(QtWidgets.QGroupBox):
                 if wcheckbox.text() == 'duration of the second syllable after the current one':
                     wcheckbox.setChecked(False)
 
+<<<<<<< HEAD
         
 class ColumnBox(QtWidgets.QGroupBox):
     checkboxToUncheck = QtCore.pyqtSignal(object)
+=======
+class ColumnBox(QtWidgets.QGroupBox):
+    checkboxToUncheck = QtCore.pyqtSignal(object)
+    exportHelpBroadcast = QtCore.pyqtSignal(object)
+>>>>>>> MontrealCorpusTools/master
 
     def __init__(self, hierarchy, to_find):
         super(ColumnBox, self).__init__('Columns')
@@ -515,6 +581,10 @@ class ColumnBox(QtWidgets.QGroupBox):
         policy.setVerticalStretch(1)
         self.setSizePolicy(policy)
 
+    def sendForHelp(self, to_find):
+        options = self.attributeWidget.attribute()
+        self.exportHelpBroadcast.emit(options)
+
     def deleteWidget(self):
         widget = self.sender()
         self.mainLayout.removeWidget(widget)
@@ -535,6 +605,8 @@ class ColumnBox(QtWidgets.QGroupBox):
     def addNewColumn(self):
         widget = ColumnWidget(self.hierarchy, self.to_find)
         widget.needsDelete.connect(self.deleteWidget)
+        widget.exportHelpBroadcast.connect(self.exportHelpBroadcast.emit)
+
         self.mainLayout.addWidget(widget)
 
     def fillInColumn(self, label):
@@ -615,6 +687,7 @@ class ColumnBox(QtWidgets.QGroupBox):
         return columns
 
 class ExportProfileDialog(QtWidgets.QDialog):
+    exportHelpBroadcast = QtCore.pyqtSignal(object)
     def __init__(self, config, to_find, parent):
         super(ExportProfileDialog, self).__init__(parent)
 
@@ -660,6 +733,9 @@ class ExportProfileDialog(QtWidgets.QDialog):
         self.acceptButton.clicked.connect(self.accept)
         self.saveButton.clicked.connect(self.saveAs)
         self.cancelButton.clicked.connect(self.reject)
+
+        self.columnWidget.exportHelpBroadcast.connect(self.exportHelpBroadcast.emit)
+
 
         aclayout.addWidget(self.acceptButton)
         aclayout.addWidget(self.saveButton)

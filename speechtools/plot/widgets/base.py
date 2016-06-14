@@ -5,14 +5,14 @@ from vispy.plot.plotwidget import PlotWidget
 
 from ..visuals import SCTLinePlot, SelectionRect, SelectionLine, PlayLine
 
-from ..cameras import SCTAudioCamera, BaseCamera
+from ..cameras import SCTAudioCamera
 
 class SelectablePlotWidget(PlotWidget):
-    def __init__(self, *args, **kwargs):
-        super(SelectablePlotWidget, self).__init__(*args, **kwargs)
-
     def _configure_2d(self, fg_color=None):
+<<<<<<< HEAD
         
+=======
+>>>>>>> MontrealCorpusTools/master
         super(SelectablePlotWidget, self)._configure_2d(fg_color)
 
         self.view.camera = SCTAudioCamera(zoom = None, pan = None)
