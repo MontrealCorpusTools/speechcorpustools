@@ -7,6 +7,11 @@ from PyInstaller.utils.hooks import (
 
 hiddenimports = ['cython', 'mock']
 
+
+from PyInstaller.utils.hooks import copy_metadata
+
+datas = copy_metadata('mock')
+
 if sys.platform == 'darwin':
     binaries = [(os.path.expanduser('~/dev/tools/bin/reaper'), '.')]
 
