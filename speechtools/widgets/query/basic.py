@@ -9,6 +9,7 @@ from ..base import NonScrollingComboBox
 
 from ...profiles import QueryProfile, Filter
 
+
 class AttributeSelect(NonScrollingComboBox):
     def __init__(self, hierarchy, to_find, alignment):
         super(AttributeSelect, self).__init__()
@@ -73,6 +74,7 @@ class SpeakerAttributeSelect(AttributeSelect):
 
 class AttributeWidget(QtWidgets.QWidget):
     attributeTypeChanged = QtCore.pyqtSignal(object, object, object)
+
     def __init__(self, config, to_find, alignment = False):
         self.config = config
         with CorpusContext(self.config) as c:
@@ -99,6 +101,7 @@ class AttributeWidget(QtWidgets.QWidget):
 
         self.mainLayout.addWidget(self.baseSelect)
         self.attributeTypeChanged.emit(self.to_find, self.baseSelect.label(), self.baseSelect.type())
+
 
     def setToFind(self, to_find):
         self.to_find = to_find
@@ -128,6 +131,7 @@ class AttributeWidget(QtWidgets.QWidget):
             widget.currentIndexChanged.connect(self.updateAttribute)
             self.mainLayout.addWidget(widget)
             self.attributeTypeChanged.emit(combobox.currentText(), widget.label(), widget.type())
+
         else:
             self.attributeTypeChanged.emit(current_annotation_type, combobox.label(), combobox.type())
 
@@ -184,7 +188,6 @@ class AttributeWidget(QtWidgets.QWidget):
                 annotation = self.annotationType()
                 widget = self.mainLayout.itemAt(self.mainLayout.count() - 1).widget()
                 self.attributeTypeChanged.emit(annotation, widget.label(), widget.type())
-
 
 class ValueWidget(QtWidgets.QWidget):
     def __init__(self, config, to_find):
@@ -345,8 +348,12 @@ class ValueWidget(QtWidgets.QWidget):
 
 
 class FilterWidget(QtWidgets.QWidget):
+   
     needsDelete = QtCore.pyqtSignal()
+    needsHelp = QtCore.pyqtSignal(object)
     def __init__(self, config, to_find):
+        #add in slot to tell which type to find
+
         self.config = config
         with CorpusContext(self.config) as c:
             self.hierarchy = c.hierarchy
@@ -369,15 +376,29 @@ class FilterWidget(QtWidgets.QWidget):
         self.deleteButton.setSizePolicy(QtWidgets.QSizePolicy.Fixed,QtWidgets.QSizePolicy.Fixed)
         mainLayout.addWidget(self.deleteButton)
 
+        self.helpButton = QtWidgets.QPushButton()
+        self.helpButton.setText("help")
+        self.helpButton.clicked.connect(self.needHelp)
+        self.helpButton.setSizePolicy(QtWidgets.QSizePolicy.Fixed,QtWidgets.QSizePolicy.Fixed)
+        
+        mainLayout.addWidget(self.helpButton)
+
+
         self.setLayout(mainLayout)
 
         self.attributeWidget.attributeTypeChanged.connect(self.valueWidget.changeType)
         self.valueWidget.changeType(self.to_find, self.attributeWidget.label(), self.attributeWidget.type())
 
+    def needHelp(self, to_find):
+        options = [self.attributeWidget.attribute(), self.valueWidget.operator(), self.valueWidget.value()]   
+        self.needsHelp.emit(options)
+
     def setToFind(self, to_find):
         self.to_find = to_find
         self.attributeWidget.setToFind(to_find)
         self.valueWidget.setToFind(to_find)
+        
+
 
     def toFilter(self):
         att = self.attributeWidget.attribute()
@@ -431,6 +452,7 @@ class FilterWidget(QtWidgets.QWidget):
 
 
 class FilterBox(QtWidgets.QGroupBox):
+    needsHelp = QtCore.pyqtSignal(object)
     def __init__(self):
         super(FilterBox, self).__init__('Filters')
 
@@ -496,6 +518,7 @@ class FilterBox(QtWidgets.QGroupBox):
         widget = FilterWidget(self.config, self.to_find)
         widget.needsDelete.connect(self.deleteWidget)
         self.mainLayout.insertWidget(self.mainLayout.count(), widget)
+        widget.needsHelp.connect(self.needsHelp.emit)
 
     def setFilters(self, filters):
         self.clearFilters()
@@ -513,7 +536,9 @@ class FilterBox(QtWidgets.QGroupBox):
             filters.append(widget.toFilter())
         return filters
 
+
 class BasicQuery(QtWidgets.QWidget):
+    needsHelp = QtCore.pyqtSignal(object)
     def __init__(self):
         super(BasicQuery, self).__init__()
         self.config = None
@@ -524,14 +549,13 @@ class BasicQuery(QtWidgets.QWidget):
         self.toFindWidget.currentIndexChanged.connect(self.updateToFind)
 
         self.filterWidget = FilterBox()
-
+        self.filterWidget.needsHelp.connect(self.needsHelp.emit)
         mainLayout.addRow('Linguistic objects to find', self.toFindWidget)
         mainLayout.addRow(self.filterWidget)
 
         self.setLayout(mainLayout)
 
         self.setSizePolicy(QtWidgets.QSizePolicy.MinimumExpanding,QtWidgets.QSizePolicy.MinimumExpanding)
-
 
     def updateToFind(self):
         to_find = self.toFindWidget.currentText()
