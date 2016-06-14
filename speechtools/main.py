@@ -139,9 +139,6 @@ class MainWindow(QtWidgets.QMainWindow):
 
         self.rightPane.connectWidget.corporaHelpBroadcast.connect(self.rightPane.helpWidget.getConnectionHelp)
 
-        self.leftPane.queryWidget.viewRequested.connect(self.rightPane.discourseWidget.changeView)
-        self.rightPane.discourseWidget.viewRequested.connect(self.leftPane.viewWidget.discourseWidget.changeView)
-
         self.leftPane.viewWidget.discourseWidget.nextRequested.connect(self.leftPane.queryWidget.requestNext)
         self.leftPane.viewWidget.discourseWidget.previousRequested.connect(self.leftPane.queryWidget.requestPrevious)
         self.leftPane.viewWidget.discourseWidget.markedAsAnnotated.connect(self.leftPane.queryWidget.markAnnotated)
@@ -153,8 +150,6 @@ class MainWindow(QtWidgets.QMainWindow):
         self.leftPane.queryWidget.exportHelpBroadcast.connect(self.rightPane.helpPopup.exportHelp)
         self.enrichHelpBroadcast.connect(self.rightPane.helpWidget.getEnrichHelp)
         self.leftPane.viewWidget.discourseWidget.discourseHelpBroadcast.connect(self.rightPane.helpWidget.getDiscourseHelp)
-
-
 
         self.wrapper = QtWidgets.QWidget()
         layout = QtWidgets.QHBoxLayout()

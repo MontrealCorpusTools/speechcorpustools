@@ -45,7 +45,7 @@ class SelectableAudioWidget(QtWidgets.QWidget):
         toplayout = QtWidgets.QHBoxLayout()
         bottomlayout = QtWidgets.QHBoxLayout()
 
-        
+
 
         self.setFocusPolicy(QtCore.Qt.StrongFocus)
 
@@ -74,18 +74,18 @@ class SelectableAudioWidget(QtWidgets.QWidget):
         self.helpButton.setText("help")
         self.helpButton.clicked.connect(self.discourseHelpBroadcast.emit)
         self.helpButton.setSizePolicy(QtWidgets.QSizePolicy.Fixed,QtWidgets.QSizePolicy.Fixed)
-      
+
         vhelpLayout = QtWidgets.QHBoxLayout()
         vhelpLayout.addStretch(1)
-        vhelpLayout.addWidget(self.helpButton)      
-        
+        vhelpLayout.addWidget(self.helpButton)
+
         helpLayout = QtWidgets.QVBoxLayout()
         helpLayout.addStretch(1)
-        helpLayout.addLayout(vhelpLayout)        
+        helpLayout.addLayout(vhelpLayout)
 
         layout.addLayout(bottomlayout)
 
-        
+
 
         mainlayout = QtWidgets.QHBoxLayout()
         mainlayout.addLayout(layout)
@@ -139,7 +139,7 @@ class SelectableAudioWidget(QtWidgets.QWidget):
 
     def cachePreceding(self):
         if self.audio is not None:
-            if self.view_begin < self.audio.cached_begin + self.cache_window:
+            if self.audio.cached_begin != 0 and self.view_begin < self.audio.cached_begin + self.cache_window:
                 self.audioCacheWorker.setParams({'sound_file':self.discourse_model.sound_file, 'begin': self.view_begin, 'end': self.view_end})
                 self.audioCacheWorker.start()
         if not self.precedingCacheWorker.finished:
@@ -155,7 +155,7 @@ class SelectableAudioWidget(QtWidgets.QWidget):
 
     def cacheFollowing(self):
         if self.audio is not None:
-            if self.view_end > self.audio.cached_end - self.cache_window:
+            if self.audio.cached_end != self.audio.duration and self.view_end > self.audio.cached_end - self.cache_window:
                 self.audioCacheWorker.setParams({'sound_file':self.discourse_model.sound_file, 'begin': self.view_begin, 'end': self.view_end})
                 self.audioCacheWorker.start()
         if not self.followingCacheWorker.finished:
@@ -578,18 +578,10 @@ class SelectableAudioWidget(QtWidgets.QWidget):
         self.cacheFollowing()
         self.cachePreceding()
         self.audioWidget.update_time_bounds(self.view_begin, self.view_end)
-        begin = time.time()
         self.drawSignal()
-        print('drew signal in {} seconds'.format(time.time() - begin))
-        begin = time.time()
         self.drawAnnotations()
-        print('drew annotations in {} seconds'.format(time.time() - begin))
-        begin = time.time()
         self.drawFormants()
-        print('drew formants in {} seconds'.format(time.time() - begin))
-        begin = time.time()
         self.drawPitch()
-        print('drew pitch in {} seconds'.format(time.time() - begin))
 
     def save_selected_boundary(self):
         key, ind = self.selected_boundary

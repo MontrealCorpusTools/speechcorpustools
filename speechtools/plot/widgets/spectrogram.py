@@ -40,7 +40,6 @@ class SpectralPlotWidget(SelectablePlotWidget):
             self.pitchplot._pos = None
             self.pitchplot.update()
         else:
-            print(pitch)
             factor = 125 / 600
             data = []
             for i,(t, p) in enumerate(pitch):

@@ -45,6 +45,10 @@ class SCTProgressBar(QtWidgets.QWidget):
 
     def finish(self):
         self.done = True
+        self.label.setText('Finished!')
+        if self.progressBar.maximum() == 0:
+            self.progressBar.setMaximum(1)
+        self.progressBar.setValue(self.progressBar.maximum())
 
 class ProgressWidget(QtWidgets.QDialog):
     def __init__(self, parent = None):

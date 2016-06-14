@@ -156,7 +156,7 @@ class AnnotationPlotWidget(SelectablePlotWidget):
         return ranking
 
     def set_signal(self, data):
-        if data is None:
+        if data is None or data.shape[0] == 0:
             self.waveform.visible = False
             self.waveform.set_data(None)
             return

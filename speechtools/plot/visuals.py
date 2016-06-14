@@ -251,7 +251,7 @@ class SCTSpectrogramVisual(visuals.ImageVisual):
 
     @property
     def xscale(self):
-        if self._signal is None:
+        if self._signal is None or len(self._signal) == 0 :
             return 1
         num_steps = self._data.shape[1]
         return num_steps /(len(self._signal) /self._sr)
@@ -273,7 +273,7 @@ class SCTSpectrogramVisual(visuals.ImageVisual):
         return 0
 
     def _do_spec(self):
-        if self._signal is None:
+        if self._signal is None or len(self._signal) == 0:
             self.set_data(np.array([[0.5]]))
             return
         #if len(self._signal) / self._sr > 30:
