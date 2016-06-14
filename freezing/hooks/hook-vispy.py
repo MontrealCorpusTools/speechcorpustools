@@ -5,6 +5,9 @@ import sys
 from PyInstaller.utils.hooks import (
     collect_data_files, collect_dynamic_libs)
 
+from PyInstaller.utils.hooks import copy_metadata
+
+datas = copy_metadata('mock')
 
 
 hiddenimports = ['vispy', 'six', 'vispy.app.backends._pyqt5',
