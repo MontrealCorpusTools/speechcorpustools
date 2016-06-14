@@ -8,7 +8,6 @@ from ..visuals import SCTLinePlot, SelectionRect, SelectionLine, PlayLine
 from ..cameras import SCTAudioCamera
 
 class SelectablePlotWidget(PlotWidget):
-
     def _configure_2d(self, fg_color=None):
         super(SelectablePlotWidget, self)._configure_2d(fg_color)
 
