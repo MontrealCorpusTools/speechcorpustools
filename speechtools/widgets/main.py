@@ -5,7 +5,7 @@ from polyglotdb.config import BASE_DIR, CorpusConfig
 
 from ..plot import SCTSummaryWidget
 
-from ..workers import (DiscourseQueryWorker, DiscourseAudioWorker)
+from ..workers import (DiscourseQueryWorker)
 
 from .base import DataListWidget, CollapsibleWidgetPair, DetailedMessageBox, CollapsibleTabWidget
 
@@ -13,9 +13,10 @@ from .selectable_audio import SelectableAudioWidget
 
 from polyglotdb import CorpusContext
 
+from polyglotdb.exceptions import GraphQueryError
+
 class DiscourseWidget(QtWidgets.QWidget):
-    discourseChanged = QtCore.pyqtSignal(str)
-    viewRequested = QtCore.pyqtSignal(object, object)
+    discourseChanged = QtCore.pyqtSignal(str, object, object)
     def __init__(self):
         super(DiscourseWidget, self).__init__()
 
@@ -37,28 +38,19 @@ class DiscourseWidget(QtWidgets.QWidget):
             discourse = None
         else:
             discourse = item.text()
-        self.discourseChanged.emit(discourse)
-        self.viewRequested.emit(None, None)
-
-    def changeView(self, discourse, begin, end):
-        self.viewRequested.emit(begin, end)
-        for i in range(self.discourseList.count()):
-            item = self.discourseList.item(i)
-            if item.text() == discourse:
-                index = self.discourseList.model().index(i, 0)
-                self.discourseList.selectionModel().select(index,
-                                QtCore.QItemSelectionModel.ClearAndSelect|QtCore.QItemSelectionModel.Rows)
-                break
-        self.discourseChanged.emit(discourse)
+        self.discourseChanged.emit(discourse, None, None)
 
     def updateConfig(self, config):
         self.config = config
         self.discourseList.clear()
         if self.config is None or self.config.corpus_name == '':
             return
-        with CorpusContext(self.config) as c:
-            for d in sorted(c.discourses):
-                self.discourseList.addItem(d)
+        try:
+            with CorpusContext(self.config) as c:
+                for d in sorted(c.discourses):
+                    self.discourseList.addItem(d)
+        except GraphQueryError:
+            self.discourseList.clear()
 
 class ViewWidget(CollapsibleTabWidget):
     
@@ -87,12 +79,8 @@ class ViewWidget(CollapsibleTabWidget):
         self.addTab(self.discourseWidget, 'Discourse')
         #self.addTab(summaryTab, 'Summary')
 
-        self.audioWorker = DiscourseAudioWorker()
-        self.audioWorker.dataReady.connect(self.discourseWidget.updateAudio)
-        self.audioWorker.errorEncountered.connect(self.showError)
-
         self.worker = DiscourseQueryWorker()
-        self.worker.dataReady.connect(self.discourseWidget.updateAnnotations)
+        self.worker.dataReady.connect(self.discourseWidget.updateDiscourseModel)
         self.changingDiscourse.connect(self.worker.stop)
         self.changingDiscourse.connect(self.discourseWidget.clearDiscourse)
         self.worker.errorEncountered.connect(self.showError)
@@ -104,25 +92,19 @@ class ViewWidget(CollapsibleTabWidget):
         reply.setDetailedText(str(e))
         ret = reply.exec_()
 
-    def changeDiscourse(self, discourse):
+    def changeDiscourse(self, discourse, begin = None, end = None):
         if discourse:
             self.changingDiscourse.emit()
             kwargs = {}
-
+            if begin is None:
+                begin = 0
+            if end is None:
+                end = 30
             kwargs['config'] = self.config
             kwargs['discourse'] = discourse
-
-            self.audioWorker.setParams(kwargs)
-            self.audioWorker.start()
-            kwargs = {}
-            with CorpusContext(self.config) as c:
-                self.discourseWidget.updateHierachy(c.hierarchy)
-                kwargs['seg_type'] = c.hierarchy.lowest
-                kwargs['word_type'] = c.hierarchy.highest
-
-            kwargs['config'] = self.config
-            kwargs['discourse'] = discourse
-
+            kwargs['begin'] = begin
+            kwargs['end'] = end
+            print(discourse, begin, end)
             self.worker.setParams(kwargs)
             self.worker.start()
 
