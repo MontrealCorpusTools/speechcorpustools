@@ -2,7 +2,8 @@ import os
 import mock
 import sys
 
-MOCK_MODULES = ['matplotlib', 'tkinter', 'tkinter.filedialog']
+MOCK_MODULES = ['matplotlib', 'matplotlib.image', 'matplotlib.ticker',
+                'matplotlib.pyplot', 'tkinter', 'tkinter.filedialog']
 
 for mod_name in MOCK_MODULES:
     sys.modules[mod_name] = mock.Mock()
