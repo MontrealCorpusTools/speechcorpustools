@@ -68,6 +68,8 @@ before_script:
 # Run test
 script:
   - $HOME/neo4j/neo4j/bin/neo4j start
+  - sleep 10
+  - $HOME/neo4j/neo4j/bin/neo4j status
   - coverage run --source=speechtools setup.py test
 
 # Calculate coverage
