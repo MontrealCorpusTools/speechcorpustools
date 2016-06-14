@@ -15,9 +15,12 @@ class CorporaList(QtWidgets.QGroupBox):
     selectionChanged = QtCore.pyqtSignal(object)
     cancelImporter = QtCore.pyqtSignal()
     corpusToImport = QtCore.pyqtSignal(object, object)
+    
     def __init__(self, parent = None):
         super(CorporaList, self).__init__('Available corpora', parent)
         layout = QtWidgets.QVBoxLayout()
+
+        corpType = ""
 
         self.corporaList = QtWidgets.QListWidget()
         self.corporaList.itemSelectionChanged.connect(self.changed)
@@ -31,6 +34,7 @@ class CorporaList(QtWidgets.QGroupBox):
         buckeyeAction = QtWidgets.QAction('Buckeye Corpus', self)
         buckeyeAction.triggered.connect(lambda x: self.importCorpus('buckeye'))
         menu.addAction(buckeyeAction)
+     
 
         timitAction = QtWidgets.QAction('TIMIT', self)
         timitAction.triggered.connect(lambda x: self.importCorpus('timit'))
@@ -42,7 +46,8 @@ class CorporaList(QtWidgets.QGroupBox):
 
         self.importButton.setMenu(menu)
 
-        layout.addWidget(self.importButton)
+        layout.addWidget(self.importButton)      
+
         self.setLayout(layout)
 
         self.importFree = True
@@ -129,9 +134,11 @@ class CorporaList(QtWidgets.QGroupBox):
                       QtCore.QItemSelectionModel.ClearAndSelect|QtCore.QItemSelectionModel.Current)
 
                 self.changed()
+    
 
 class ConnectWidget(QtWidgets.QWidget):
     configChanged = QtCore.pyqtSignal(object)
+    corporaHelpBroadcast = QtCore.pyqtSignal()
     def __init__(self, config = None, parent = None):
         super(ConnectWidget, self).__init__(parent)
 
@@ -184,6 +191,14 @@ class ConnectWidget(QtWidgets.QWidget):
 
         self.formlayout.addRow(self.resetCacheButton)
 
+
+        self.helpButton = QtWidgets.QPushButton()
+        self.helpButton.setText("Help")
+
+        self.helpButton.clicked.connect(self.getHelp)
+
+        self.formlayout.addRow(self.helpButton)
+
         layout.addLayout(self.formlayout)
 
         self.corporaList = CorporaList()
@@ -191,6 +206,7 @@ class ConnectWidget(QtWidgets.QWidget):
 
         self.corporaList.selectionChanged.connect(self.enableFindAudio)
         layout.addWidget(self.corporaList)
+
 
         self.setLayout(layout)
         if config is not None:
@@ -321,3 +337,8 @@ class ConnectWidget(QtWidgets.QWidget):
         else:
             self.audioLookupButton.setText('Find local audio files')
             self.setEnabled(True)
+
+    def getHelp(self):
+        self.corporaHelpBroadcast.emit()
+
+
