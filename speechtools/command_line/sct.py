@@ -1,5 +1,5 @@
 import os
-#import mock
+import mock
 import sys
 
 #MOCK_MODULES = ['matplotlib', 'tkinter', 'tkinter.filedialog']
