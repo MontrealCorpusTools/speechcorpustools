@@ -7,6 +7,8 @@ MOCK_MODULES = ['matplotlib', 'matplotlib.image', 'matplotlib.ticker',
 
 for mod_name in MOCK_MODULES:
     sys.modules[mod_name] = mock.Mock()
+    if mod_name == 'matplotlib':
+        sys.modules[mod_name].__version__ = '0.0.0'
 
 import multiprocessing
 
