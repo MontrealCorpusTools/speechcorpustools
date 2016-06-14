@@ -1,11 +1,11 @@
 import os
-import mock
+#import mock
 import sys
 
-MOCK_MODULES = ['matplotlib', 'tkinter', 'tkinter.filedialog']
+#MOCK_MODULES = ['matplotlib', 'tkinter', 'tkinter.filedialog']
 
-for mod_name in MOCK_MODULES:
-    sys.modules[mod_name] = mock.Mock()
+#for mod_name in MOCK_MODULES:
+#    sys.modules[mod_name] = mock.Mock()
 
 import multiprocessing
 
