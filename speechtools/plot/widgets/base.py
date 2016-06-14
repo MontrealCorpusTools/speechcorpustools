@@ -5,7 +5,7 @@ from vispy.plot.plotwidget import PlotWidget
 
 from ..visuals import SCTLinePlot, SelectionRect, SelectionLine, PlayLine
 
-from ..cameras import SCTAudioCamera, BaseCamera
+from ..cameras import SCTAudioCamera
 
 class SelectablePlotWidget(PlotWidget):
     def _configure_2d(self, fg_color=None):

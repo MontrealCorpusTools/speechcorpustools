@@ -24,6 +24,7 @@ class HierarchyWidget(QtWidgets.QWidget):
     toggleSpectrogram = QtCore.pyqtSignal()
     toggleFormants = QtCore.pyqtSignal()
     togglePitch = QtCore.pyqtSignal()
+    channelChanged = QtCore.pyqtSignal(int)
     def __init__(self, parent = None):
         super(HierarchyWidget, self).__init__(parent)
         layout = QtWidgets.QVBoxLayout()
@@ -34,7 +35,7 @@ class HierarchyWidget(QtWidgets.QWidget):
         self.hierarchyLayout.setStretch(0, 0)
         self.hierarchyLayout.setContentsMargins(0,0,0,0)
         self.hierarchyLayout.setAlignment(QtCore.Qt.AlignTop)
-        self.spectrumLayout = QtWidgets.QVBoxLayout()
+        self.spectrumLayout = QtWidgets.QFormLayout()
         self.spectrumLayout.setSpacing(0)
         self.spectrumLayout.setContentsMargins(0,0,0,0)
 
@@ -56,9 +57,15 @@ class HierarchyWidget(QtWidgets.QWidget):
         i = ClickableLabel('Intensity')
         v.setSizePolicy(QtWidgets.QSizePolicy.Minimum,QtWidgets.QSizePolicy.Minimum)
         i.setSizePolicy(QtWidgets.QSizePolicy.Minimum,QtWidgets.QSizePolicy.Minimum)
-        self.spectrumLayout.addWidget(self.specLabel)
-        self.spectrumLayout.addWidget(self.formantLabel)
-        self.spectrumLayout.addWidget(self.pitchLabel)
+        self.spectrumLayout.addRow(self.specLabel)
+        self.spectrumLayout.addRow(self.formantLabel)
+        self.spectrumLayout.addRow(self.pitchLabel)
+
+        self.channelSelect = QtWidgets.QComboBox()
+        self.setNumChannels(1)
+        self.channelSelect.currentIndexChanged.connect(self.channelChanged.emit)
+        self.spectrumLayout.addRow('Audio channel', self.channelSelect)
+
         #self.spectrumLayout.addWidget(v)
         #self.spectrumLayout.addWidget(i)
         self.hWidget = QtWidgets.QWidget()
@@ -71,6 +78,11 @@ class HierarchyWidget(QtWidgets.QWidget):
         layout.addLayout(self.spectrumLayout)
 
         self.setLayout(layout)
+
+    def setNumChannels(self, n_channels):
+        self.channelSelect.clear()
+        for i in range(n_channels):
+            self.channelSelect.addItem(str(i+1))
 
     def toggleSpecLabel(self):
         self.toggleSpectrogram.emit()

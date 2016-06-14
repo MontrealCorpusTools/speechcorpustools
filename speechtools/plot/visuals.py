@@ -6,9 +6,7 @@ import scipy
 from scipy.signal import gaussian
 from librosa.core.spectrum import stft
 
-from vispy import scene
-from vispy import visuals
-from vispy import gloo
+from vispy import scene, visuals, gloo
 
 from vispy.geometry import Rect
 
@@ -17,6 +15,19 @@ from vispy.visuals.shaders import Function
 from vispy.visuals import collections
 from vispy.color import Color, ColorArray, get_colormap
 
+class WaveformLineVisual(visuals.LineVisual):
+    def __init__(self):
+        super(WaveformLineVisual, self).__init__(method = 'gl', color = 'k')
+
+    def set_data(self, data):
+        if data is not None:
+            scene.visuals.Line.set_data(self, pos = data)
+        else:
+            color = None
+            self._bounds = None
+            self._changed['pos'] = True
+            self._pos = None
+            self.update()
 
 
 class SCTLineVisual(visuals.LineVisual):
@@ -240,7 +251,7 @@ class SCTSpectrogramVisual(visuals.ImageVisual):
 
     @property
     def xscale(self):
-        if self._signal is None:
+        if self._signal is None or len(self._signal) == 0 :
             return 1
         num_steps = self._data.shape[1]
         return num_steps /(len(self._signal) /self._sr)
@@ -262,7 +273,7 @@ class SCTSpectrogramVisual(visuals.ImageVisual):
         return 0
 
     def _do_spec(self):
-        if self._signal is None:
+        if self._signal is None or len(self._signal) == 0:
             self.set_data(np.array([[0.5]]))
             return
         #if len(self._signal) / self._sr > 30:
@@ -315,6 +326,7 @@ PlayLine = scene.visuals.create_visual_node(PlayLineVisual)
 
 Spectrogram = scene.visuals.create_visual_node(SCTSpectrogramVisual)
 SCTLinePlot = scene.visuals.create_visual_node(SCTLineVisual)
+WaveformPlot = scene.visuals.create_visual_node(WaveformLineVisual)
 
 class TierRectangle(scene.Rectangle):
     def __init__(self, tier_index, num_types, num_sub_types):

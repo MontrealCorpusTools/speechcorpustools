@@ -9,31 +9,35 @@ from vispy.visuals.text.text import FontManager
 
 from .base import SelectablePlotWidget, PlotWidget
 
-from ..visuals import SCTLinePlot, ScalingText, SCTAnnotation, SelectionLine, TierRectangle
+from ..visuals import SCTLinePlot, ScalingText, SCTAnnotation, SelectionLine, TierRectangle, WaveformPlot
 
 from ..helper import generate_boundaries
 
 class AnnotationPlotWidget(SelectablePlotWidget):
+
     def __init__(self, *args, **kwargs):
         super(AnnotationPlotWidget, self).__init__(*args, **kwargs)
-        self._configure_2d()
         self.unfreeze()
         self.hierarchy = None
         self.num_types = 0
-        self.breakline = SCTLinePlot(None, width = 1, color = 'k')
-        self.waveform = SCTLinePlot(None, connect='strip', color = 'k')
         self.annotation_visuals = {}
         self.annotations = None
         self.min_time = None
         self.max_time = None
         self.line_visuals = {}
         self.box_visuals = {}
+        self.font_manager = FontManager()
+        self.breakline = SCTLinePlot(None, width = 1, color = 'k')
+        self.waveform = WaveformPlot()
+        self.freeze()
+        self._configure_2d()
+
+    def _configure_2d(self, fg_color = None):
+        super(AnnotationPlotWidget, self)._configure_2d(fg_color)
         self.view.add(self.breakline)
         self.view.add(self.waveform)
         self.visuals.append(self.breakline)
         self.visuals.append(self.waveform)
-        self.font_manager = FontManager()
-        self.freeze()
         self.play_time_line.visible = True
 
     def set_time_bounds(self, min_time, max_time):
@@ -45,7 +49,10 @@ class AnnotationPlotWidget(SelectablePlotWidget):
             v.update_times(min_time, max_time)
 
     def set_selection(self, min_time, max_time):
-        self.selection_rect.update_selection(min_time, max_time)
+        try:
+            self.selection_rect.update_selection(min_time, max_time)
+        except AttributeError:
+            pass
 
     def pos_to_key(self, pos):
         for k, v in self.line_visuals.items():
@@ -54,43 +61,45 @@ class AnnotationPlotWidget(SelectablePlotWidget):
         return None
 
     def set_hierarchy(self, hierarchy):
-        for k,v in self.annotation_visuals.items():
-            v.parent = None
-        for k,v in self.line_visuals.items():
-            v.parent = None
         self.hierarchy = hierarchy
         if self.hierarchy is None:
             return
-        self.num_types = len(self.hierarchy.keys())
-        keys = []
-        for k, v in sorted(self.hierarchy.subannotations.items()):
-            for s in v:
-                keys.append((k,s))
-        self.annotation_visuals = {}
-        self.line_visuals = {}
-        cycle = ['b', 'r']
-        for i, k in enumerate(self.hierarchy.highest_to_lowest):
-            c = cycle[i % len(cycle)]
-            self.annotation_visuals[k] = ScalingText(face = 'OpenSans', font_manager = self.font_manager) #FIXME Need to get a better font that covers more scripts, i.e. Thai (**Only applies to windows)
-            if k == self.hierarchy.lowest:
+        try:
+            for k,v in self.annotation_visuals.items():
+                v.parent = None
+            for k,v in self.line_visuals.items():
+                v.parent = None
+            self.num_types = len(self.hierarchy.keys())
+            keys = []
+            for k, v in sorted(self.hierarchy.subannotations.items()):
+                for s in v:
+                    keys.append((k,s))
+            self.annotation_visuals = {}
+            self.line_visuals = {}
+            cycle = ['b', 'r']
+            for i, k in enumerate(self.hierarchy.highest_to_lowest):
+                c = cycle[i % len(cycle)]
+                self.annotation_visuals[k] = ScalingText(face = 'OpenSans', font_manager = self.font_manager) #FIXME Need to get a better font that covers more scripts, i.e. Thai (**Only applies to windows)
+                if k == self.hierarchy.lowest:
+                    self.annotation_visuals[k].set_lowest()
+                self.line_visuals[k] = SCTLinePlot(connect = 'segments', color = c)
+                #self.box_visuals[k] = TierRectangle(i, self.num_types, len(keys))
+                #self.view.add(self.box_visuals[k])
+                self.view.add(self.annotation_visuals[k])
+                self.view.add(self.line_visuals[k])
+            ind = len(self.hierarchy.highest_to_lowest)
+            for k in sorted(keys):
+                c = cycle[ind % len(cycle)]
+                self.annotation_visuals[k] = ScalingText(face = 'OpenSans', font_manager = self.font_manager)
                 self.annotation_visuals[k].set_lowest()
-            self.line_visuals[k] = SCTLinePlot(connect = 'segments', color = c)
-            #self.box_visuals[k] = TierRectangle(i, self.num_types, len(keys))
-            #self.view.add(self.box_visuals[k])
-            self.view.add(self.annotation_visuals[k])
-            self.view.add(self.line_visuals[k])
-        ind = len(self.hierarchy.highest_to_lowest)
-        for k in sorted(keys):
-            c = cycle[ind % len(cycle)]
-            self.annotation_visuals[k] = ScalingText(face = 'OpenSans', font_manager = self.font_manager)
-            self.annotation_visuals[k].set_lowest()
-            self.line_visuals[k] = SCTLinePlot(connect = 'segments', color = c)
-            #self.box_visuals[k] = TierRectangle(ind, self.num_types, len(keys))
-            #self.view.add(self.box_visuals[k])
-            self.view.add(self.annotation_visuals[k])
-            self.view.add(self.line_visuals[k])
-            ind += 1
-
+                self.line_visuals[k] = SCTLinePlot(connect = 'segments', color = c)
+                #self.box_visuals[k] = TierRectangle(ind, self.num_types, len(keys))
+                #self.view.add(self.box_visuals[k])
+                self.view.add(self.annotation_visuals[k])
+                self.view.add(self.line_visuals[k])
+                ind += 1
+        except AttributeError:
+            pass
     def set_annotations(self, data):
         #Assume that data is the highest level of the hierarchy
         self.annotations = data
@@ -147,17 +156,16 @@ class AnnotationPlotWidget(SelectablePlotWidget):
         return ranking
 
     def set_signal(self, data):
-        if data is None:
+        if data is None or data.shape[0] == 0:
             self.waveform.visible = False
             self.waveform.set_data(None)
             return
-        new_data = copy.deepcopy(data)
-        max_sig = np.abs(new_data[:,1]).max()
+        max_sig = np.abs(data[:,1]).max()
         if max_sig < 0.5:
             ratio = 0.5 / max_sig
-            new_data[:,1] *=  ratio
+            data[:,1] *=  ratio
 
-        self.waveform.set_data(new_data)
+        self.waveform.set_data(data)
         self.waveform.visible = True
 
     def set_play_time(self, time):
