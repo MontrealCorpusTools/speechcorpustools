@@ -15,9 +15,7 @@
 
 import sys
 import os
-<<<<<<< HEAD
-from mock import Mock as MagicMock
-=======
+
 import mock
 
 MOCK_MODULES = ['polyglotdb', 'polyglotdb.config', 'polyglotdb.exceptions',
@@ -35,7 +33,7 @@ MOCK_MODULES = ['polyglotdb', 'polyglotdb.config', 'polyglotdb.exceptions',
                 'librosa', 'librosa.core.spectrum']
 for mod_name in MOCK_MODULES:
     sys.modules[mod_name] = mock.Mock()
->>>>>>> MontrealCorpusTools/master
+
 
 import shlex
 import alabaster
