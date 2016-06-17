@@ -120,21 +120,25 @@ Some complex queries come pre-made. These include "all vowels in mono-syllabic w
 			* Second, we need to encode syllables
 			* Finally, we can encode the hierarchical property: count of syllables in word
 		* Now that we have this property, we can add a filter to look for monosyllabic words:
-		```word: count_of_syllable_in_word == 1```
+		``word: count_of_syllable_in_word == 1``
+		
 			* Notice that we had to select "word" for "count_of_syllable_in_word" to be available
 		* The next filter we want to add would be to get only the vowels from this word.
-		```subset == syllabic```
+		``subset == syllabic``
+		
 			* This will get the syllabic segments (vowels) that we encoded earlier 
 
 	* Phones before word-final consonants
 		* Once again, it is clear that we are looking for "phones" as our linguistic object.
 		* The word "before" should tip you off that we will need to use the "following" or "previous" property.
 		* We start by getting all phones that are in the penultimate position in a word.
-		```following phone right-aligned with word```
+		``following phone right-aligned with word``
+		
 			* This will ensure that the phone after the one we are looking for is the word-final phone
 		* Now we need to limit it to consonants 
-		```following phone subset != syllabic```
-			*This will further limit the results to only phones before non-syllabic word-final segments (word-final consonants)
+		``following phone subset != syllabic``
+		
+			* This will further limit the results to only phones before non-syllabic word-final segments (word-final consonants)
 			
 
 
