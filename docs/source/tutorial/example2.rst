@@ -29,9 +29,9 @@ For this query profile:
 This corresponds to the following query profile, which has been saved (in this screenshot) as "PSS: first syllable" in SCT:
 
 	.. image:: ex2Fig1.png
-		:width: 450px
+		:width: 614px
 		:align: center
-		:height: 300px
+		:height: 307px
 		:alt: Image cannot be displayed in your browser
 
 
