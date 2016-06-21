@@ -9,10 +9,7 @@ from ..cameras import SCTAudioCamera
 
 class SelectablePlotWidget(PlotWidget):
     def _configure_2d(self, fg_color=None):
-<<<<<<< HEAD
-        
-=======
->>>>>>> MontrealCorpusTools/master
+
         super(SelectablePlotWidget, self)._configure_2d(fg_color)
 
         self.view.camera = SCTAudioCamera(zoom = None, pan = None)

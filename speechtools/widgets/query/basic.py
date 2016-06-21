@@ -455,6 +455,8 @@ class BasicFilterBox(QtWidgets.QGroupBox):
     filterToAdd2 = QtCore.pyqtSignal(object)
     filterToAdd3 = QtCore.pyqtSignal(object)
     toFindToAdd = QtCore.pyqtSignal(object)
+    compdelete = QtCore.pyqtSignal(object)
+    deletecomplex = QtCore.pyqtSignal()
 
     def __init__(self):
         super(BasicFilterBox, self).__init__('Basic Filters')
@@ -462,6 +464,7 @@ class BasicFilterBox(QtWidgets.QGroupBox):
         self.FilterBox = FilterBox()
 
         self.checked = []
+        self.checkedsenders = []
 
         self.simplenames = ['utterance-initial words', 'utterance-final words', 'syllable-initial phones', 'syllable-final phones', 'penultimate syllables', 'phones before a consonant']
         self.complexnames = ['all vowels in monosyllabic words', 'phones before a word-final consonant']
@@ -648,9 +651,12 @@ class BasicFilterBox(QtWidgets.QGroupBox):
                 if checkbox2.text() != 'phones before a word-final consonant':
                     checkbox2.setChecked(False)
             self.toFindToAdd.emit(label)
+            filler = 0
+            self.compdelete.emit(filler)  
 
         if label not in self.checked and senderwidget.isChecked() == True:
             self.checked.append(label)
+            self.checkedsenders.append(sender)
             self.filterToAdd.emit(label)
             if sender == 'all vowels in monosyllabic words' or sender == 'phones before a word-final consonant':
                 self.filterToAdd2.emit(label2)
@@ -658,6 +664,7 @@ class BasicFilterBox(QtWidgets.QGroupBox):
                 self.filterToAdd3.emit(label3)
         else:
             self.checked.remove(label)
+            self.checkedsenders.remove(sender)
             label.append('delete')
             label.append('delete2')
             self.filterToAdd.emit(label)
@@ -670,32 +677,54 @@ class BasicFilterBox(QtWidgets.QGroupBox):
                 label3.append('delete2')
                 self.filterToAdd3.emit(label3)
 
+        if 'all vowels in monosyllabic words' in self.checkedsenders or 'phones before a word-final consonant' in self.checkedsenders:
+            for i in range(len(self.grid)):
+                checkbox = self.grid.itemAt(i).widget()
+                checkbox.setEnabled(False)
+        else:
+            for i in range(len(self.grid)):
+                checkbox = self.grid.itemAt(i).widget()
+                checkbox.setEnabled(True) 
+
     def uncheck(self, to_uncheck):
-        if to_uncheck == ['alignment', 'Right aligned with']:
+        if to_uncheck == ['word', 'alignment', 'Right aligned with']:
             for i in range(len(self.grid)):
                 wcheckbox = self.grid.itemAt(i).widget()
                 if wcheckbox.text() == 'utterance-final words':
                     wcheckbox.setChecked(False)
-        elif to_uncheck == ['alignment', 'Left aligned with']:
+        elif to_uncheck == ['word', 'alignment', 'Left aligned with']:
             for i in range(len(self.grid)):
                 wcheckbox = self.grid.itemAt(i).widget()
-                if wcheckbox.text() == 'word-initial phones':
+                if wcheckbox.text() == 'utterance-initial words':
                     wcheckbox.setChecked(False)
-        elif to_uncheck == ['following', 'alignment']:
+        elif to_uncheck == ['phone', 'alignment', 'Right aligned with']:
+            for i in range(len(self.grid)):
+                wcheckbox = self.grid.itemAt(i).widget()
+                if wcheckbox.text() == 'syllable-final phones':
+                    wcheckbox.setChecked(False)
+        elif to_uncheck == ['phone', 'alignment', 'Left aligned with']:
+            for i in range(len(self.grid)):
+                wcheckbox = self.grid.itemAt(i).widget()
+                if wcheckbox.text() == 'syllable-initial phones':
+                    wcheckbox.setChecked(False)
+        elif to_uncheck == ['syllable', 'following', '']:
             for i in range(len(self.grid)):
                 wcheckbox = self.grid.itemAt(i).widget()
                 if wcheckbox.text() == 'penultimate syllables':
                     wcheckbox.setChecked(False)
+        elif to_uncheck == ['phone', 'following', '==']:
+            for i in range(len(self.grid)):
+                wcheckbox = self.grid.itemAt(i).widget()
+                if wcheckbox.text() == 'phones before a consonant':
+                    wcheckbox.setChecked(False)
 
 
 class FilterBox(QtWidgets.QGroupBox):
-<<<<<<< HEAD
     checkboxToUncheck = QtCore.pyqtSignal(object)
     tofind = QtCore.pyqtSignal(object)
 
-=======
     needsHelp = QtCore.pyqtSignal(object)
->>>>>>> MontrealCorpusTools/master
+
     def __init__(self):
         super(FilterBox, self).__init__('Filters')
 
@@ -739,8 +768,12 @@ class FilterBox(QtWidgets.QGroupBox):
         widget.deleteLater()
         categorywidget = widget.attributeWidget.mainLayout.itemAt(0).widget().currentText()
         if len(widget.attributeWidget.mainLayout) > 1:
-            infowidget = widget.attributeWidget.mainLayout.itemAt(0).widget().currentText()
-            self.checkboxToUncheck.emit([categorywidget, infowidget])
+            infowidget = widget.attributeWidget.mainLayout.itemAt(1).widget().currentText()
+            #self.checkboxToUncheck.emit([categorywidget, infowidget])
+            infowidget2 = widget.valueWidget.mainLayout.itemAt(0).widget().currentText()
+            #self.checkboxToUncheck.emit([categorywidget, infowidget, infowidget2])
+            infowidget3 = widget.valueWidget.mainLayout.itemAt(1).widget()
+            self.checkboxToUncheck.emit([categorywidget, infowidget, infowidget2])
         else:
             infowidget = widget.valueWidget.mainLayout.itemAt(0).widget().currentText()
             self.checkboxToUncheck.emit([categorywidget, infowidget])
@@ -786,54 +819,77 @@ class FilterBox(QtWidgets.QGroupBox):
             filters.append(widget.toFilter())
         return filters
 
-<<<<<<< HEAD
     def fillInColumn(self, label):
         delete = []
-        for i in range(len(self.mainLayout)):
-            match = self.mainLayout.itemAt(i)
-            delete.append(match.widget())
-        if len(delete) > 0:
-            for i in range(len(delete)):
-                todelete = delete[i]
-                self.mainLayout.removeWidget(todelete)
-                todelete.setParent(None)
-                todelete.deleteLater()
+        if label == ['phone', 'subset', '==', 'syllabic'] or label == ['phone', 'following', 'alignment', 'Right aligned with', 'word']:
+            for i in range(len(self.mainLayout)):
+                match = self.mainLayout.itemAt(i)
+                delete.append(match.widget())
+            if len(delete) > 0:
+                for i in range(len(delete)):
+                    todelete = delete[i]
+                    self.mainLayout.removeWidget(todelete)
+                    todelete.setParent(None)
+                    todelete.deleteLater()
 
         if len(label) < 6:
             widget = FilterWidget(self.config, self.to_find)
             widget.needsDelete.connect(self.deleteWidget)
             self.mainLayout.addWidget(widget)
 
-            defaultwidget = widget.attributeWidget.mainLayout.itemAt(0).widget()
-            index = defaultwidget.findText(label[0])
-            defaultwidget.setCurrentIndex(index)
-            if label[1] == 'alignment':
-                defaultwidget2 = widget.attributeWidget.mainLayout.itemAt(1).widget()
-                index2 = defaultwidget2.findText(label[1])
-                defaultwidget2.setCurrentIndex(index2)
-                defaultwidget3 = widget.valueWidget.mainLayout.itemAt(0).widget()
-                index3 = defaultwidget3.findText(label[2])
-                defaultwidget3.setCurrentIndex(index3)
-                #defaultwidget4 = widget.attributeWidget.mainLayout.itemAt(1).widget()
-                #index4 = defaultwidget4.findText(label[3])
-                #defaultwidget4.setCurrentIndex(index4)
-            if label[1] == 'following' and label[0] == 'syllable':
-                defaultwidget2 = widget.attributeWidget.mainLayout.itemAt(1).widget()
-                index2 = defaultwidget2.findText(label[1])
-                defaultwidget2.setCurrentIndex(index2)
-                defaultwidget3 = widget.valueWidget.mainLayout.itemAt(0).widget()
-                index3 = defaultwidget3.findText(label[2])
-                defaultwidget3.setCurrentIndex(index3)
-                defaultwidget4 = widget.attributeWidget.mainLayout.itemAt(2).widget()
-                #index4 = defaultwidget4.findText(label[4])
-                #defaultwidget4.setCurrentIndex(index4)'''
-            #if label[1] == 'following' and label[0] == 'phone':
+            if label == ['phone', 'subset', '==', 'syllabic'] or label == ['phone', 'following', 'alignment', 'Right aligned with', 'word']:
+                defaultwidget = widget.attributeWidget.mainLayout.itemAt(0).widget()
+                index = defaultwidget.findText(label[1])
+                defaultwidget.setCurrentIndex(index)
+                if label[1] == 'following':
+                    defaultwidget2 = widget.attributeWidget.mainLayout.itemAt(1).widget()
+                    index2 = defaultwidget2.findText(label[2])
+                    defaultwidget2.setCurrentIndex(index2)
+                if label[1] == 'subset':
+                    defaultwidget2 = widget.valueWidget.mainLayout.itemAt(0).widget()
+                    index2 = defaultwidget2.findText(label[2])
+                    defaultwidget2.setCurrentIndex(index2)
 
-        if len(label) > 5:
+            else:
+                defaultwidget = widget.attributeWidget.mainLayout.itemAt(0).widget()
+                index = defaultwidget.findText(label[0])
+                defaultwidget.setCurrentIndex(index)
+                if label[1] == 'alignment':
+                    defaultwidget2 = widget.attributeWidget.mainLayout.itemAt(1).widget()
+                    index2 = defaultwidget2.findText(label[1])
+                    defaultwidget2.setCurrentIndex(index2)
+                    defaultwidget3 = widget.valueWidget.mainLayout.itemAt(0).widget()
+                    index3 = defaultwidget3.findText(label[2])
+                    defaultwidget3.setCurrentIndex(index3)
+                    #defaultwidget4 = widget.attributeWidget.mainLayout.itemAt(1).widget()
+                    #index4 = defaultwidget4.findText(label[3])
+                    #defaultwidget4.setCurrentIndex(index4)
+                if label[1] == 'following' and label[0] == 'syllable':
+                    defaultwidget2 = widget.attributeWidget.mainLayout.itemAt(1).widget()
+                    index2 = defaultwidget2.findText(label[1])
+                    defaultwidget2.setCurrentIndex(index2)
+                    defaultwidget3 = widget.valueWidget.mainLayout.itemAt(0).widget()
+                    index3 = defaultwidget3.findText(label[2])
+                    defaultwidget3.setCurrentIndex(index3)
+                    defaultwidget4 = widget.attributeWidget.mainLayout.itemAt(2).widget()
+                    #index4 = defaultwidget4.findText(label[4])
+                    #defaultwidget4.setCurrentIndex(index4)'''
+                #if label[1] == 'following' and label[0] == 'phone':
+                if label[1] == 'following' and label[0] == 'phone':
+                    defaultwidget2 = widget.attributeWidget.mainLayout.itemAt(1).widget()
+                    index2 = defaultwidget2.findText(label[1])
+                    defaultwidget2.setCurrentIndex(index2)
+                    defaultwidget3 = widget.attributeWidget.mainLayout.itemAt(2).widget()
+                    index3 = defaultwidget3.findText(label[2])
+                    defaultwidget3.setCurrentIndex(index3)
+                    defaultwidget4 = widget.attributeWidget.mainLayout.itemAt(2).widget()
+
+        if len(label) > 5 and label != ['phone', 'subset', '==', 'syllabic', 'delete', 'delete2'] and label != ['phone', 'following', 'alignment', 'Right aligned with', 'word', 'delete', 'delete2']:
+            print (label)
             unchecked = []
             for i in range(len(self.mainLayout)):
                 match = self.mainLayout.itemAt(i)
-                checkdefault = match.widget().attributeWidget.mainLayout.itemAt(0).widget().currentText()
+                checkdefault = match.widget().attributeWidget.mainLayout.itemAt(1).widget().currentText()
                 if label[1] == 'alignment':
                     checkdefault2 = match.widget().valueWidget.mainLayout.itemAt(0).widget().currentText()
                     if checkdefault2 == label[2] and checkdefault == label[1]:
@@ -842,9 +898,7 @@ class FilterBox(QtWidgets.QGroupBox):
                     checkdefault2 = match.widget().valueWidget.mainLayout.itemAt(0).widget().currentText()
                     if checkdefault2 == label[3] and checkdefault == label[1]:
                         unchecked.append(match.widget())
-                if label[1] == 'subset':
-                    checkdefault2 = match.widget().valueWidget.mainLayout.itemAt(0).widget().currentText()
-                    if checkdefault2 == label[2] and checkdefault == label[1]:
+                if label[0] == 'syllable':
                         unchecked.append(match.widget())              
 
             if len(unchecked) > 0:
@@ -853,6 +907,9 @@ class FilterBox(QtWidgets.QGroupBox):
                     self.mainLayout.removeWidget(todelete)
                     todelete.setParent(None)
                     todelete.deleteLater()
+
+        if len(label) > 5 and label == ['phone', 'subset', '==', 'syllabic', 'delete', 'delete2'] or label == ['phone', 'following', 'alignment', 'Right aligned with', 'word', 'delete', 'delete2']:
+            self.clearFilters()
 
     def fillInColumn2(self, label2):
         widget = FilterWidget(self.config, self.to_find)
@@ -943,9 +1000,6 @@ class FilterBox(QtWidgets.QGroupBox):
                     todelete.setParent(None)
                     todelete.deleteLater()
 
-=======
->>>>>>> MontrealCorpusTools/master
-
 class BasicQuery(QtWidgets.QWidget):
     needsHelp = QtCore.pyqtSignal(object)
     def __init__(self):
@@ -958,18 +1012,16 @@ class BasicQuery(QtWidgets.QWidget):
         self.toFindWidget.currentIndexChanged.connect(self.updateToFind)
 
         self.filterWidget = FilterBox()
-<<<<<<< HEAD
         self.basicFilterWidget = BasicFilterBox()
 
+        self.basicFilterWidget.deletecomplex.connect(self.filterWidget.clearFilters)
         self.basicFilterWidget.filterToAdd.connect(self.filterWidget.fillInColumn)
         self.basicFilterWidget.filterToAdd2.connect(self.filterWidget.fillInColumn2)
         self.basicFilterWidget.filterToAdd3.connect(self.filterWidget.fillInColumn3)
-        #self.basicFilterWidget.toFindToAdd.connect(self.checkboxUpdateToFind)
+        self.basicFilterWidget.toFindToAdd.connect(self.checkboxUpdateToFind)
         self.filterWidget.checkboxToUncheck.connect(self.basicFilterWidget.uncheck)
 
-=======
         self.filterWidget.needsHelp.connect(self.needsHelp.emit)
->>>>>>> MontrealCorpusTools/master
         mainLayout.addRow('Linguistic objects to find', self.toFindWidget)
         mainLayout.addRow(self.filterWidget)
         mainLayout.addRow(self.basicFilterWidget)
@@ -982,11 +1034,11 @@ class BasicQuery(QtWidgets.QWidget):
         to_find = self.toFindWidget.currentText()
         self.filterWidget.setToFind(to_find)
 
-    #def checkboxUpdateToFind(self, to_find):
-     #   to_find = to_find[0]
-      #  self.filterWidget.setToFind(to_find)
-       # index = self.toFindWidget.findText(to_find)
-        #self.toFindWidget.setCurrentIndex(index)
+    def checkboxUpdateToFind(self, to_find):
+        to_find = to_find[0]
+        self.filterWidget.setToFind(to_find)
+        index = self.toFindWidget.findText(to_find)
+        self.toFindWidget.setCurrentIndex(index)
 
     def updateConfig(self, config):
         self.config = config

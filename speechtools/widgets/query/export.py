@@ -10,15 +10,10 @@ from ...profiles import available_export_profiles, ExportProfile, Column
 
 from .basic import AttributeSelect as QueryAttributeSelect, SpeakerAttributeSelect
 
-<<<<<<< HEAD
 import collections
 
-class AttributeSelect(QueryAttributeSelect):
-    def __init__(self, hierarchy, to_find):
-=======
 class PauseSelect(QueryAttributeSelect):
     def __init__(self):
->>>>>>> MontrealCorpusTools/master
         QtWidgets.QComboBox.__init__(self)
         self.addItem('following')
         self.addItem('previous')
@@ -233,13 +228,10 @@ class ColumnWidget(QtWidgets.QWidget):
             self.needsDelete.emit()
         self.nameWidget.setText(column.name)
 
-<<<<<<< HEAD
-=======
     def sendForHelp(self, to_find):
         options = self.attributeWidget.attribute()
         self.exportHelpBroadcast.emit(options)
 
->>>>>>> MontrealCorpusTools/master
 class BasicColumnBox(QtWidgets.QGroupBox):
     columnToAdd = QtCore.pyqtSignal(object)
 
@@ -377,11 +369,8 @@ class BasicColumnBox(QtWidgets.QGroupBox):
             if name == '':
                 continue
             labelposition = self.names.index(name)/self.numcolumns
-<<<<<<< HEAD
-            if labelposition != int(labelposition) and name != 'discourse' and name != 'speaker': 
-=======
+
             if labelposition != int(labelposition) and name != 'discourse' and name != 'speaker':
->>>>>>> MontrealCorpusTools/master
                 widget = QtWidgets.QCheckBox(name)
                 widget.setMinimumSize(175, 35)
                 widget.toggled.connect(self.addColumn)
@@ -476,10 +465,6 @@ class BasicColumnBox(QtWidgets.QGroupBox):
             label.append('delete2')
             self.columnToAdd.emit(label)
 
-<<<<<<< HEAD
-
-=======
->>>>>>> MontrealCorpusTools/master
     def checkAll(self):
         unchecked = []
         for i in range(len(self.grid)):
@@ -536,15 +521,9 @@ class BasicColumnBox(QtWidgets.QGroupBox):
                 if wcheckbox.text() == 'duration of the second syllable after the current one':
                     wcheckbox.setChecked(False)
 
-<<<<<<< HEAD
-        
-class ColumnBox(QtWidgets.QGroupBox):
-    checkboxToUncheck = QtCore.pyqtSignal(object)
-=======
 class ColumnBox(QtWidgets.QGroupBox):
     checkboxToUncheck = QtCore.pyqtSignal(object)
     exportHelpBroadcast = QtCore.pyqtSignal(object)
->>>>>>> MontrealCorpusTools/master
 
     def __init__(self, hierarchy, to_find):
         super(ColumnBox, self).__init__('Columns')
