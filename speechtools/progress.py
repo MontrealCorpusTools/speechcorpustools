@@ -64,6 +64,7 @@ class ProgressWidget(QtWidgets.QDialog):
     def createProgressBar(self, key, worker):
         if key in self.progressBars:
             self.progressBars[key].show()
+            self.progressBars[key].done = False
         else:
             pb = SCTProgressBar(self, worker)
             self.progressBars[key] = pb

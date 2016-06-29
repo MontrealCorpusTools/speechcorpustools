@@ -76,11 +76,11 @@ class QueryWorker(FunctionWorker):
                 except (ConnectionError, NetworkAddressError, TemporaryConnectionError):
                     tries += 1
                     if tries == 2:
-                        self.connectionIssues.emit()             
+                        self.connectionIssues.emit()
 
             if not success:
                 raise(ConnectionError('The query could not be completed.  Please check your internet connectivity.'))
-                
+
         except Exception as e:
             if not isinstance(e, PGError):
                 exc_type, exc_value, exc_traceback = sys.exc_info()
@@ -105,12 +105,15 @@ class QueryWorker(FunctionWorker):
         with CorpusContext(config) as c:
             a_type = getattr(c, profile.to_find)
             query = c.query_graph(a_type)
+            query.call_back = self.kwargs['call_back']
+            query.stop_check = self.kwargs['stop_check']
             query = query.filter(*profile.for_polyglot(c))
             query = query.preload(getattr(a_type, 'speaker'), getattr(a_type,'discourse'))
             print(query.cypher())
 
             results = query.all()
-            print(len(results))
+            if results is not None:
+                print(len(results))
         return query, results
 
 
@@ -155,12 +158,18 @@ class ExportQueryWorker(QueryWorker):
         with CorpusContext(config) as c:
             a_type = getattr(c, profile.to_find)
             query = c.query_graph(a_type)
+            query.call_back = self.kwargs['call_back']
+            query.stop_check = self.kwargs['stop_check']
             filters = profile.for_polyglot(c)
             query = query.filter(*filters)
             columns = export_profile.for_polyglot(c, to_find = profile.to_find)
             query = query.columns(*columns)
             print(query.cypher())
-            results = query.to_csv(export_path)
+            try:
+                results = query.to_csv(export_path)
+            except PermissionError:
+                raise(PGError('The file you specified could not be written to. Please ensure you have proper permissions and programs that lock the file (i.e., Excel) do not have it open.'))
+
         return True
 
 class DiscourseQueryWorker(QueryWorker):
