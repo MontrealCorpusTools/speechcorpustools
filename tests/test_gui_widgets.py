@@ -2,7 +2,7 @@
 import pytest
 
 from speechtools.widgets.annotation import SubannotationDialog, NoteDialog
-from speechtools.widgets.audio import AudioOutput, Generator
+from speechtools.widgets.audio import MediaPlayer
 from speechtools.widgets.base import CollapsibleWidgetPair, DataListWidget, DetailedMessageBox
 from speechtools.widgets.connection import ConnectWidget, CorporaList
 from speechtools.widgets.details import DetailsWidget
@@ -21,7 +21,7 @@ def test_notes_dialog(qtbot):
     qtbot.addWidget(w)
 
 def test_audio(qtbot):
-    w = AudioOutput()
+    w = MediaPlayer()
     qtbot.addWidget(w)
 
 def test_connection(qtbot):

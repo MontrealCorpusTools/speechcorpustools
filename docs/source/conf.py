@@ -15,15 +15,24 @@
 
 import sys
 import os
-from mock import Mock as MagicMock
+import mock
 
-class Mock(MagicMock):
-    @classmethod
-    def __getattr__(cls, name):
-            return Mock()
+MOCK_MODULES = ['polyglotdb', 'polyglotdb.config', 'polyglotdb.exceptions',
+                'polyglotdb.graph.func', 'polyglotdb.io', 'polyglotdb.io.enrichment',
+                'polyglotdb.utils', 'polyglotdb.acoustics.analysis',
+                'polyglotdb.graph.discourse',
+                'numpy', 'PyQt5',
+                'scipy', 'scipy.signal',
+                'vispy', 'vispy.geometry', 'vispy.visuals.visual',
+                'vispy.visuals', 'vispy.visuals.shaders',
+                'vispy.color', 'vispy.scene.cameras.panzoom',
+                'vispy.visuals.axis',
+                'vispy.visuals.text.text',
+                'vispy.plot.plotwidget'
+                'librosa', 'librosa.core.spectrum']
+for mod_name in MOCK_MODULES:
+    sys.modules[mod_name] = mock.Mock()
 
-MOCK_MODULES = ['polyglotdb', 'numpy', 'scipy', 'matplotlib', 'acousticsim', 'sqlalchemy']
-#sys.modules.update((mod_name, Mock()) for mod_name in MOCK_MODULES)
 import shlex
 import alabaster
 
