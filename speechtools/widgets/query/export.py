@@ -1,5 +1,6 @@
 
 
+import collections
 
 from PyQt5 import QtGui, QtCore, QtWidgets
 
@@ -9,34 +10,51 @@ from ...profiles import available_export_profiles, ExportProfile, Column
 
 from .basic import AttributeSelect as QueryAttributeSelect, SpeakerAttributeSelect
 
-import collections
+class PauseSelect(QueryAttributeSelect):
+    def __init__(self):
+        QtWidgets.QComboBox.__init__(self)
+        self.addItem('following')
+        self.addItem('previous')
+        self.addItem('duration')
+
+class AcousticSelect(QueryAttributeSelect):
+    def __init__(self):
+        QtWidgets.QComboBox.__init__(self)
+        self.addItem('mean')
+        self.addItem('max')
+        self.addItem('min')
 
 class AttributeSelect(QueryAttributeSelect):
     def __init__(self, hierarchy, to_find):
         QtWidgets.QComboBox.__init__(self)
-        present = []
-        for k,t in sorted(hierarchy.token_properties[to_find]):
-            if k == 'id':
-                continue
-            present.append(k)
-            self.addItem(k)
-        for k,t in sorted(hierarchy.type_properties[to_find]):
-            if k == 'id':
-                continue
-            if k in present:
-                continue
-            self.addItem(k)
-        self.addItem('following')
-        self.addItem('previous')
-        self.addItem('duration')
-        for k in hierarchy.highest_to_lowest:
-            if k != to_find:
+        if to_find != 'pause':
+
+            present = []
+            for k,t in sorted(hierarchy.token_properties[to_find]):
+                if k == 'id':
+                    continue
+                present.append(k)
                 self.addItem(k)
-        self.addItem('speaker')
-        self.addItem('discourse')
-        if to_find in hierarchy.subannotations:
-            for s in sorted(hierarchy.subannotations[to_find]):
-                self.addItem(s)
+            for k,t in sorted(hierarchy.type_properties[to_find]):
+                if k == 'id':
+                    continue
+                if k in present:
+                    continue
+                self.addItem(k)
+            self.addItem('following')
+            self.addItem('previous')
+            self.addItem('duration')
+            if to_find == 'word':
+                self.addItem('pause')
+            for k in hierarchy.highest_to_lowest:
+                if k != to_find:
+                    self.addItem(k)
+            self.addItem('speaker')
+            self.addItem('discourse')
+            if to_find in hierarchy.subannotations:
+                for s in sorted(hierarchy.subannotations[to_find]):
+                    self.addItem(s)
+            self.addItem('pitch')
 
 class AttributeWidget(QtWidgets.QWidget):
     finalChanged = QtCore.pyqtSignal(object)
@@ -84,6 +102,14 @@ class AttributeWidget(QtWidgets.QWidget):
         current_annotation_type = self.annotationType()
         if combobox.currentText() in self.hierarchy.annotation_types:
             widget = AttributeSelect(self.hierarchy, combobox.currentText())
+            widget.currentIndexChanged.connect(self.updateAttribute)
+            self.mainLayout.addWidget(widget)
+        elif current_annotation_type == 'pause':
+            widget = PauseSelect()
+            widget.currentIndexChanged.connect(self.updateAttribute)
+            self.mainLayout.addWidget(widget)
+        elif combobox.currentText() == 'pitch':
+            widget = AcousticSelect()
             widget.currentIndexChanged.connect(self.updateAttribute)
             self.mainLayout.addWidget(widget)
         elif combobox.currentText() in ['previous','following']:
@@ -176,6 +202,10 @@ class ColumnWidget(QtWidgets.QWidget):
         self.setLayout(mainLayout)
 
     def updateColumnName(self, name):
+        if any(name.endswith(x) for x in ['_mean', '_min', '_max']):
+            self.nameWidget.setEnabled(False)
+        else:
+            self.nameWidget.setEnabled(True)
         self.nameWidget.setText(name)
 
     def setToFind(self, to_find):

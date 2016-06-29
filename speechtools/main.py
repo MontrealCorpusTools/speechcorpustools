@@ -56,6 +56,7 @@ class LeftPane(Pane):
         self.queryWidget = QueryWidget()
         self.queryWidget.needsShrinking.connect(self.growLower)
         self.viewWidget.needsShrinking.connect(self.growUpper)
+        self.queryWidget.viewRequested.connect(self.changeDiscourse)
 
         self.splitter = CollapsibleWidgetPair(QtCore.Qt.Vertical, self.queryWidget, self.viewWidget, collapsible = 0)
 
@@ -67,8 +68,8 @@ class LeftPane(Pane):
         self.viewWidget.updateConfig(config)
         self.queryWidget.updateConfig(config)
 
-    def changeDiscourse(self, discourse):
-        self.viewWidget.changeDiscourse(discourse)
+    def changeDiscourse(self, discourse, begin = None, end = None):
+        self.viewWidget.changeDiscourse(discourse, begin, end)
 
 
 class RightPane(Pane):
@@ -138,8 +139,6 @@ class MainWindow(QtWidgets.QMainWindow):
 
         self.rightPane.connectWidget.corporaHelpBroadcast.connect(self.rightPane.helpWidget.getConnectionHelp)
 
-        self.leftPane.queryWidget.viewRequested.connect(self.rightPane.discourseWidget.changeView)
-        self.rightPane.discourseWidget.viewRequested.connect(self.leftPane.viewWidget.discourseWidget.changeView)
         self.leftPane.viewWidget.discourseWidget.nextRequested.connect(self.leftPane.queryWidget.requestNext)
         self.leftPane.viewWidget.discourseWidget.previousRequested.connect(self.leftPane.queryWidget.requestPrevious)
         self.leftPane.viewWidget.discourseWidget.markedAsAnnotated.connect(self.leftPane.queryWidget.markAnnotated)
@@ -151,8 +150,6 @@ class MainWindow(QtWidgets.QMainWindow):
         self.leftPane.queryWidget.exportHelpBroadcast.connect(self.rightPane.helpPopup.exportHelp)
         self.enrichHelpBroadcast.connect(self.rightPane.helpWidget.getEnrichHelp)
         self.leftPane.viewWidget.discourseWidget.discourseHelpBroadcast.connect(self.rightPane.helpWidget.getDiscourseHelp)
-
-
 
         self.wrapper = QtWidgets.QWidget()
         layout = QtWidgets.QHBoxLayout()
@@ -415,7 +412,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.enhancementMenu.addAction(self.phoneSubsetAct)
         self.enhancementMenu.addAction(self.pausesAct)
         self.enhancementMenu.addAction(self.utterancesAct)
-        
+
         #self.enhancementMenu.addAction(self.speechRateAct)
         #self.enhancementMenu.addAction(self.utterancePositionAct)
         self.enhancementMenu.addAction(self.analyzeAcousticsAct)
@@ -518,7 +515,7 @@ class MainWindow(QtWidgets.QMainWindow):
             self.utteranceWorker.start()
 
     def getEnrichHelp(self):
-        
+
         self.enrichHelpBroadcast.emit()
 
     def speechRate(self):
@@ -544,7 +541,9 @@ class MainWindow(QtWidgets.QMainWindow):
     def analyzeAcoustics(self):
         dialog = AnalyzeAcousticsDialog(self.corpusConfig, self)
         if dialog.exec_() == QtWidgets.QDialog.Accepted:
-            kwargs = {'config': self.corpusConfig}
+            acoustics = dialog.value()
+            kwargs = {'config': self.corpusConfig,
+                    'acoustics': acoustics}
             self.acousticWorker.setParams(kwargs)
             self.progressWidget.createProgressBar('acoustic', self.acousticWorker)
             self.progressWidget.show()

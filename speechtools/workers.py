@@ -19,7 +19,8 @@ from polyglotdb.io.enrichment import enrich_lexicon_from_csv, enrich_features_fr
 
 from polyglotdb.utils import update_sound_files, gp_language_stops, gp_speakers
 
-from polyglotdb.acoustics.analysis import get_pitch, get_formants, acoustic_analysis
+from polyglotdb.acoustics.analysis import acoustic_analysis
+from polyglotdb.graph.discourse import LongSoundFile
 
 class FunctionWorker(QtCore.QThread):
     updateProgress = QtCore.pyqtSignal(object)
@@ -33,6 +34,7 @@ class FunctionWorker(QtCore.QThread):
     def __init__(self):
         super(FunctionWorker, self).__init__()
         self.stopped = False
+        self.finished = False
 
     def setParams(self, kwargs):
         self.kwargs = kwargs
@@ -84,14 +86,17 @@ class QueryWorker(FunctionWorker):
                 exc_type, exc_value, exc_traceback = sys.exc_info()
                 e = ''.join(traceback.format_exception(exc_type, exc_value,
                                           exc_traceback))
+            self.finished = True
             self.errorEncountered.emit(e)
             return
         if self.stopped:
             time.sleep(0.1)
+            self.finished = True
             self.finishedCancelling.emit()
             return
         print('finished')
         self.dataReady.emit(results)
+        self.finished = True
 
     def run_query(self):
         profile = self.kwargs['profile']
@@ -158,90 +163,41 @@ class ExportQueryWorker(QueryWorker):
             results = query.to_csv(export_path)
         return True
 
-class DiscourseAudioWorker(QueryWorker):
-    def run_query(self):
-        config = self.kwargs['config']
-        discourse = self.kwargs['discourse']
-        with CorpusContext(config) as c:
-            audio_file = c.discourse_sound_file(discourse)
-            if audio_file is not None:
-                c.sql_session.expunge(audio_file)
-        return audio_file
-
 class DiscourseQueryWorker(QueryWorker):
     def run_query(self):
-        a_type = self.kwargs['word_type']
-        s_type = self.kwargs['seg_type']
+        begin = self.kwargs['begin']
+        end = self.kwargs['end']
         config = self.kwargs['config']
         discourse = self.kwargs['discourse']
         with CorpusContext(config) as c:
-            word = getattr(c,a_type)
-            q = c.query_graph(word).filter(word.discourse.name == discourse)
-            preloads = []
-            if a_type in c.hierarchy.subannotations:
-                for s in c.hierarchy.subannotations[a_type]:
-                    preloads.append(getattr(word, s))
-            for t in c.hierarchy.get_lower_types(a_type):
-                preloads.append(getattr(word, t))
-            q = q.preload(*preloads)
-            q = q.order_by(word.begin)
-            #annotations = c.query_acoustics(q).pitch('reaper').all()
-            annotations = q.all()
-        return annotations
-
-class BoundaryGeneratorWorker(QueryWorker):
-    pass
-
-class SpectrogramGeneratorWorker(QueryWorker):
-    pass
-
-class FormantsGeneratorWorker(QueryWorker):
-    def run(self):
-        print('beginning formants work')
-        config = self.kwargs['config']
-        sound_file = self.kwargs['sound_file']
-        with CorpusContext(config) as c:
-            formant_list = get_formants(c, sound_file, calculate = False)
-            formant_dict = {'F1': np.array([[x.time, x.F1] for x in formant_list]),
-                            'F2': np.array([[x.time, x.F2] for x in formant_list]),
-                            'F3': np.array([[x.time, x.F3] for x in formant_list])}
-        self.dataReady.emit(formant_dict)
-        print('finished formants work')
-
-class PitchGeneratorWorker(QueryWorker):
-    def run(self):
-        print('beginning pitch work')
-        config = self.kwargs['config']
-        sound_file = self.kwargs['sound_file']
-        with CorpusContext(config) as c:
-            pitch_list = get_pitch(c, sound_file, calculate = False)
-            pitch_list = np.array([[x.time, x.F0] for x in pitch_list])
-        self.dataReady.emit(pitch_list)
-        print('finished pitch work')
+            discourse = c.inspect_discourse(discourse, begin, end)
+        return discourse, begin, end
 
 class AudioFinderWorker(QueryWorker):
-    def run(self):
+    def run_query(self):
         config = self.kwargs['config']
         directory = self.kwargs['directory']
         with CorpusContext(config) as c:
             update_sound_files(c, directory)
             all_found = c.has_all_sound_files()
-        self.dataReady.emit(all_found)
+        return all_found
 
 class AudioCheckerWorker(QueryWorker):
-    def run(self):
+    def run_query(self):
         config = self.kwargs['config']
         with CorpusContext(config) as c:
             all_found = c.has_all_sound_files()
-        self.dataReady.emit(all_found)
+        return all_found
 
 class AcousticAnalysisWorker(QueryWorker):
     def run_query(self):
         config = self.kwargs['config']
+        acoustics = self.kwargs['acoustics']
         with CorpusContext(config) as c:
             acoustic_analysis(c,
                             stop_check = self.kwargs['stop_check'],
-                            call_back = self.kwargs['call_back'])
+                            call_back = self.kwargs['call_back'],
+                            acoustics = acoustics)
         return True
 
 class PauseEncodingWorker(QueryWorker):
@@ -419,3 +375,70 @@ class HierarchicalPropertiesWorker(QueryWorker):
             if stop_check():
                 return False
         return True
+
+class PrecedingCacheWorker(QueryWorker):
+    def run_query(self):
+        print('starting to cache preceding')
+        config = self.kwargs['config']
+        discourse = self.kwargs['discourse']
+        begin = self.kwargs['begin']
+        end = self.kwargs['end']
+        with CorpusContext(config) as c:
+            h_type = c.hierarchy.highest
+            highest = getattr(c, h_type)
+            q = c.query_graph(highest)
+            q = q.filter(highest.discourse.name == discourse)
+            q = q.filter(highest.begin < end)
+            q = q.filter(highest.end > begin)
+            preloads = []
+            if h_type in c.hierarchy.subannotations:
+                for s in c.hierarchy.subannotations[h_type]:
+                    preloads.append(getattr(highest, s))
+            for t in c.hierarchy.get_lower_types(h_type):
+                preloads.append(getattr(highest, t))
+            preloads.append(highest.speaker)
+            preloads.append(highest.discourse)
+            q = q.preload(*preloads)
+            q = q.order_by(highest.begin)
+            results = [x for x in q.all()]
+        print('finished query')
+        return results
+
+class FollowingCacheWorker(QueryWorker):
+    def run_query(self):
+        print('starting to cache following')
+        config = self.kwargs['config']
+        discourse = self.kwargs['discourse']
+        begin = self.kwargs['begin']
+        end = self.kwargs['end']
+        with CorpusContext(config) as c:
+            h_type = c.hierarchy.highest
+            highest = getattr(c, h_type)
+            q = c.query_graph(highest)
+            q = q.filter(highest.discourse.name == discourse)
+            q = q.filter(highest.begin < end)
+            q = q.filter(highest.end > begin)
+            preloads = []
+            if h_type in c.hierarchy.subannotations:
+                for s in c.hierarchy.subannotations[h_type]:
+                    preloads.append(getattr(highest, s))
+            for t in c.hierarchy.get_lower_types(h_type):
+                preloads.append(getattr(highest, t))
+            preloads.append(highest.speaker)
+            preloads.append(highest.discourse)
+            q = q.preload(*preloads)
+            q = q.order_by(highest.begin)
+            print('getting results')
+            results = [x for x in q.all()]
+        print('finished query')
+        return results
+
+class AudioCacheWorker(QueryWorker):
+    def run_query(self):
+        print('beginning audio caching')
+        sound_file = self.kwargs['sound_file']
+        begin = self.kwargs['begin']
+        end = self.kwargs['end']
+        f = LongSoundFile(sound_file, begin, end)
+        print('finished audio caching')
+        return f

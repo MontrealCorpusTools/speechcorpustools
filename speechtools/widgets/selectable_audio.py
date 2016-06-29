@@ -1,19 +1,20 @@
 import numpy as np
-from scipy.io import wavfile
-from scipy.signal import lfilter
+import librosa
 import time
 
 from PyQt5 import QtGui, QtCore, QtWidgets, QtMultimedia
 
-from .audio import AudioOutput, Generator
+from .base import DetailedMessageBox
+
+from .audio import MediaPlayer
 
 from .annotation import SubannotationDialog, NoteDialog
 
 from .structure import HierarchyWidget
 
-from ..workers import PitchGeneratorWorker, FormantsGeneratorWorker
-
 from ..plot import AnnotationWidget, SpectralWidget
+
+from ..workers import PrecedingCacheWorker, FollowingCacheWorker, AudioCacheWorker
 
 class SelectableAudioWidget(QtWidgets.QWidget):
     discourseHelpBroadcast = QtCore.pyqtSignal()
@@ -25,20 +26,13 @@ class SelectableAudioWidget(QtWidgets.QWidget):
     def __init__(self, parent = None):
         super(SelectableAudioWidget, self).__init__(parent)
         #self.setMinimumHeight(600)
-        self.signal = None
-        self.preemph_signal = None
-        self.sr = None
-        self.pitch = None
-        self.formants = None
-        self.annotations = None
+        self.discourse_model = None
         self.hierarchy = None
         self.config = None
-        self.min_time = None
-        self.max_time = None
-        self.min_vis_time = None
-        self.max_vis_time = None
+
         self.min_selected_time = None
         self.max_selected_time = None
+        self.channel = 0
         self.selected_boundary = None
         self.selected_time = None
         self.allowSubEdit = True
@@ -51,7 +45,7 @@ class SelectableAudioWidget(QtWidgets.QWidget):
         toplayout = QtWidgets.QHBoxLayout()
         bottomlayout = QtWidgets.QHBoxLayout()
 
-        
+
 
         self.setFocusPolicy(QtCore.Qt.StrongFocus)
 
@@ -80,18 +74,18 @@ class SelectableAudioWidget(QtWidgets.QWidget):
         self.helpButton.setText("help")
         self.helpButton.clicked.connect(self.discourseHelpBroadcast.emit)
         self.helpButton.setSizePolicy(QtWidgets.QSizePolicy.Fixed,QtWidgets.QSizePolicy.Fixed)
-      
+
         vhelpLayout = QtWidgets.QHBoxLayout()
         vhelpLayout.addStretch(1)
-        vhelpLayout.addWidget(self.helpButton)      
-        
+        vhelpLayout.addWidget(self.helpButton)
+
         helpLayout = QtWidgets.QVBoxLayout()
         helpLayout.addStretch(1)
-        helpLayout.addLayout(vhelpLayout)        
+        helpLayout.addLayout(vhelpLayout)
 
         layout.addLayout(bottomlayout)
 
-        
+
 
         mainlayout = QtWidgets.QHBoxLayout()
         mainlayout.addLayout(layout)
@@ -102,30 +96,105 @@ class SelectableAudioWidget(QtWidgets.QWidget):
         self.hierarchyWidget.toggleSpectrogram.connect(self.spectrumWidget.toggle_spectrogram)
         self.hierarchyWidget.togglePitch.connect(self.spectrumWidget.toggle_pitch)
         self.hierarchyWidget.toggleFormants.connect(self.spectrumWidget.toggle_formants)
+        self.hierarchyWidget.channelChanged.connect(self.updateChannel)
 
         mainlayout.addWidget(self.hierarchyWidget)
 
         self.setLayout(mainlayout)
 
-        self.pitchWorker = PitchGeneratorWorker()
-        self.pitchWorker.dataReady.connect(self.updatePitch)
-
-        self.formantsWorker = FormantsGeneratorWorker()
-        self.formantsWorker.dataReady.connect(self.updateFormants)
-
-        self.m_audioOutput = AudioOutput()
-        self.m_audioOutput.notify.connect(self.notified)
+        #self.m_audioOutput = AudioOutput()
+        self.m_audioOutput = MediaPlayer()
+        self.m_audioOutput.error.connect(self.showError)
+        self.m_audioOutput.positionChanged.connect(self.notified)
         self.m_audioOutput.stateChanged.connect(self.handleAudioState)
 
-        self.m_generator = Generator(self.m_audioOutput.m_format, self)
+        self.view_begin = None
+        self.view_end = None
+        self.audio = None
+        self.cache_window = 5
+
+        self.precedingCacheWorker = PrecedingCacheWorker()
+        self.precedingCacheWorker.dataReady.connect(self.addPreceding)
+        self.precedingCacheWorker.errorEncountered.connect(self.showError)
+        self.followingCacheWorker = FollowingCacheWorker()
+        self.followingCacheWorker.dataReady.connect(self.addFollowing)
+        self.followingCacheWorker.errorEncountered.connect(self.showError)
+
+        self.audioCacheWorker = AudioCacheWorker()
+        self.audioCacheWorker.dataReady.connect(self.updateAudio)
+        self.audioCacheWorker.errorEncountered.connect(self.showError)
+
+    def showError(self, e):
+        reply = DetailedMessageBox()
+        reply.setDetailedText(str(e))
+        ret = reply.exec_()
+
+    def updateAudio(self, audio):
+        self.audio = audio
+        if self.audio is not None:
+            p = QtCore.QUrl.fromLocalFile(self.audio.path)
+            self.m_audioOutput.setMedia(QtMultimedia.QMediaContent(p))
+            self.spectrumWidget.update_sampling_rate(self.audio.sr)
+            self.hierarchyWidget.setNumChannels(self.audio.num_channels)
+
+    def cachePreceding(self):
+        if self.audio is not None:
+            if self.audio.cached_begin != 0 and self.view_begin < self.audio.cached_begin + self.cache_window:
+                self.audioCacheWorker.setParams({'sound_file':self.discourse_model.sound_file, 'begin': self.view_begin, 'end': self.view_end})
+                self.audioCacheWorker.start()
+        if not self.precedingCacheWorker.finished:
+            return
+        if self.discourse_model.cached_begin != 0 and self.view_begin < self.discourse_model.cached_begin + self.cache_window:
+            kwargs = {'config': self.config,
+                        'begin': self.discourse_model.cached_begin - 2 * self.cache_window,
+                        'end': self.discourse_model.cached_begin,
+                        'discourse': self.discourse_model.name}
+            self.precedingCacheWorker.setParams(kwargs)
+            self.precedingCacheWorker.start()
+
+
+    def cacheFollowing(self):
+        if self.audio is not None:
+            if self.audio.cached_end != self.audio.duration and self.view_end > self.audio.cached_end - self.cache_window:
+                self.audioCacheWorker.setParams({'sound_file':self.discourse_model.sound_file, 'begin': self.view_begin, 'end': self.view_end})
+                self.audioCacheWorker.start()
+        if not self.followingCacheWorker.finished:
+            return
+        if self.view_end > self.discourse_model.cached_end - self.cache_window:
+            end = self.discourse_model.cached_end + 2 * self.cache_window
+            if self.view_end > end:
+                end = self.view_end + 2 * self.cache_window
+            kwargs = {'config': self.config,
+                        'begin': self.discourse_model.cached_end,
+                        'end': end,
+                        'discourse': self.discourse_model.name}
+            self.followingCacheWorker.setParams(kwargs)
+            self.followingCacheWorker.start()
+
+    def addPreceding(self, results):
+        if self.discourse_model is None:
+            return
+        self.discourse_model.add_preceding(results)
+        self.updateVisible()
+
+    def addFollowing(self, results):
+        if self.discourse_model is None:
+            return
+        self.discourse_model.add_following(results)
+        self.updateVisible()
+
+    def updateChannel(self, channel):
+        self.channel = channel
+        self.updateVisible()
 
     def handleAudioState(self, state):
         if state == QtMultimedia.QAudio.StoppedState:
             if self.min_selected_time is None:
-                min_time = self.min_vis_time
+                min_time = self.view_begin
             else:
                 min_time = self.min_selected_time
             self.updatePlayTime(min_time)
+            self.m_audioOutput.setPosition(0)
 
     def updatePlayTime(self, time):
         if time is None:
@@ -135,12 +204,8 @@ class SelectableAudioWidget(QtWidgets.QWidget):
         self.audioWidget.update_play_time(time)
         self.spectrumWidget.update_play_time(pos)
 
-    def notified(self):
-        min_time = self.m_generator.min_time
-        if min_time is None:
-            return
-        time = self.m_audioOutput.processedUSecs() / 1000000
-        time += min_time
+    def notified(self, position):
+        time = position / 1000
         self.updatePlayTime(time)
 
     def focusNextPrevChild(self, next_):
@@ -170,51 +235,48 @@ class SelectableAudioWidget(QtWidgets.QWidget):
                     self.markedAsAnnotated.emit(annotated_value)
                     self.selectionChanged.emit(self.selected_annotation)
         elif event.key() == QtCore.Qt.Key_Tab:
-            if self.signal is None:
+            if self.audio is None:
                 return
-            if self.m_audioOutput.state() == QtMultimedia.QAudio.StoppedState or \
-                self.m_audioOutput.state() == QtMultimedia.QAudio.IdleState:
+            if self.m_audioOutput.state() == QtMultimedia.QMediaPlayer.StoppedState or \
+                self.m_audioOutput.state() == QtMultimedia.QMediaPlayer.PausedState:
                 if self.min_selected_time is None:
-                    min_time = self.min_vis_time
-                    max_time = self.max_vis_time
+                    min_time = self.view_begin
+                    max_time = self.view_end
                 else:
                     min_time = self.min_selected_time
                     max_time = self.max_selected_time
-                #print(min_time, max_time, max_time - min_time)
-                self.m_generator.generateData(min_time, max_time)
-                self.m_audioOutput.reset()
-                if self.m_audioOutput.state() == QtMultimedia.QAudio.StoppedState:
-                    self.m_audioOutput.start(self.m_generator)
-                #print(self.m_audioOutput.error(), self.m_audioOutput.state())
-                #print(self.m_generator.pos())
-
-            elif self.m_audioOutput.state() == QtMultimedia.QAudio.ActiveState:
-                self.m_audioOutput.suspend()
-            elif self.m_audioOutput.state() == QtMultimedia.QAudio.SuspendedState:
-                self.m_audioOutput.resume()
+                self.m_audioOutput.setMinTime(min_time)
+                self.m_audioOutput.setMaxTime(max_time)
+                #self.m_audioOutput.stop()
+                if self.m_audioOutput.state() == QtMultimedia.QMediaPlayer.StoppedState:
+                    self.m_audioOutput.play()
+            elif self.m_audioOutput.state() == QtMultimedia.QMediaPlayer.PlayingState:
+                self.m_audioOutput.pause()
+            elif self.m_audioOutput.state() == QtMultimedia.QMediaPlayer.PausedState:
+                self.m_audioOutput.play()
         elif event.key() == QtCore.Qt.Key_Left:
             print(event.modifiers())
             if event.modifiers() & QtCore.Qt.ShiftModifier:
                 print('shift left')
             else:
-                vis = self.max_vis_time - self.min_vis_time
+                vis = self.view_end - self.view_begin
                 to_pan = 0.1 * vis * -1
                 self.pan(to_pan)
         elif event.key() == QtCore.Qt.Key_Right:
             if event.modifiers() == QtCore.Qt.ShiftModifier:
                 print('shift right')
             else:
-                vis = self.max_vis_time - self.min_vis_time
+                vis = self.view_end - self.view_begin
                 to_pan = 0.1 * vis
                 self.pan(to_pan)
         elif event.key() == QtCore.Qt.Key_Up:
-            vis = self.max_vis_time - self.min_vis_time
-            center_time = self.min_vis_time + vis / 2
+            vis = self.view_end - self.view_begin
+            center_time = self.view_begin + vis / 2
             factor = (1 + 0.007) ** (-30)
             self.zoom(factor, center_time)
         elif event.key() == QtCore.Qt.Key_Down:
-            vis = self.max_vis_time - self.min_vis_time
-            center_time = self.min_vis_time + vis / 2
+            vis = self.view_end - self.view_begin
+            center_time = self.view_begin + vis / 2
             factor = (1 + 0.007) ** (30)
             self.zoom(factor, center_time)
         elif event.key() == QtCore.Qt.Key_Comma:
@@ -256,69 +318,10 @@ class SelectableAudioWidget(QtWidgets.QWidget):
             print(event.key())
 
     def find_annotation(self, key, time):
-        annotation = None
-        for a in self.annotations:
-            if a.end < self.min_vis_time:
-                continue
-            if isinstance(key, tuple):
-                elements = getattr(a, key[0])
-                for e in elements:
-                    subs = getattr(e, key[1])
-                    for s in subs:
-                        if time >= s.begin and time <= s.end:
-                            annotation = s
-                            break
-                    if annotation is not None:
-                        break
-            elif key != a._type:
-                elements = getattr(a, key)
-                for e in elements:
-                    if time >= e.begin and time <= e.end:
-                        annotation = e
-                        break
-            elif time >= a.begin and time <= a.end:
-                annotation = a
-            if annotation is not None:
-                break
-        return annotation
+        return self.discourse_model.find_annotation(key, time, channel = self.channel)
 
     def get_acoustics(self, time):
-        acoustics = {}
-        if self.pitch is None:
-            acoustics['F0'] = None
-        else:
-            for i,p in enumerate(self.pitch):
-                if p[0] > time:
-                    if i != 0:
-                        prev_time = self.pitch[i-1][0]
-                        prev_pitch = self.pitch[i-1][1]
-                        dur = p[0] - prev_time
-                        cur_time = time - prev_time
-                        percent = cur_time / dur
-                        acoustics['F0'] = prev_pitch * percent + p[1] * (1 - percent)
-                    else:
-                        acoustics['F0'] = p[1]
-                    break
-            else:
-                acoustics['F0'] = None
-        if self.formants is None:
-            acoustics['F1'] = None
-            acoustics['F2'] = None
-            acoustics['F3'] = None
-        else:
-            for k,v in self.formants.items():
-                for i,f in enumerate(v):
-                    if f[0] > time:
-                        if i != 0:
-                            prev_time = v[i-1][0]
-                            prev_formant = v[i-1][1]
-                            dur = f[0] - prev_time
-                            cur_time = time - prev_time
-                            percent = cur_time / dur
-                            acoustics[k] = prev_formant * percent + f[1] * (1 - percent)
-                        else:
-                            acoustics[k] = f[1]
-                        break
+        acoustics = self.discourse_model.get_acoustics(time)
         self.acousticsSelected.emit(acoustics)
 
     def on_mouse_press(self, event):
@@ -367,7 +370,7 @@ class SelectableAudioWidget(QtWidgets.QWidget):
             self.max_selected_time = annotation.end
             self.audioWidget.update_selection(self.min_selected_time, self.max_selected_time)
 
-            if self.signal is None:
+            if self.audio is None:
                 return
             self.updatePlayTime(self.min_selected_time)
             event.handled = True
@@ -391,13 +394,13 @@ class SelectableAudioWidget(QtWidgets.QWidget):
             self.min_selected_time = annotation.begin
             self.max_selected_time = annotation.end
             self.audioWidget.update_selection(self.min_selected_time, self.max_selected_time)
-            if self.signal is None:
+            if self.audio is None:
                 return
             self.updatePlayTime(self.min_selected_time)
         elif event.button == 1 and is_single_click and not event.native.modifiers() & QtCore.Qt.ShiftModifier and \
                 self.selected_annotation is None:
             time = self.audioWidget.transform_pos_to_time(event.pos)
-            if self.signal is None:
+            if self.audio is None:
                 return
             self.updatePlayTime(time)
 
@@ -418,7 +421,7 @@ class SelectableAudioWidget(QtWidgets.QWidget):
             self.min_selected_time = annotation.begin
             self.max_selected_time = annotation.end
             self.audioWidget.update_selection(self.min_selected_time, self.max_selected_time)
-            if self.signal is not None:
+            if self.audio is not None:
                 if self.m_audioOutput.state() == QtMultimedia.QAudio.SuspendedState:
                     self.m_audioOutput.stop()
                     self.m_audioOutput.reset()
@@ -501,7 +504,7 @@ class SelectableAudioWidget(QtWidgets.QWidget):
                         if ind != -1:
                             self.selected_time = p[0]
                             break
-                #self.updatePlayTime(self.min_vis_time)
+                #self.updatePlayTime(self.view_begin)
                 self.audioWidget.update_selected_boundary(self.selected_time, *self.selected_boundary)
 
                 self.audioWidget.update_selection_time(self.selected_time)
@@ -527,54 +530,54 @@ class SelectableAudioWidget(QtWidgets.QWidget):
         event.handled = True
 
     def zoom(self, factor, center_time):
-        if self.max_vis_time is None:
+        if self.discourse_model is None:
             return
-        if self.max_time is None:
-            return
-        if self.max_vis_time == self.max_time and self.min_vis_time == self.min_time and factor > 1:
+        if self.view_end == self.discourse_model.max_time \
+                    and self.view_begin == 0 and factor > 1:
             return
 
-        left_space = center_time - self.min_vis_time
-        right_space = self.max_vis_time - center_time
+        left_space = center_time - self.view_begin
+        right_space = self.view_end - center_time
 
         min_time = center_time - left_space * factor
         max_time = center_time + right_space * factor
 
-        if max_time > self.max_time:
-            max_time = self.max_time
-        if min_time < self.min_time:
-            min_time = self.min_time
-        self.max_vis_time = max_time
-        self.min_vis_time = min_time
+        if max_time > self.discourse_model.max_time:
+            max_time = self.discourse_model.max_time
+        if min_time < 0:
+            min_time = 0
+        self.view_begin = min_time
+        self.view_end = max_time
         self.updateVisible()
 
     def pan(self, time_delta):
-        if self.max_vis_time is None:
+        if self.discourse_model is None:
             return
-        if self.max_time is None:
+        if self.view_end == self.discourse_model.max_time and time_delta > 0:
             return
-        if self.max_vis_time == self.max_time and time_delta > 0:
+        if self.view_begin == 0 and time_delta < 0:
             return
-        if self.min_vis_time == self.min_time and time_delta < 0:
-            return
-        min_time = self.min_vis_time + time_delta
-        max_time = self.max_vis_time + time_delta
-        if max_time > self.max_time:
-            new_delta = time_delta - (max_time - self.max_time)
-            min_time = self.min_vis_time + new_delta
-            max_time = self.max_vis_time + new_delta
-        if min_time < self.min_time:
-            new_delta = time_delta - (min_time - self.min_time)
-            min_time = self.min_vis_time + new_delta
-            max_time = self.max_vis_time + new_delta
-        self.min_vis_time = min_time
-        self.max_vis_time = max_time
+
+        min_time = self.view_begin + time_delta
+        max_time = self.view_end + time_delta
+        if max_time > self.discourse_model.max_time:
+            new_delta = time_delta - (max_time - self.discourse_model.max_time)
+            min_time = self.view_begin + new_delta
+            max_time = self.view_end + new_delta
+        if min_time < 0:
+            new_delta = time_delta - (min_time)
+            min_time = self.view_begin + new_delta
+            max_time = self.view_end + new_delta
+        self.view_begin = min_time
+        self.view_end = max_time
         self.updateVisible()
 
     def updateVisible(self):
-        if self.annotations is None:
+        if self.discourse_model is None:
             return
-        self.audioWidget.update_time_bounds(self.min_vis_time, self.max_vis_time)
+        self.cacheFollowing()
+        self.cachePreceding()
+        self.audioWidget.update_time_bounds(self.view_begin, self.view_end)
         self.drawSignal()
         self.drawAnnotations()
         self.drawFormants()
@@ -586,12 +589,12 @@ class SelectableAudioWidget(QtWidgets.QWidget):
         index = 0
         selected_annotation = None
         for a in self.annotations:
-            if a.end < self.min_vis_time:
+            if a.end < self.view_begin:
                 continue
             if isinstance(key, tuple):
                 elements = getattr(a, key[0])
                 for e in elements:
-                    if e.end < self.min_vis_time:
+                    if e.end < self.view_begin:
                         continue
                     subs = getattr(e, key[1])
                     for s in subs:
@@ -613,10 +616,10 @@ class SelectableAudioWidget(QtWidgets.QWidget):
             if selected_annotation is not None:
                 break
         mod = ind % 6
-        if self.selected_time > self.max_vis_time:
-            self.selected_time = self.max_vis_time
-        elif self.selected_time < self.min_vis_time:
-            self.selected_time = self.min_vis_time
+        if self.selected_time > self.view_end:
+            self.selected_time = self.view_end
+        elif self.selected_time < self.view_begin:
+            self.selected_time = self.view_begin
         if mod == 0:
             selected_annotation.update_properties(begin = self.selected_time)
         else:
@@ -630,131 +633,68 @@ class SelectableAudioWidget(QtWidgets.QWidget):
         self.audioWidget.update_hierarchy(self.hierarchy)
 
     def drawSignal(self):
-        if self.signal is None or self.sr is None:
+        if self.audio is None:
             self.audioWidget.update_signal(None)
             self.spectrumWidget.update_signal(None)
         else:
-            min_samp = np.floor(self.min_vis_time * self.sr)
-            max_samp = np.ceil(self.max_vis_time * self.sr)
-            desired = self.audioQtWidget.width() * 3
-            actual = max_samp - min_samp
-            factor = int(actual/desired)
-            if factor == 0:
-                factor = 1
-
-            sig = self.signal[min_samp:max_samp:factor]
-
-            t = np.arange(sig.shape[0]) / (self.sr/factor) + self.min_vis_time
-            data = np.array((t, sig)).T
-            #sp_begin = time.time()
-            self.audioWidget.update_signal(data)
-            #print('wave_time', time.time() - sp_begin)
-            #sp_begin = time.time()
-            self.spectrumWidget.update_signal(self.preemph_signal[min_samp:max_samp])
-            #print('spec_time', time.time() - sp_begin)
-            self.updatePlayTime(self.min_vis_time)
-            #sp_begin = time.time()
-            #print('aud_time', time.time() - sp_begin)
-
-    def updateAnnotations(self, annotations):
-        self.annotations = annotations
-        if self.signal is None:
-            self.min_time = 0
-            if len(self.annotations):
-                self.max_time = self.annotations[-1].end
+            if self.view_end - self.view_begin < 15:
+                sig = self.audio.visible_signal(self.view_begin, self.view_end, self.channel)
+                sr = self.audio.sr
+            elif self.view_end - self.view_begin < 60:
+                sig = self.audio.visible_downsampled_1000(self.view_begin, self.view_end, self.channel)
+                sr = 1000
             else:
-                self.max_time = 30
-            if self.min_vis_time is None:
-                self.min_vis_time = 0
-                self.max_vis_time = self.max_time
-        min_time, max_time = self.min_vis_time, self.max_vis_time
-        self.audioWidget.update_time_bounds(min_time, max_time)
-        self.drawAnnotations()
+                sig = self.audio.visible_downsampled_100(self.view_begin, self.view_end, self.channel)
+                sr = 100
+            preemph_signal  = self.audio.visible_preemph_signal(self.view_begin, self.view_end, self.channel)
+
+            t = np.arange(sig.shape[0]) / (sr) + self.view_begin
+
+            data = np.array((t, sig)).T
+            begin = time.time()
+            self.audioWidget.update_signal(data)
+            begin = time.time()
+            self.spectrumWidget.update_sampling_rate(self.audio.sr)
+            self.spectrumWidget.update_signal(preemph_signal)
+            self.updatePlayTime(self.view_begin)
+
+    def updateDiscourseModel(self, discourse_model):
+        discourse_model, begin, end = discourse_model
+        self.discourse_model = discourse_model
+        self.audio = None
+        if discourse_model.sound_file is not None:
+            self.audioCacheWorker.setParams({'sound_file':self.discourse_model.sound_file, 'begin': begin, 'end': end})
+            self.audioCacheWorker.start()
+        if begin is None:
+            begin = 0
+        if end is None or end > self.discourse_model.max_time:
+            end = self.discourse_model.max_time
+        self.view_begin, self.view_end = begin, end
+        self.audioWidget.update_time_bounds(self.view_begin, self.view_end)
+        self.updateVisible()
 
     def drawAnnotations(self):
-        if self.annotations is None:
-            self.audioWidget.update_annotations(None)
-        else:
-            annos = [x for x in self.annotations if x.end > self.min_vis_time
-                and x.begin < self.max_vis_time]
-            self.audioWidget.update_annotations(annos)
-
-    def updatePitch(self, pitch):
-        self.pitch = pitch
-        self.drawPitch()
+        annotations = self.discourse_model.annotations(begin = self.view_begin, end = self.view_end, channel = self.channel)
+        self.audioWidget.update_annotations(annotations)
 
     def drawPitch(self):
-        if self.pitch is not None:
-            pitch = [[x[0] - self.min_vis_time, x[1]]
-                        for x in self.pitch
-                        if x[0] > self.min_vis_time - 0.1
-                        and x[0] < self.max_vis_time + 0.1]
-            self.spectrumWidget.update_pitch(pitch)
-        else:
-            self.spectrumWidget.update_pitch([])
-
-    def updateFormants(self, formants):
-        self.formants = formants
-        self.drawFormants()
+        pitch = self.discourse_model.pitch_from_begin(begin = self.view_begin, end = self.view_end, channel = self.channel)
+        self.spectrumWidget.update_pitch(pitch)
 
     def drawFormants(self):
-        if self.formants is not None:
-            self.spectrumWidget.update_formants({'F1':[[x[0] - self.min_vis_time, x[1]] for x in self.formants['F1'] if x[0] > self.min_vis_time - 0.1 and x[0] < self.max_vis_time + 0.1],
-                                    'F2':[[x[0] - self.min_vis_time, x[1]] for x in self.formants['F2'] if x[0] > self.min_vis_time - 0.1 and x[0] < self.max_vis_time + 0.1],
-                                    'F3':[[x[0] - self.min_vis_time, x[1]] for x in self.formants['F3'] if x[0] > self.min_vis_time - 0.1 and x[0] < self.max_vis_time + 0.1],})
-        else:
-            self.spectrumWidget.update_formants({})
-
-    def updateAudio(self, audio_file):
-        if audio_file is not None:
-            alpha = 0.95
-            kwargs = {'config':self.config, 'sound_file': audio_file, 'algorithm':'reaper'}
-            self.pitch = None
-            self.pitchWorker.setParams(kwargs)
-            self.pitchWorker.start()
-            kwargs = {'config':self.config, 'sound_file': audio_file, 'algorithm':'acousticsim'}
-            self.formants = None
-            self.formantsWorker.setParams(kwargs)
-            self.formantsWorker.start()
-            self.sr, self.signal = wavfile.read(audio_file.filepath)
-            self.signal = self.signal / 32768
-            self.preemph_signal = lfilter([1., -alpha], 1, self.signal)
-
-            if self.m_generator.isOpen():
-                self.m_generator.close()
-            self.m_generator.set_signal(self.signal)
-            if self.min_time is None:
-                self.min_time = 0
-                self.max_time = len(self.signal) / self.sr
-            if self.min_vis_time is None:
-                self.min_vis_time = 0
-                self.max_vis_time = self.max_time
-            if self.max_vis_time - self.min_vis_time > 30:
-                self.max_vis_time = self.min_vis_time + 30
-            self.spectrumWidget.update_sampling_rate(self.sr)
-            self.audioWidget.update_time_bounds(self.min_vis_time, self.max_vis_time)
-            self.drawSignal()
-        else:
-            self.signal = None
-            self.sr = None
-            self.spectrumWidget.update_sampling_rate(self.sr)
+        formants = self.discourse_model.formants_from_begin(begin = self.view_begin, end = self.view_end, channel = self.channel)
+        self.spectrumWidget.update_formants(formants)
 
     def changeView(self, begin, end):
-        self.min_vis_time = begin
-        self.max_vis_time = end
+        if self.discourse_model is None:
+            return
+        self.discourse_model.update_times(begin, end)
         self.selectionChanged.emit(None)
-        #self.updateVisible()
 
     def clearDiscourse(self):
-        self.min_time = None
-        self.max_time = None
+        self.discourse_model = None
+
         self.min_selected_time = None
         self.max_selected_time = None
-        self.pitch = None
-        self.formants = None
-        self.signal = None
-        self.drawPitch()
-        self.drawFormants()
-        self.drawSignal()
         self.audioWidget.update_selection(self.min_selected_time, self.max_selected_time)
-        #self.audioWidget.clear()
+        self.need_update = False
