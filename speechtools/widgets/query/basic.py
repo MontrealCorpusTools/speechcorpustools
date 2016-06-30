@@ -590,6 +590,10 @@ class BasicFilterBox(QtWidgets.QGroupBox):
         self.subset_types = annotation_types[2]
 
     def disable(self, to_find):
+        for i in range(len(self.grid2)):
+            checkbox = self.grid2.itemAt(i).widget()
+            if to_find[0] != 'phone':
+                checkbox.setChecked(False)
         for i in range(len(self.grid)):
             checkbox = self.grid.itemAt(i).widget()
             checkbox.setChecked(False)
@@ -645,9 +649,9 @@ class BasicFilterBox(QtWidgets.QGroupBox):
                 self.stayunchecked.append(checkbox)
             if checkbox.text() == 'phones before a word-final consonant' and 'phone' in self.annotation_types and ('consonant' in self.subset_tokens['phone'] or 'consonant' in self.subset_types['phone']):
                 checkbox.setEnabled(True)
-        for i in range(len(self.grid2)):
-            checkbox = self.grid2.itemAt(i).widget()
-            #checkbox.setChecked(False)
+        if len(self.stayunchecked) > 2:
+            self.stayunchecked.pop(0)
+            self.stayunchecked.pop(1)
 
     def addColumn(self):
         senderwidget = self.sender()
@@ -713,7 +717,7 @@ class BasicFilterBox(QtWidgets.QGroupBox):
                 self.filterToAdd2.emit(f2)
             if sender == 'all vowels in monosyllabic words':
                 self.filterToAdd3.emit(f3)
-        else:
+        elif label in self.checked:
             self.checked.remove(label)
             self.checkedsenders.remove(sender)
             label.append('delete')
@@ -760,8 +764,14 @@ class BasicFilterBox(QtWidgets.QGroupBox):
                 checkbox = self.grid2.itemAt(i).widget()
                 if checkbox not in self.stayunchecked:
                     checkbox.setEnabled(True)
+        if len(self.checkedsenders) == 0:
+            for i in range(len(self.grid2)):
+                checkbox = self.grid2.itemAt(i).widget()
+                if checkbox not in self.stayunchecked:
+                    checkbox.setEnabled(True)
 
     def uncheck(self, to_uncheck):
+        checked = []
         if to_uncheck == ['word', 'alignment', 'Right aligned with']:
             for i in range(len(self.grid)):
                 wcheckbox = self.grid.itemAt(i).widget()
@@ -792,13 +802,15 @@ class BasicFilterBox(QtWidgets.QGroupBox):
                 wcheckbox = self.grid.itemAt(i).widget()
                 if wcheckbox.text() == 'phones before a consonant':
                     wcheckbox.setChecked(False)
-
-    def uncheckall(self):
-        for i in range(len(self.grid2)):
-            checkbox = self.grid2.itemAt(i).widget()
-            #if checkbox not in self.stayunchecked:
-             #   checkbox.setEnabled(True)
-            #checkbox.setChecked(False)
+        for i in range(len(self.grid)):
+            checkbox = self.grid.itemAt(i).widget()
+            if checkbox.isChecked() == True:
+                checked.append(checkbox)
+        if len(checked) == 0:
+            for i in range(len(self.grid2)):
+                checkbox = self.grid2.itemAt(i).widget()
+                if checkbox not in self.stayunchecked:
+                    checkbox.setEnabled(True)
 
 
 class FilterBox(QtWidgets.QGroupBox):
@@ -966,57 +978,6 @@ class FilterBox(QtWidgets.QGroupBox):
         if len(label) > 5 and label == ['phone', 'subset', '==', 'syllabic', 'delete', 'delete2'] or label == ['phone', 'following', 'alignment', 'Right aligned with', 'word', 'delete', 'delete2']:
             self.clearFilters()
 
-    '''def fillInColumn2(self, label2):
-        widget = FilterWidget(self.config, self.to_find)
-        widget.needsDelete.connect(self.deleteWidget)
-        self.mainLayout.addWidget(widget)
-
-        if len(label2) > 5:
-            unchecked = []
-            for i in range(len(self.mainLayout)):
-                match = self.mainLayout.itemAt(i)
-                checkdefault = match.widget().attributeWidget.mainLayout.itemAt(0).widget().currentText()
-                if label2[1] == 'syllable':
-                    checkdefault2 = match.widget().valueWidget.mainLayout.itemAt(0).widget().currentText()
-                    if checkdefault2 == label2[3] and checkdefault == label2[1]:
-                        unchecked.append(match.widget())
-                if label2[1] == 'following':
-                    checkdefault2 = match.widget().valueWidget.mainLayout.itemAt(0).widget().currentText()
-                    if checkdefault2 == label2[3] and checkdefault == label2[1]:
-                        unchecked.append(match.widget())
-
-            if len(unchecked) > 0:
-                for i in range(len(unchecked)):
-                    todelete = unchecked[i]
-                    self.mainLayout.removeWidget(todelete)
-                    todelete.setParent(None)
-                    todelete.deleteLater()
-
-        if len(label2) > 5 and label == ['phone', 'subset', '==', 'syllabic', 'delete', 'delete2'] or label == ['phone', 'following', 'alignment', 'Right aligned with', 'word', 'delete', 'delete2']:
-            print ('hi')
-            self.clearFilters()
-
-    def fillInColumn3(self, label3):
-        widget = FilterWidget(self.config, self.to_find)
-        widget.needsDelete.connect(self.deleteWidget)
-        self.mainLayout.addWidget(widget)
-
-        if len(label3) > 5:
-            unchecked = []
-            for i in range(len(self.mainLayout)):
-                match = self.mainLayout.itemAt(i)
-                checkdefault = match.widget().attributeWidget.mainLayout.itemAt(0).widget().currentText()
-                checkdefault2 = match.widget().valueWidget.mainLayout.itemAt(0).widget().currentText()
-                if checkdefault2 == label3[3] and checkdefault == label3[1]:
-                    unchecked.append(match.widget())
-
-            if len(unchecked) > 0:
-                for i in range(len(unchecked)):
-                    todelete = unchecked[i]
-                    self.mainLayout.removeWidget(todelete)
-                    todelete.setParent(None)
-                    todelete.deleteLater()'''
-
 class BasicQuery(QtWidgets.QWidget):
     needsHelp = QtCore.pyqtSignal(object)
     changetofind = QtCore.pyqtSignal(object)
@@ -1040,9 +1001,6 @@ class BasicQuery(QtWidgets.QWidget):
         self.basicFilterWidget.filterToAdd2.connect(self.filterWidget.addFilter)
         self.basicFilterWidget.filterToAdd3.connect(self.filterWidget.addFilter)
         self.basicFilterWidget.labelout.connect(self.filterWidget.fillInColumn)
-        self.filterWidget.uncheckall.connect(self.basicFilterWidget.uncheckall)
-        #self.basicFilterWidget.labelout2.connect(self.filterWidget.fillInColumn2)
-        #self.basicFilterWidget.labelout3.connect(self.filterWidget.fillInColumn3)
         self.filterWidget.checkboxToUncheck.connect(self.basicFilterWidget.uncheck)
 
         self.filterWidget.needsHelp.connect(self.needsHelp.emit)
