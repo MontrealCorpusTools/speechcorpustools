@@ -73,6 +73,7 @@ class LeftPane(Pane):
         self.viewWidget.changeDiscourse(discourse, begin, end)
 
 
+
 class RightPane(Pane):
     configUpdated = QtCore.pyqtSignal(object)
     discourseChanged = QtCore.pyqtSignal(str)
@@ -140,6 +141,9 @@ class MainWindow(QtWidgets.QMainWindow):
 
         self.rightPane.connectWidget.corporaHelpBroadcast.connect(self.rightPane.helpWidget.getConnectionHelp)
 
+
+        self.leftPane.queryWidget.viewRequested.connect(self.rightPane.discourseWidget.changeView)
+        self.rightPane.discourseWidget.viewRequested.connect(self.leftPane.viewWidget.discourseWidget.changeView)
         self.leftPane.viewWidget.discourseWidget.nextRequested.connect(self.leftPane.queryWidget.requestNext)
         self.leftPane.viewWidget.discourseWidget.previousRequested.connect(self.leftPane.queryWidget.requestPrevious)
         self.leftPane.viewWidget.discourseWidget.markedAsAnnotated.connect(self.leftPane.queryWidget.markAnnotated)
@@ -147,12 +151,11 @@ class MainWindow(QtWidgets.QMainWindow):
         self.leftPane.viewWidget.discourseWidget.acousticsSelected.connect(self.rightPane.acousticsWidget.showDetails)
         self.mainWidget = CollapsibleWidgetPair(QtCore.Qt.Horizontal, self.leftPane,self.rightPane)
         self.leftPane.queryWidget.needsHelp.connect(self.rightPane.helpWidget.getHelpInfo)
-        self.leftPane.queryWidget.queryForm.queryToRun.connect(self.runQuery)
-        self.leftPane.queryWidget.queryForm.queryToExport.connect(self.exportQuery)
-
         self.leftPane.queryWidget.exportHelpBroadcast.connect(self.rightPane.helpPopup.exportHelp)
         self.enrichHelpBroadcast.connect(self.rightPane.helpWidget.getEnrichHelp)
         self.leftPane.viewWidget.discourseWidget.discourseHelpBroadcast.connect(self.rightPane.helpWidget.getDiscourseHelp)
+        self.leftPane.queryWidget.queryForm.queryToRun.connect(self.runQuery)
+        self.leftPane.queryWidget.queryForm.queryToExport.connect(self.exportQuery)
 
         self.wrapper = QtWidgets.QWidget()
         layout = QtWidgets.QHBoxLayout()
@@ -554,7 +557,6 @@ class MainWindow(QtWidgets.QMainWindow):
             self.utteranceWorker.start()
 
     def getEnrichHelp(self):
-
         self.enrichHelpBroadcast.emit()
 
     def speechRate(self):
