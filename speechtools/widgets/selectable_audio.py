@@ -45,11 +45,7 @@ class SelectableAudioWidget(QtWidgets.QWidget):
         toplayout = QtWidgets.QHBoxLayout()
         bottomlayout = QtWidgets.QHBoxLayout()
 
-<<<<<<< HEAD
-        
-=======
 
->>>>>>> MontrealCorpusTools/master
 
         self.setFocusPolicy(QtCore.Qt.StrongFocus)
 
@@ -78,20 +74,6 @@ class SelectableAudioWidget(QtWidgets.QWidget):
         self.helpButton.setText("help")
         self.helpButton.clicked.connect(self.discourseHelpBroadcast.emit)
         self.helpButton.setSizePolicy(QtWidgets.QSizePolicy.Fixed,QtWidgets.QSizePolicy.Fixed)
-<<<<<<< HEAD
-      
-        vhelpLayout = QtWidgets.QHBoxLayout()
-        vhelpLayout.addStretch(1)
-        vhelpLayout.addWidget(self.helpButton)      
-        
-        helpLayout = QtWidgets.QVBoxLayout()
-        helpLayout.addStretch(1)
-        helpLayout.addLayout(vhelpLayout)        
-
-        layout.addLayout(bottomlayout)
-
-        
-=======
 
         vhelpLayout = QtWidgets.QHBoxLayout()
         vhelpLayout.addStretch(1)
@@ -104,7 +86,6 @@ class SelectableAudioWidget(QtWidgets.QWidget):
         layout.addLayout(bottomlayout)
 
 
->>>>>>> MontrealCorpusTools/master
 
         mainlayout = QtWidgets.QHBoxLayout()
         mainlayout.addLayout(layout)
