@@ -474,6 +474,7 @@ class BasicFilterBox(QtWidgets.QGroupBox):
 
         self.checked = []
         self.checkedsenders = []
+        self.stayunchecked = []
 
         self.simplenames = ['utterance-initial words', 'utterance-final words', 'penultimate syllables', 'syllable-initial phones', 'syllable-final phones', 'phones before a consonant']
         self.complexnames = ['all vowels in monosyllabic words', 'phones before a word-final consonant']
@@ -595,41 +596,26 @@ class BasicFilterBox(QtWidgets.QGroupBox):
         if to_find[0] == 'utterance':
             for i in range(len(self.grid)):
                 checkbox = self.grid.itemAt(i).widget()
-                if checkbox.text() != 'utterance-final words' and checkbox.text() != 'utterance-initial words':
-                    checkbox.setEnabled(True)
-                else:
-                    checkbox.setEnabled(False)
-                if checkbox.text() == 'penultimate syllables' and ('syllable' not in self.annotation_types or 'word' not in self.annotation_types):
-                    checkbox.setEnabled(False)
-                if (checkbox.text() == 'syllable-initial phones' or checkbox.text() == 'syllable-final phones') and ('syllable' not in self.annotation_types or 'phone' not in self.annotation_types):
-                    checkbox.setEnabled(False)
-                if checkbox.text() == 'phones before a consonant' and ('phones' not in self.annotation_types or ('consonant' not in self.subset_tokens and 'consonant' not in self.subset_types)):
-                    checkbox.setEnabled(False)
+                checkbox.setEnabled(False)
         if to_find[0] == 'word':
             for i in range(len(self.grid)):
                 checkbox = self.grid.itemAt(i).widget()
-                if checkbox.text() != 'penultimate syllables':
+                if checkbox.text() != 'penultimate syllables' and checkbox.text() != 'syllable-initial phones' and checkbox.text() != 'syllable-final phones' and checkbox.text() != 'phones before a consonant':
                     checkbox.setEnabled(True)
                 else:
                     checkbox.setEnabled(False)
                 if (checkbox.text() == 'utterance-final words' or checkbox.text() == 'utterance-initial words') and ('utterance' not in self.annotation_types or 'word' not in self.annotation_types):
-                    checkbox.setEnabled(False)
-                if (checkbox.text() == 'syllable-initial phones' or checkbox.text() == 'syllable-final phones') and ('syllable' not in self.annotation_types or 'phone' not in self.annotation_types):
-                    checkbox.setEnabled(False)
-                if checkbox.text() == 'phones before a consonant' and ('phones' not in self.annotation_types or ('consonant' not in self.subset_tokens and 'consonant' not in self.subset_types)):
                     checkbox.setEnabled(False)
         if to_find[0] == 'syllable':
             for i in range(len(self.grid)):
                 checkbox = self.grid.itemAt(i).widget()
-                if checkbox.text() != 'syllable-initial phones' and checkbox.text() != 'syllable-final phones':
+                if checkbox.text() != 'syllable-initial phones' and checkbox.text() != 'syllable-final phones' and checkbox.text() != 'phones before a consonant':
                     checkbox.setEnabled(True)
                 else:
                     checkbox.setEnabled(False)
                 if (checkbox.text() == 'utterance-final words' or checkbox.text() == 'utterance-initial words') and ('utterance' not in self.annotation_types or 'word' not in self.annotation_types):
                     checkbox.setEnabled(False)
                 if checkbox.text() == 'penultimate syllables' and ('syllable' not in self.annotation_types or 'word' not in self.annotation_types):
-                    checkbox.setEnabled(False)
-                if checkbox.text() == 'phones before a consonant' and ('phones' not in self.annotation_types or ('consonant' not in self.subset_tokens and 'consonant' not in self.subset_types)):
                     checkbox.setEnabled(False)
         if to_find[0] == 'phone':
             for i in range(len(self.grid)):
@@ -641,8 +627,27 @@ class BasicFilterBox(QtWidgets.QGroupBox):
                     checkbox.setEnabled(False)
                 if checkbox.text() == 'penultimate syllables' and ('syllable' not in self.annotation_types or 'word' not in self.annotation_types):
                     checkbox.setEnabled(False)
-                if checkbox.text() == 'phones before a consonant' and ('phones' not in self.annotation_types or ('consonant' not in self.subset_tokens and 'consonant' not in self.subset_types)):
+                if checkbox.text() == 'phones before a consonant' and ('phones' not in self.annotation_types or ('consonant' not in self.subset_tokens['phone'] and 'consonant' not in self.subset_types['phone'])):
                     checkbox.setEnabled(False)
+        for i in range(len(self.grid2)):
+            checkbox = self.grid2.itemAt(i).widget()
+            if checkbox.text() == 'all vowels in monosyllabic words' and ('phone' not in self.annotation_types or 'word' not in self.annotation_types or
+            ('syllabic' not in self.subset_tokens['phone'] and 'syllabic' not in self.subset_types['phone'])):
+                checkbox.setEnabled(False)
+                self.stayunchecked.append(checkbox)
+            if checkbox.text() == 'all vowels in monosyllabic words' and 'phone' in self.annotation_types and 'word' in self.annotation_types and ('syllabic' in self.subset_tokens['phone'] or 'syllabic' in self.subset_types['phone']):
+                checkbox.setEnabled(True)
+        for i in range(len(self.grid2)):
+            checkbox = self.grid2.itemAt(i).widget()
+            if checkbox.text() == 'phones before a word-final consonant' and ('phone' not in self.annotation_types or
+            ('consonant' not in self.subset_tokens['phone'] and 'consonant' not in self.subset_types['phone'])):
+                checkbox.setEnabled(False)
+                self.stayunchecked.append(checkbox)
+            if checkbox.text() == 'phones before a word-final consonant' and 'phone' in self.annotation_types and ('consonant' in self.subset_tokens['phone'] or 'consonant' in self.subset_types['phone']):
+                checkbox.setEnabled(True)
+        for i in range(len(self.grid2)):
+            checkbox = self.grid2.itemAt(i).widget()
+            #checkbox.setChecked(False)
 
     def addColumn(self):
         senderwidget = self.sender()
@@ -743,7 +748,7 @@ class BasicFilterBox(QtWidgets.QGroupBox):
                         checkbox.setEnabled(False)
                     if checkbox.text() == 'penultimate syllables' and ('syllable' not in self.annotation_types or 'word' not in self.annotation_types):
                         checkbox.setEnabled(False)
-                    if checkbox.text() == 'phones before a consonant' and ('phones' not in self.annotation_types or ('consonant' not in self.subset_tokens and 'consonant' not in self.subset_types)):
+                    if checkbox.text() == 'phones before a consonant' and ('phones' not in self.annotation_types or ('consonant' not in self.subset_tokens['phone'] and 'consonant' not in self.subset_types['phone'])):
                         checkbox.setEnabled(False)
 
         if len(self.checkedsenders) > 0 and 'all vowels in monosyllabic words' not in self.checkedsenders and 'phones before a word-final consonant' not in self.checkedsenders:
@@ -753,7 +758,8 @@ class BasicFilterBox(QtWidgets.QGroupBox):
         else:
             for i in range(len(self.grid2)):
                 checkbox = self.grid2.itemAt(i).widget()
-                checkbox.setEnabled(True)
+                if checkbox not in self.stayunchecked:
+                    checkbox.setEnabled(True)
 
     def uncheck(self, to_uncheck):
         if to_uncheck == ['word', 'alignment', 'Right aligned with']:
@@ -787,10 +793,18 @@ class BasicFilterBox(QtWidgets.QGroupBox):
                 if wcheckbox.text() == 'phones before a consonant':
                     wcheckbox.setChecked(False)
 
+    def uncheckall(self):
+        for i in range(len(self.grid2)):
+            checkbox = self.grid2.itemAt(i).widget()
+            #if checkbox not in self.stayunchecked:
+             #   checkbox.setEnabled(True)
+            #checkbox.setChecked(False)
+
 
 class FilterBox(QtWidgets.QGroupBox):
     checkboxToUncheck = QtCore.pyqtSignal(object)
     tofind = QtCore.pyqtSignal(object)
+    uncheckall = QtCore.pyqtSignal()
 
     needsHelp = QtCore.pyqtSignal(object)
 
@@ -851,6 +865,7 @@ class FilterBox(QtWidgets.QGroupBox):
             if item.widget() is None:
                 continue
             item.widget().deleteLater()
+        self.uncheckall.emit()
 
     def setConfig(self, config):
         self.config = config
@@ -906,7 +921,7 @@ class FilterBox(QtWidgets.QGroupBox):
                     todelete.deleteLater()
 
         if len(label) > 5 and label != ['phone', 'subset', '==', 'syllabic', 'delete', 'delete2'] and label != ['phone', 'following', 'alignment', 'Right aligned with', 'word', 'delete', 'delete2']:
-            unchecked = []
+            unchecked = []   
             for i in range(len(self.mainLayout)):
                 match = self.mainLayout.itemAt(i)
                 if match.widget().attributeWidget.mainLayout.itemAt(1) != None:
@@ -922,7 +937,9 @@ class FilterBox(QtWidgets.QGroupBox):
                         if checkdefault2 == label[3] and checkdefault == label[1] and checkdefault3 == label[0]:
                             unchecked.append(match.widget())
                     if label[0] == 'syllable':
-                            checkdefault2 = match.widget().valueWidget.mainLayout.itemAt(0).widget().currentText()
+                        checkdefault2 = match.widget().valueWidget.mainLayout.itemAt(0).widget().currentText()
+                        checkdefault3 = match.widget().attributeWidget.mainLayout.itemAt(0).widget().currentText()
+                        if checkdefault2 == label[3] and checkdefault == label[2] and checkdefault3 == label[1]:
                             unchecked.append(match.widget())
                 else:
                     checkdefault = match.widget().attributeWidget.mainLayout.itemAt(0).widget().currentText()
@@ -935,6 +952,8 @@ class FilterBox(QtWidgets.QGroupBox):
                         if checkdefault2 == label[3] and checkdefault == label[1]:
                             unchecked.append(match.widget())
                     if label[0] == 'syllable':
+                        checkdefault2 = match.widget().attributeWidget.mainLayout.itemAt(0).widget().currentText()
+                        if checkdefault == label[1] and checkdefault2 == label[2]:
                             unchecked.append(match.widget())
 
             if len(unchecked) > 0:
@@ -947,7 +966,7 @@ class FilterBox(QtWidgets.QGroupBox):
         if len(label) > 5 and label == ['phone', 'subset', '==', 'syllabic', 'delete', 'delete2'] or label == ['phone', 'following', 'alignment', 'Right aligned with', 'word', 'delete', 'delete2']:
             self.clearFilters()
 
-    def fillInColumn2(self, label2):
+    '''def fillInColumn2(self, label2):
         widget = FilterWidget(self.config, self.to_find)
         widget.needsDelete.connect(self.deleteWidget)
         self.mainLayout.addWidget(widget)
@@ -973,6 +992,10 @@ class FilterBox(QtWidgets.QGroupBox):
                     todelete.setParent(None)
                     todelete.deleteLater()
 
+        if len(label2) > 5 and label == ['phone', 'subset', '==', 'syllabic', 'delete', 'delete2'] or label == ['phone', 'following', 'alignment', 'Right aligned with', 'word', 'delete', 'delete2']:
+            print ('hi')
+            self.clearFilters()
+
     def fillInColumn3(self, label3):
         widget = FilterWidget(self.config, self.to_find)
         widget.needsDelete.connect(self.deleteWidget)
@@ -992,7 +1015,7 @@ class FilterBox(QtWidgets.QGroupBox):
                     todelete = unchecked[i]
                     self.mainLayout.removeWidget(todelete)
                     todelete.setParent(None)
-                    todelete.deleteLater()
+                    todelete.deleteLater()'''
 
 class BasicQuery(QtWidgets.QWidget):
     needsHelp = QtCore.pyqtSignal(object)
@@ -1008,8 +1031,8 @@ class BasicQuery(QtWidgets.QWidget):
         self.filterWidget = FilterBox()
         self.basicFilterWidget = BasicFilterBox()
 
-        self.changeconfig.connect(self.basicFilterWidget.store)
         self.changetofind.connect(self.filterWidget.clearFilters)
+        self.changeconfig.connect(self.basicFilterWidget.store)
         self.changetofind.connect(self.basicFilterWidget.disable)
         self.basicFilterWidget.deletecomplex.connect(self.filterWidget.clearFilters)
         self.basicFilterWidget.toFindToAdd.connect(self.checkboxUpdateToFind)
@@ -1017,8 +1040,9 @@ class BasicQuery(QtWidgets.QWidget):
         self.basicFilterWidget.filterToAdd2.connect(self.filterWidget.addFilter)
         self.basicFilterWidget.filterToAdd3.connect(self.filterWidget.addFilter)
         self.basicFilterWidget.labelout.connect(self.filterWidget.fillInColumn)
-        self.basicFilterWidget.labelout2.connect(self.filterWidget.fillInColumn2)
-        self.basicFilterWidget.labelout3.connect(self.filterWidget.fillInColumn3)
+        self.filterWidget.uncheckall.connect(self.basicFilterWidget.uncheckall)
+        #self.basicFilterWidget.labelout2.connect(self.filterWidget.fillInColumn2)
+        #self.basicFilterWidget.labelout3.connect(self.filterWidget.fillInColumn3)
         self.filterWidget.checkboxToUncheck.connect(self.basicFilterWidget.uncheck)
 
         self.filterWidget.needsHelp.connect(self.needsHelp.emit)
