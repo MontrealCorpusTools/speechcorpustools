@@ -154,6 +154,8 @@ class QueryForm(QtWidgets.QWidget):
     def __init__(self):
         super(QueryForm, self).__init__()
         self.config = None
+        #self.hierarchy = hierarchy
+        #self.to_find = to_find
 
         mainLayout = QtWidgets.QVBoxLayout()
         headerLayout = QtWidgets.QHBoxLayout()
@@ -161,7 +163,6 @@ class QueryForm(QtWidgets.QWidget):
         mainLayout.setContentsMargins(10,0,10,0)
 
         self.queryWidget = BasicQuery()
-
 
         self.profileWidget = QueryProfileWidget()
         self.profileWidget.profileSelected.connect(self.queryWidget.updateProfile)

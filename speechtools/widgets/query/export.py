@@ -690,6 +690,8 @@ class ExportProfileDialog(QtWidgets.QDialog):
 
             self.toFindWidget.currentIndexChanged.connect(self.updateToFind)
 
+        #self.BasicFilterBox = BasicFilterBox(hierarchy, to_find)
+
         layout = QtWidgets.QFormLayout()
         mainlayout = QtWidgets.QVBoxLayout()
         layout.addRow('Linguistic objects to find', self.toFindWidget)
