@@ -10,6 +10,8 @@ from ...profiles import available_export_profiles, ExportProfile, Column
 
 from .basic import AttributeSelect as QueryAttributeSelect, SpeakerAttributeSelect
 
+import collections
+
 class PauseSelect(QueryAttributeSelect):
     def __init__(self):
         QtWidgets.QComboBox.__init__(self)
@@ -367,6 +369,7 @@ class BasicColumnBox(QtWidgets.QGroupBox):
             if name == '':
                 continue
             labelposition = self.names.index(name)/self.numcolumns
+
             if labelposition != int(labelposition) and name != 'discourse' and name != 'speaker':
                 widget = QtWidgets.QCheckBox(name)
                 widget.setMinimumSize(175, 35)
@@ -685,6 +688,8 @@ class ExportProfileDialog(QtWidgets.QDialog):
                 self.toFindWidget.addItem(at)
 
             self.toFindWidget.currentIndexChanged.connect(self.updateToFind)
+
+        #self.BasicFilterBox = BasicFilterBox(hierarchy, to_find)
 
         layout = QtWidgets.QFormLayout()
         mainlayout = QtWidgets.QVBoxLayout()
