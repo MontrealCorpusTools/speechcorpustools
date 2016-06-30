@@ -79,7 +79,7 @@ class ExportWidget(QtWidgets.QWidget):
         layout.addWidget(self.exportButton)
         self.setLayout(layout)
 
-       
+
     def beginExport(self):
         a = self.sender()
         name = a.text()
@@ -150,7 +150,8 @@ class SaveDialog(QtWidgets.QDialog):
 class QueryForm(QtWidgets.QWidget):
     finishedRunning = QtCore.pyqtSignal(object)
     exportHelpBroadcast = QtCore.pyqtSignal(object)
-
+    queryToRun = QtCore.pyqtSignal(object)
+    queryToExport = QtCore.pyqtSignal(object, object, object)
     def __init__(self):
         super(QueryForm, self).__init__()
         self.config = None
@@ -169,7 +170,7 @@ class QueryForm(QtWidgets.QWidget):
         self.executeButton = QtWidgets.QPushButton('Run query')
         self.exportWidget = ExportWidget()
         self.exportWidget.exportQuery.connect(self.exportQuery)
-       
+
 
         self.saveButton = QtWidgets.QPushButton('Save query profile')
         self.executeButton.clicked.connect(self.runQuery)
@@ -187,16 +188,6 @@ class QueryForm(QtWidgets.QWidget):
 
         self.setLayout(mainLayout)
 
-        self.queryWorker = QueryWorker()
-        self.queryWorker.dataReady.connect(self.setResults)
-        self.queryWorker.errorEncountered.connect(self.showError)
-        self.queryWorker.errorEncountered.connect(self.finishQuery)
-        self.queryWorker.dataReady.connect(self.finishQuery)
-
-        self.exportWorker = ExportQueryWorker()
-        self.exportWorker.errorEncountered.connect(self.showError)
-        self.exportWorker.errorEncountered.connect(self.finishExport)
-        self.exportWorker.dataReady.connect(self.finishExport)
 
     def finishExport(self):
         self.exportWidget.refresh()
@@ -225,11 +216,6 @@ class QueryForm(QtWidgets.QWidget):
     def currentProfile(self):
         return self.queryWidget.profile()
 
-    def showError(self, e):
-        reply = DetailedMessageBox()
-        reply.setDetailedText(str(e))
-        ret = reply.exec_()
-
     def exportQuery(self, profile_name):
         if self.config is None:
             return
@@ -251,27 +237,15 @@ class QueryForm(QtWidgets.QWidget):
         if not path:
             self.exportWidget.readyExport()
             return
-        kwargs = {}
-        kwargs['config'] = self.config
-        kwargs['profile'] = self.currentProfile()
-        kwargs['export_profile'] = export_profile
-        kwargs['path'] = path
-        self.exportWorker.setParams(kwargs)
-        self.exportWorker.start()
+        self.queryToExport.emit(self.currentProfile(), export_profile, path)
 
 
     def runQuery(self):
-        self.queryWorker.stop()
         if self.config is None:
             return
         self.executeButton.setText('Query running...')
         self.setEnabled(False)
-        kwargs = {}
-        kwargs['config'] = self.config
-        kwargs['profile'] = self.currentProfile()
-
-        self.queryWorker.setParams(kwargs)
-        self.queryWorker.start()
+        self.queryToRun.emit(self.currentProfile())
 
     def updateConfig(self, config):
         self.config = config
@@ -284,10 +258,6 @@ class QueryForm(QtWidgets.QWidget):
         self.exportWidget.setDisabled(False)
         self.saveButton.setDisabled(False)
         self.queryWidget.updateConfig(config)
-
-
-    def setResults(self, results):
-        self.finishedRunning.emit(results)
 
 class QueryResults(QtWidgets.QWidget):
     def __init__(self, results):
@@ -322,7 +292,6 @@ class QueryWidget(CollapsibleTabWidget):
         self.queryForm = QueryForm()
 
         self.queryForm.queryWidget.needsHelp.connect(self.needsHelp.emit)
-        self.queryForm.finishedRunning.connect(self.updateResults)
         self.setTabsClosable(True)
         self.tabCloseRequested.connect(self.closeTab)
         self.addTab(self.queryForm, 'New query')
@@ -337,7 +306,7 @@ class QueryWidget(CollapsibleTabWidget):
         widget.setParent(None)
         widget.deleteLater()
 
-        
+
     def updateConfig(self, config):
         self.config = config
         self.queryForm.updateConfig(config)
