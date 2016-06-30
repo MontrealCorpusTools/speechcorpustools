@@ -196,11 +196,7 @@ class ColumnWidget(QtWidgets.QWidget):
         self.helpButton.setText("help")
         self.helpButton.clicked.connect(self.sendForHelp)
         self.helpButton.setSizePolicy(QtWidgets.QSizePolicy.Fixed,QtWidgets.QSizePolicy.Fixed)
-<<<<<<< HEAD
-        
-=======
 
->>>>>>> MontrealCorpusTools/master
         mainLayout.addWidget(self.helpButton)
 
         self.setLayout(mainLayout)
@@ -234,10 +230,6 @@ class ColumnWidget(QtWidgets.QWidget):
         options = self.attributeWidget.attribute()
         self.exportHelpBroadcast.emit(options)
 
-<<<<<<< HEAD
-class ColumnBox(QtWidgets.QGroupBox):
-    exportHelpBroadcast = QtCore.pyqtSignal(object)
-=======
 class BasicColumnBox(QtWidgets.QGroupBox):
     columnToAdd = QtCore.pyqtSignal(object)
 
@@ -529,8 +521,6 @@ class BasicColumnBox(QtWidgets.QGroupBox):
 class ColumnBox(QtWidgets.QGroupBox):
     checkboxToUncheck = QtCore.pyqtSignal(object)
     exportHelpBroadcast = QtCore.pyqtSignal(object)
-
->>>>>>> MontrealCorpusTools/master
     def __init__(self, hierarchy, to_find):
         super(ColumnBox, self).__init__('Columns')
         self.hierarchy = hierarchy
@@ -594,10 +584,6 @@ class ColumnBox(QtWidgets.QGroupBox):
 
         self.mainLayout.addWidget(widget)
 
-<<<<<<< HEAD
-
-        
-=======
     def fillInColumn(self, label):
         if len(label) < 3 or label == ['previous', 'phone', 'syllable_position'] or label == ['following', 'following', 'syllable', 'duration']:
             widget = ColumnWidget(self.hierarchy, self.to_find)
@@ -653,7 +639,6 @@ class ColumnBox(QtWidgets.QGroupBox):
             todelete.setParent(None)
             todelete.deleteLater()
 
->>>>>>> MontrealCorpusTools/master
     def setColumns(self, columns):
         #Clear columns somehow
         while self.mainLayout.count() > 1:
@@ -725,11 +710,6 @@ class ExportProfileDialog(QtWidgets.QDialog):
         self.cancelButton.clicked.connect(self.reject)
 
         self.columnWidget.exportHelpBroadcast.connect(self.exportHelpBroadcast.emit)
-<<<<<<< HEAD
-     
-=======
-
->>>>>>> MontrealCorpusTools/master
 
         aclayout.addWidget(self.acceptButton)
         aclayout.addWidget(self.saveButton)
