@@ -144,7 +144,8 @@ class SelectableAudioWidget(QtWidgets.QWidget):
                 self.audioCacheWorker.start()
         if not self.precedingCacheWorker.finished:
             return
-        if self.discourse_model.cached_begin != 0 and self.view_begin < self.discourse_model.cached_begin + self.cache_window:
+        if self.discourse_model.cached_begin != self.discourse_model.speech_begin and self.view_begin < self.discourse_model.cached_begin + self.cache_window:
+            print('beginning!')
             kwargs = {'config': self.config,
                         'begin': self.discourse_model.cached_begin - 2 * self.cache_window,
                         'end': self.discourse_model.cached_begin,
@@ -160,7 +161,7 @@ class SelectableAudioWidget(QtWidgets.QWidget):
                 self.audioCacheWorker.start()
         if not self.followingCacheWorker.finished:
             return
-        if self.view_end > self.discourse_model.cached_end - self.cache_window:
+        if self.discourse_model.cached_end != self.discourse_model.speech_end and self.view_end > self.discourse_model.cached_end - self.cache_window:
             end = self.discourse_model.cached_end + 2 * self.cache_window
             if self.view_end > end:
                 end = self.view_end + 2 * self.cache_window
