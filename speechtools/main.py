@@ -142,8 +142,6 @@ class MainWindow(QtWidgets.QMainWindow):
         self.rightPane.connectWidget.corporaHelpBroadcast.connect(self.rightPane.helpWidget.getConnectionHelp)
 
 
-        self.leftPane.queryWidget.viewRequested.connect(self.rightPane.discourseWidget.changeView)
-        self.rightPane.discourseWidget.viewRequested.connect(self.leftPane.viewWidget.discourseWidget.changeView)
         self.leftPane.viewWidget.discourseWidget.nextRequested.connect(self.leftPane.queryWidget.requestNext)
         self.leftPane.viewWidget.discourseWidget.previousRequested.connect(self.leftPane.queryWidget.requestPrevious)
         self.leftPane.viewWidget.discourseWidget.markedAsAnnotated.connect(self.leftPane.queryWidget.markAnnotated)
