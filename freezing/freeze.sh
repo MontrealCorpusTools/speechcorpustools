@@ -11,7 +11,7 @@ if [ `uname` == Darwin ]; then
         --exclude-module sphinx \
         --exclude-module docutils \
         --exclude-module scikits.samplerate \
-        --hidden-import setuptools
+        --hidden-import setuptools \
         speechtools/command_line/sct.py
 
 fi
