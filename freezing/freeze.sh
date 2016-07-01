@@ -2,7 +2,7 @@
 
 
 if [ `uname` == Darwin ]; then
-    pyinstaller -F --clean -y \
+    pyinstaller -w --clean -y \
         --additional-hooks-dir=freezing/hooks \
         --exclude-module matplotlib \
         --exclude-module tkinter \
