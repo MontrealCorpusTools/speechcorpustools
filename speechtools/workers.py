@@ -34,7 +34,7 @@ class FunctionWorker(QtCore.QThread):
     def __init__(self):
         super(FunctionWorker, self).__init__()
         self.stopped = False
-        self.finished = False
+        self.finished = True
 
     def setParams(self, kwargs):
         self.kwargs = kwargs
@@ -63,6 +63,7 @@ class FunctionWorker(QtCore.QThread):
 class QueryWorker(FunctionWorker):
     connectionIssues = QtCore.pyqtSignal()
     def run(self):
+        finished = False
         time.sleep(0.1)
         print('beginning')
         try:
