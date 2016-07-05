@@ -11,11 +11,7 @@ Contents:
 .. toctree::
       :maxdepth: 4
 
-   introduction.rst
-   
-   importing.rst
-   queries.rst
-   apireference.rst
+   introduction.rst   
 
    tutorial/tutorial.rst
    additional/tour.rst

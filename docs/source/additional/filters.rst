@@ -111,5 +111,3 @@ This is where the "following" and "previous" options come into play. We can use 
 
 For a full list of filters and their uses, see the section on `building queries <http://sct.readthedocs.io/en/latest/additional/buildingqueries.html>`_
 
-
-For a full list of filters and their meanings, see the section on `building queries <http://sct.readthedocs.io/en/latest/additional/buildingqueries.html>`_
