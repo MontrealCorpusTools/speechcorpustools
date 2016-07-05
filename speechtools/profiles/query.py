@@ -45,12 +45,20 @@ class Filter(object):
                     value = getattr(value, getattr(corpus_context, a))
                 else:
                     value = getattr(value, a)
+
         else:
             value = self.value
+      
+      
+        boolValue = False
+        if type(value) == bool and value == True: 
+            boolValue = True
 
         if self.operator == '==':
             return att == value
         elif self.operator == '!=':
+            if boolValue:
+                return att == None
             return att != value
         elif self.operator == '>':
             return att > value
