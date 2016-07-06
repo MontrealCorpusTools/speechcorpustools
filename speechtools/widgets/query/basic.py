@@ -214,12 +214,16 @@ class ValueWidget(QtWidgets.QWidget):
             item.widget().deleteLater()
         self.compWidget = NonScrollingComboBox()
         self.compWidget.setSizePolicy(QtWidgets.QSizePolicy.Fixed,QtWidgets.QSizePolicy.Fixed)
+        
+
+
         if new_type == 'alignment':
             self.compWidget.addItem('Right aligned with')
             self.compWidget.addItem('Left aligned with')
             self.compWidget.addItem('Not right aligned with')
             self.compWidget.addItem('Not left aligned with')
             self.valueWidget = AttributeWidget(self.config, self.to_find, alignment = True)
+
         elif new_type == 'subset':
             self.compWidget.addItem('==')
             self.valueWidget = NonScrollingComboBox()
@@ -239,46 +243,52 @@ class ValueWidget(QtWidgets.QWidget):
             self.compWidget.addItem('<=')
             self.valueWidget = QtWidgets.QLineEdit()
         elif new_type == str:
-            self.compWidget.currentIndexChanged.connect(self.updateValueWidget)
-            self.compWidget.addItem('==')
-            self.compWidget.addItem('!=')
-            self.compWidget.addItem('regex')
-            self.mainLayout.addWidget(self.compWidget)
+            
             if self.hierarchy.has_type_property(annotation, label):
                 with CorpusContext(self.config) as c:
                     if label == 'label':
                         self.levels = c.lexicon.list_labels(annotation)
                     else:
                         self.levels = c.lexicon.get_property_levels(label, annotation)
-                self.updateValueWidget()
+                boolean = self.updateValueWidget()
             elif annotation == 'speaker':
                 with CorpusContext(self.config) as c:
                     self.levels = c.speakers
-                self.updateValueWidget()
+                boolean = self.updateValueWidget()
             elif annotation == 'discourse':
                 with CorpusContext(self.config) as c:
                     self.levels = c.discourses
-                self.updateValueWidget()
+                boolean = self.updateValueWidget()
             else:
                 self.levels = []
-                self.updateValueWidget()
-
+                boolean = self.updateValueWidget()
+            if not boolean: 
+                self.compWidget.currentIndexChanged.connect(self.updateValueWidget)
+                self.compWidget.addItem('==')
+                self.compWidget.addItem('!=')
+                self.compWidget.addItem('regex')
+            self.mainLayout.addWidget(self.compWidget)
+            self.mainLayout.addWidget(self.valueWidget)
         elif new_type == bool:
+            print("in bool!!! \n\n\n\n")
             self.compWidget.addItem('==')
             self.valueWidget = QtWidgets.QComboBox()
             self.valueWidget.addItem('True')
             self.valueWidget.addItem('False')
             self.valueWidget.addItem('Null')
+            self.mainLayout.addWidget(self.valueWidget)
         if new_type == str:
             pass
         elif new_type != bool:
             self.mainLayout.addWidget(self.compWidget)
             self.mainLayout.addWidget(self.valueWidget)
+
         #if new_type in [int, float, str, bool]:
         #    self.switchWidget = QtWidgets.QPushButton('Switch')
         #    self.mainLayout.addWidget(self.switchWidget)
 
     def updateValueWidget(self):
+        boolean = False
         if self.levels is None:
             return
 
@@ -290,16 +300,28 @@ class ValueWidget(QtWidgets.QWidget):
             self.valueWidget = QtWidgets.QLineEdit()
         else:
             if len(self.levels) < 10:
-                self.valueWidget = NonScrollingComboBox()
-                for l in self.levels:
-                    self.valueWidget.addItem(l)
+                
+                if len(self.levels) == 1 and self.levels[0] == 'True' or self.levels[0] == 'False':
+                    self.compWidget.addItem('==')
+                    self.valueWidget = QtWidgets.QComboBox()
+                    self.valueWidget.addItem('True')
+                    self.valueWidget.addItem('False')
+                    self.valueWidget.addItem('Null')
+                    boolean = True
+                    #self.mainLayout.addWidget(self.compWidget)
+                    
+
+                else:
+                    self.valueWidget = NonScrollingComboBox()
+                    for l in self.levels:
+                        self.valueWidget.addItem(l)
             else:
                 self.valueWidget = QtWidgets.QLineEdit()
                 completer = QtWidgets.QCompleter(self.levels)
                 completer.setCaseSensitivity(QtCore.Qt.CaseInsensitive)
                 self.valueWidget.setCompleter(completer)
-        self.mainLayout.addWidget(self.valueWidget)
-
+        #self.mainLayout.addWidget(self.valueWidget)
+        return boolean
 
     def setToFind(self, to_find):
         self.to_find = to_find
@@ -431,6 +453,7 @@ class FilterWidget(QtWidgets.QWidget):
             value = tuple(list(filter.value)[:-1])
             a = filter.attribute[-1]
             op = filter.operator
+
             if a == 'begin':
                 if op == '==':
                     operator = 'Left aligned with'
