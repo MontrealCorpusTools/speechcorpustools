@@ -8,7 +8,7 @@ In this panel, the user constructs queries by adding filters (these will be expl
 There are two key concepts that drive a query in SCT:
 
 * **Linguistic Object** A linguistic object can be an utterance, word, or phone. By selecting a linguistic object, the user is specifying the set of elements over which the query is to be made. For example, selecting "phones" will cause the program to look for phones with properties specified by the user (if "words" were selected, then the program would look for words, etc.)
-* **Filters** Filters are statements that limit the data returned to a specific set. Each filter added provides another constraint on the data. Here's an example of a filter:
+* **Filters** Filters are statements that limit the data returned to a specific set. Each filter added provides another constraint on the data. Click `here <http://sct.readthedocs.io/en/latest/additional/filters.html>`_ for more information on filters. Here's an example of a filter:
 
 	.. image:: filter.png
 		:width: 683px
@@ -30,6 +30,7 @@ Linguistic Objects
 * **Phone**: A phone is a single speech segment. 
 
 The following is avaiable only for the TIMIT database:
+
 * **surface_transcription** This is the phonetic transcription of the utterance
 
 Filters
@@ -97,16 +98,54 @@ The second filter will depend on which filter you chose in the first column. For
 		* **not left aligned with** This will exclude objects whose leftmost boundary lines up with the left most boundary of the object you will select in the third column of dropdown menus (**utterance**, **syllable**, **word**, or **phone**).
 	* **subset**
 		* **==** This will filter for objects that are in the class that you select in the third dropdown menu.
-	* **begin**/**end**/**num_phones**/**num_syllables**/**position_in_utterance**/**frequency**/**neighborhood_density**/**duration**
+	* **begin**/**end**/**num_phones**/**num_syllables**/ **position_in_utterance**/**frequency**/ **neighborhood_density**/**duration**
 		* **==** This will filter for objects whose property is equal to what you have specified in the text box following this menu.
 		* **!=** This will exclude objects whose property is equal to what you have specified in the text box following this menu.
 		* **>=** This will filter for objects whose property is greater than or equal to what you have specified in the text box following this menu.
 		* **<=** This will filter for objects whose property is less than or equal to what you have specified in the text box following this menu.
 		* **>** This will filter for objects whose property is greater than what you have specified in the text box following this menu.
 		* **<** This will filter for objects whose property is less than what you have specified in the text box following this menu.
-	* **stress_pattern**/**category**/**label**/**speaker** \+ **name**/**discourse** \+ **name**/**transcription**/**vowel_height**/**vowel_backness**/**vowel_rounding**/**manner_of_articulation**/**place_of_articulation**/**voicing**
+	* **stress_pattern**/**category**/**label**/ **speaker** \+ **name**/**discourse** \+ **name**/ **transcription**/**vowel_height**/ **vowel_backness**/**vowel_rounding**/ **manner_of_articulation**/ **place_of_articulation**/**voicing**
 		* **==** This will filter for objects whose property is equivalent to what you have specified in the text box or dropdown menu following this menu.
 		* **!=** This will exclude objects whose property name is equivalent to what you have specified in the text box or dropdown menu following this menu.
 		* **regex** This option allows you to input a regular expression to match certain properties.
 
 Experiment with combining these filters. Remember that each time you add a filter, you are applying further constraints on the data. 
+
+
+Some complex queries come pre-made. These include "all vowels in mono-syllabic words" and "phones before word-final consonants". Translating from English to filters can be complicated, so here we'll cover which filters constitute these two queries. 
+	* All vowels in mono-syllabic words
+		* Since we're looking for vowels, we know that the linguistic object to search for must be "phones"
+		* To get mono-syllabic words, we have to go through three phases of enrichment
+			* First, we need to encode syllabic segments
+			* Second, we need to encode syllables
+			* Finally, we can encode the hierarchical property: count of syllables in word
+		* Now that we have this property, we can add a filter to look for monosyllabic words:
+		``word: count_of_syllable_in_word == 1``
+		
+			* Notice that we had to select "word" for "count_of_syllable_in_word" to be available
+		* The next filter we want to add would be to get only the vowels from this word.
+		``subset == syllabic``
+		
+			* This will get the syllabic segments (vowels) that we encoded earlier 
+
+	* Phones before word-final consonants
+		* Once again, it is clear that we are looking for "phones" as our linguistic object.
+		* The word "before" should tip you off that we will need to use the "following" or "previous" property.
+		* We start by getting all phones that are in the penultimate position in a word.
+		``following phone right-aligned with word``
+		
+			* This will ensure that the phone after the one we are looking for is the word-final phone
+		* Now we need to limit it to consonants 
+		``following phone subset != syllabic``
+		
+			* This will further limit the results to only phones before non-syllabic word-final segments (word-final consonants)
+			
+
+
+
+
+
+
+
+

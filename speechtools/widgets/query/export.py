@@ -524,7 +524,6 @@ class BasicColumnBox(QtWidgets.QGroupBox):
 class ColumnBox(QtWidgets.QGroupBox):
     checkboxToUncheck = QtCore.pyqtSignal(object)
     exportHelpBroadcast = QtCore.pyqtSignal(object)
-
     def __init__(self, hierarchy, to_find):
         super(ColumnBox, self).__init__('Columns')
         self.hierarchy = hierarchy
@@ -716,7 +715,6 @@ class ExportProfileDialog(QtWidgets.QDialog):
         self.cancelButton.clicked.connect(self.reject)
 
         self.columnWidget.exportHelpBroadcast.connect(self.exportHelpBroadcast.emit)
-
 
         aclayout.addWidget(self.acceptButton)
         aclayout.addWidget(self.saveButton)

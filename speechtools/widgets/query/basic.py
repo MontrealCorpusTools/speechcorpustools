@@ -632,6 +632,7 @@ class BasicFilterBox(QtWidgets.QGroupBox):
                 if checkbox.text() == 'penultimate syllables' and ('syllable' not in self.annotation_types or 'word' not in self.annotation_types):
                     checkbox.setEnabled(False)
                 if checkbox.text() == 'phones before a syllabic' and ('phone' not in self.annotation_types or ('syllabic' not in self.subset_tokens['phone'] and 'syllabic' not in self.subset_types['phone'])):
+
                     checkbox.setEnabled(False)
         for i in range(len(self.grid2)):
             checkbox = self.grid2.itemAt(i).widget()
@@ -676,6 +677,7 @@ class BasicFilterBox(QtWidgets.QGroupBox):
         if sender == 'phones before a syllabic':
             label = ['phone', 'following', 'subset', '==', 'syllabic']
             f = Filter(('', 'phone','following', 'type_subset'), '==', 'syllabic')
+
         if sender == 'all vowels in monosyllabic words':
             label = ['phone', 'subset', '==', 'syllabic']
             f = Filter(('phone', 'type_subset'), '==', 'syllabic')
@@ -683,6 +685,7 @@ class BasicFilterBox(QtWidgets.QGroupBox):
             f2 = Filter(('phone','syllable', 'end'), '==', ('phone', 'syllable','word','end'))
             label3 = ['phone', 'syllable', 'alignment', 'Left aligned with', 'word']
             f3 = Filter(('phone','syllable', 'begin'), '==', ('phone', 'syllable','word','begin'))
+
         if sender == 'word-final phones after a syllabic':
             label = ['phone', 'alignment', 'Right aligned with', 'word']
             f = Filter(('phone', 'end'), '==', ('phone','word','end'))

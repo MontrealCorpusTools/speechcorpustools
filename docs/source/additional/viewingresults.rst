@@ -50,12 +50,12 @@ Phone
 
 Syllable 
 ########
-* ** **
-* ** ** 
-* ** ** 
-* ** ** 
-* ** ** 
-* ** ** 
+* **begin**
+* **end** 
+* **label**
+* **discourse** 
+* **speaker**
+
 
 
 

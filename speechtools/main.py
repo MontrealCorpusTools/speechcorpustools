@@ -32,7 +32,8 @@ from .workers import (AcousticAnalysisWorker, ImportCorpusWorker,
                     SpeechRateWorker, UtterancePositionWorker,
                     SyllabicEncodingWorker, PhoneSubsetEncodingWorker,
                     SyllableEncodingWorker, LexiconEnrichmentWorker,
-                    FeatureEnrichmentWorker, HierarchicalPropertiesWorker)
+                    FeatureEnrichmentWorker, HierarchicalPropertiesWorker,
+                    QueryWorker, ExportQueryWorker)
 
 sct_config_pickle_path = os.path.join(BASE_DIR, 'config')
 
@@ -70,6 +71,7 @@ class LeftPane(Pane):
 
     def changeDiscourse(self, discourse, begin = None, end = None):
         self.viewWidget.changeDiscourse(discourse, begin, end)
+
 
 
 class RightPane(Pane):
@@ -139,6 +141,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
         self.rightPane.connectWidget.corporaHelpBroadcast.connect(self.rightPane.helpWidget.getConnectionHelp)
 
+
         self.leftPane.viewWidget.discourseWidget.nextRequested.connect(self.leftPane.queryWidget.requestNext)
         self.leftPane.viewWidget.discourseWidget.previousRequested.connect(self.leftPane.queryWidget.requestPrevious)
         self.leftPane.viewWidget.discourseWidget.markedAsAnnotated.connect(self.leftPane.queryWidget.markAnnotated)
@@ -146,10 +149,11 @@ class MainWindow(QtWidgets.QMainWindow):
         self.leftPane.viewWidget.discourseWidget.acousticsSelected.connect(self.rightPane.acousticsWidget.showDetails)
         self.mainWidget = CollapsibleWidgetPair(QtCore.Qt.Horizontal, self.leftPane,self.rightPane)
         self.leftPane.queryWidget.needsHelp.connect(self.rightPane.helpWidget.getHelpInfo)
-
         self.leftPane.queryWidget.exportHelpBroadcast.connect(self.rightPane.helpPopup.exportHelp)
         self.enrichHelpBroadcast.connect(self.rightPane.helpWidget.getEnrichHelp)
         self.leftPane.viewWidget.discourseWidget.discourseHelpBroadcast.connect(self.rightPane.helpWidget.getDiscourseHelp)
+        self.leftPane.queryWidget.queryForm.queryToRun.connect(self.runQuery)
+        self.leftPane.queryWidget.queryForm.queryToExport.connect(self.exportQuery)
 
         self.wrapper = QtWidgets.QWidget()
         layout = QtWidgets.QHBoxLayout()
@@ -169,6 +173,20 @@ class MainWindow(QtWidgets.QMainWindow):
 
         if os.path.exists(sct_config_pickle_path):
             self.rightPane.connectWidget.connectToServer(ignore=True)
+
+
+        self.queryWorker = QueryWorker()
+        self.queryWorker.dataReady.connect(self.leftPane.queryWidget.updateResults)
+        self.queryWorker.errorEncountered.connect(self.showError)
+        self.queryWorker.errorEncountered.connect(self.leftPane.queryWidget.queryForm.finishQuery)
+        self.queryWorker.dataReady.connect(self.leftPane.queryWidget.queryForm.finishQuery)
+        self.queryWorker.finishedCancelling.connect(self.leftPane.queryWidget.queryForm.finishQuery)
+
+        self.exportWorker = ExportQueryWorker()
+        self.exportWorker.errorEncountered.connect(self.showError)
+        self.exportWorker.errorEncountered.connect(self.leftPane.queryWidget.queryForm.finishExport)
+        self.exportWorker.dataReady.connect(self.leftPane.queryWidget.queryForm.finishExport)
+        self.exportWorker.finishedCancelling.connect(self.leftPane.queryWidget.queryForm.finishExport)
 
         self.acousticWorker = AcousticAnalysisWorker()
         self.acousticWorker.errorEncountered.connect(self.showError)
@@ -220,6 +238,28 @@ class MainWindow(QtWidgets.QMainWindow):
         self.rightPane.connectWidget.corporaList.cancelImporter.connect(self.importWorker.stop)
         self.rightPane.connectWidget.corporaList.corpusToImport.connect(self.importCorpus)
         self.progressWidget = ProgressWidget(self)
+
+    def exportQuery(self, query_profile, export_profile, path):
+
+        kwargs = {}
+        kwargs['config'] = self.corpusConfig
+        kwargs['profile'] = query_profile
+        kwargs['export_profile'] = export_profile
+        kwargs['path'] = path
+        self.exportWorker.setParams(kwargs)
+        self.progressWidget.createProgressBar('export', self.exportWorker)
+        self.progressWidget.show()
+        self.exportWorker.start()
+
+    def runQuery(self, query_profile):
+        kwargs = {}
+        kwargs['config'] = self.corpusConfig
+        kwargs['profile'] = query_profile
+
+        self.queryWorker.setParams(kwargs)
+        self.progressWidget.createProgressBar('query', self.queryWorker)
+        self.progressWidget.show()
+        self.queryWorker.start()
 
     def checkImport(self, could_not_parse):
         if could_not_parse:
@@ -515,7 +555,6 @@ class MainWindow(QtWidgets.QMainWindow):
             self.utteranceWorker.start()
 
     def getEnrichHelp(self):
-
         self.enrichHelpBroadcast.emit()
 
     def speechRate(self):
