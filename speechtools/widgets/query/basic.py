@@ -855,15 +855,15 @@ class FilterBox(QtWidgets.QGroupBox):
 
         mainWidget.setSizePolicy(QtWidgets.QSizePolicy.Preferred,QtWidgets.QSizePolicy.Preferred)
         mainWidget.setLayout(self.mainLayout)
-        scroll = QtWidgets.QScrollArea()
-        scroll.setWidgetResizable(True)
-        scroll.setWidget(mainWidget)
-        scroll.setMinimumHeight(10)
-        scroll.setSizePolicy(QtWidgets.QSizePolicy.Preferred,QtWidgets.QSizePolicy.Preferred)
-        policy = scroll.sizePolicy()
+        self.scroll = QtWidgets.QScrollArea()
+        self.scroll.setWidgetResizable(True)
+        self.scroll.setWidget(mainWidget)
+        self.scroll.setMinimumHeight(10)
+        self.scroll.setSizePolicy(QtWidgets.QSizePolicy.Preferred,QtWidgets.QSizePolicy.Preferred)
+        policy = self.scroll.sizePolicy()
         policy.setVerticalStretch(1)
-        scroll.setSizePolicy(policy)
-        layout.addWidget(scroll)
+        self.scroll.setSizePolicy(policy)
+        layout.addWidget(self.scroll)
 
         self.config = None
         self.to_find = None
@@ -918,6 +918,7 @@ class FilterBox(QtWidgets.QGroupBox):
         widget = FilterWidget(self.config, self.to_find)
         widget.needsDelete.connect(self.deleteWidget)
         self.mainLayout.insertWidget(self.mainLayout.count(), widget)
+        self.scroll.verticalScrollBar().setValue(self.scroll.verticalScrollBar().maximum())
         widget.needsHelp.connect(self.needsHelp.emit)
 
     def setFilters(self, filters):
