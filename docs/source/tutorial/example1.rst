@@ -3,16 +3,32 @@ Speech Corpus Tools: Tutorial and examples
 ******************************************
 
 
-
 .. _example1:
 
 Example 1	
 ###################
 
+Motivation
+*************
+
+A number of factors affect the duration of vowels, including:
+
+1. Following consonant voicing (voiced > voiceless)
+2. Speech rate
+3. Word frequency
+4. Neighborhood density
+
+#1 is said to be particularly strong in varieties of English, compared
+to other languages (e.g. Chen, 1970). Here we are interested in
+examining whether these factors all affect vowel duration, and in
+particular in seeing how large and reliable the effect of consonant
+voicing is compared to other factors.
+
+
 Step 1: Creating a query profile
 ********************************
 
-Based on the motivation in `vignettes <http://sct.readthedocs.io/en/latest/tutorial/vignetteMain.html>`_, we want to make a query for:
+Based on the motivation above, we want to make a query for:
 
 * All vowels in CVC words (fixed syllable structure)
 * Only words where the second C is a stop (to examine following C voicing)
@@ -33,7 +49,6 @@ Once a query profile has been constructed, it can be saved ("Save query profile"
 	.. image:: ex1Fig1.png
 		:width: 563px
 		:align: center
-		:height: 375px
 		:alt: Image cannot be displayed in your browser
 
 	
@@ -46,10 +61,7 @@ The first three filters are:
 	.. image:: ex1Fig2.png
 		:width: 563px
 		:align: center
-		:height: 375px
 		:alt: Image cannot be displayed in your browser
-
-	
 
 These do the following:
 

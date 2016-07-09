@@ -9,13 +9,22 @@ Speech Corpus Tools: Tutorial and examples
 Vignettes
 ###################
 
+Several worked examples follow, which demonstrate the workflow of SCT
+and how to construct queries and exports. You should be able to
+complete each example by following the steps listed in **bold**. The
+examples are designed to be completed in order.
+
+Each example results in a CSV file containing data, which you should
+then be able to use to visualize the results. Instructions for basic
+visualization in R are given (but using another program, such as
+Excel, should be possible).
+
+
 Example 1: Factors affecting vowel duration
 *******************************************
 
-**Motivation**:
-a number of factors affect the duration of vowels. One which is said to be much stronger in English than many languages is following consonant voicing: the same vowel is realized as longer before 
 
-Example 1: `<http://sct.readthedocs.io/en/latest/tutorial/example1.html>`_
+:doc:`Example 1 <example1>` : factors affecting vowel duration
 
 Example 2: Polysyllabic shortening
 **********************************

@@ -17,12 +17,12 @@ This document assumes the following:
  
  * Neo4j is installed
  * Speech Corpus Tools is installed
- * You have a database for the Buckeye Corpus on your local machine.
+ * You have a database for the Librispeech Test Corpus on your local machine.
 
 Installing Neo4j
 *********************
 
-SCT currently requires that Neo4j version 2.3.3 be installed locally and running.  To install Neo4j, please use the following links.
+SCT currently requires that Neo4j version 3.0 be installed locally and running.  To install Neo4j, please use the following links.
 
 Mac version: `Mac <http://info.neotechnology.com/download-thanks.html?edition=community&release=2.3.3&flavour=dmg>`_
 
