@@ -1,10 +1,6 @@
 .. _installation_tutorial:
 
-******************************************
-Speech Corpus Tools: Tutorial and examples
-******************************************
-
-Installation Setup
+Tutorial: Installation Setup
 ##################
 
 .. _PGDB website: http://montrealcorpustools.github.io/PolyglotDB/

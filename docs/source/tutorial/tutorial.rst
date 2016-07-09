@@ -1,10 +1,6 @@
 .. _tutintroduction:
 
-******************************************
-Speech Corpus Tools: Tutorial and examples
-******************************************
-
-Introduction to Tutorial
+Tutorial: Introduction
 ########################
 
 .. _PGDB website: http://montrealcorpustools.github.io/PolyglotDB/
@@ -29,13 +25,13 @@ Ideally, the import and enrichment steps are only performed once for a given cor
 
 This document is structured as follows:
 
-* :ref:`Installation <installation_tutorial>`: Install necessary software
+*  :any:`Installation <installation_tutorial>`: Install necessary software
 
-* :ref:`Librispeech database <buckeye>`: Obtain a database for the Librispeech Corpus where the *import* and *enrichment* steps have been completed , either by using :ref:`premade <premade>` or doing the import and enrichment steps :ref:`yourself <buildown>`.
+* :any:`Librispeech database <buckeye>`: Obtain a database for the Librispeech Corpus where the *import* and *enrichment* steps have been completed , either by using :any:`premade <premade>` or doing the import and enrichment steps :any:`yourself <buildown>`.
 
-* :ref:`Examples <vignetteMain>`: Two worked examples illustrating the *Query* and *Export* steps, including creating "Query profiles" and "Export profiles".
+* :any:`Examples <vignetteMain>`: Two worked examples illustrating the *Query* and *Export* steps, including creating "Query profiles" and "Export profiles".
 
-* :ref:`Next steps <nextsteps>` : Next steps with SCT after the tutorial: pointers to different places in the documentation and presentations where SCT is described.  Intended to kickstart carrying out your own analyses, or applying SCT to your own corpus.
+* :any:`Next steps <nextsteps>`: Next steps with SCT after the tutorial: pointers to different places in the documentation and presentations where SCT is described.  Intended to kickstart carrying out your own analyses, or applying SCT to your own corpus.
 
-:ref:`Next <installation_tutorial>`
+:any:`Next <installation_tutorial>`
 

@@ -12,7 +12,6 @@ Contents:
    :maxdepth: 4
 
    introduction.rst
-
    tutorial/tutorial.rst
    additional/tour.rst
    additional/connecting.rst
