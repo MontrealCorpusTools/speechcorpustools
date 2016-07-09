@@ -8,7 +8,7 @@ In this panel, the user constructs queries by adding filters (these will be expl
 There are two key concepts that drive a query in SCT:
 
 * **Linguistic Object** A linguistic object can be an utterance, word, or phone. By selecting a linguistic object, the user is specifying the set of elements over which the query is to be made. For example, selecting "phones" will cause the program to look for phones with properties specified by the user (if "words" were selected, then the program would look for words, etc.)
-* **Filters** Filters are statements that limit the data returned to a specific set. Each filter added provides another constraint on the data. Click `here <http://sct.readthedocs.io/en/latest/additional/filters.html>`_ for more information on filters. Here's an example of a filter:
+* **Filters** Filters are statements that limit the data returned to a specific set. Each filter added provides another constraint on the data. Click :doc:`here <filters>` for more information on filters. Here's an example of a filter:
 
     .. image:: filter.png
         :width: 683px

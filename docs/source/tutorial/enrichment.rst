@@ -205,8 +205,8 @@ current state of SCT.
 
 
 
-:ref:`Next <vignetteMain>`
-:ref:`Previous <buckeye>`
+:doc:`Next <vignetteMain>`
+:doc:`Previous <buckeye>`
 
 
 

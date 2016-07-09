@@ -60,14 +60,14 @@ Running, exporting, and saving a query are all done using the respective buttons
 
 For more information see the following pages:
 
-`Building Queries <http://sct.readthedocs.io/en/latest/additional/buildingqueries.html>`_
+:any:`Building Queries <buildingqueries>`
 
-`Exporting Queries <http://sct.readthedocs.io/en/latest/additional/exporting.html>`_
+:any:`Exporting Queries <exporting>`
 
 Discourse (2)
 #############
 
-The discourse panel shows the waveform and spectrogram views of the audio for a given file (if there is audio) as well as the alignment of words, phones, and utterances (if they have been encoded) overlaid onto the waveform. For more information on viewing discourses, see `Viewing discourses <http://sct.readthedocs.io/en/latest/additional/viewingdiscourses.html>`_
+The discourse panel shows the waveform and spectrogram views of the audio for a given file (if there is audio) as well as the alignment of words, phones, and utterances (if they have been encoded) overlaid onto the waveform. For more information on viewing discourses, see :any:`Viewing discourses <viewingdiscourses>`
 
 .. image:: discourse.png
         :width: 1058px
@@ -86,8 +86,8 @@ Connect to a Neo4j server by filling in the host and port information and
 pressing "Connect". Import a database from the hard drive by pressing
 "Import Local Corpus". If a database has already been used in SCT it does
 not need to be imported again. Select a corpus by clicking on it (it will
-then be highlighed in blue or grey). For more information, see `Connecting
-to servers <http://sct.readthedocs.io/en/latest/additional/connecting.html>`_
+then be highlighed in blue or grey). For more information, see :any:`Connecting
+to servers <connecting>`
 
 .. image:: connection.png
         :width: 602px

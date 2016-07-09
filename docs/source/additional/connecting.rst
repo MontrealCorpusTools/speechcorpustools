@@ -5,7 +5,7 @@ Connection
 **********
 
 
-To see an example connection, go to `Connection example <http://sct.readthedocs.io/en/latest/additional/exconnecting.html>`_
+To see an example connection, go to :any:`Connection example <exconnecting>`
 
 In the connection tab, there are various features.
 

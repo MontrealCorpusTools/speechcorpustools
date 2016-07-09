@@ -4,7 +4,7 @@
 Exporting Queries
 *****************
 
-While getting in-app results can be a quick way to visualize data, most often the user will want to further manipulate the data (i.e. in R, MatLab, etc.) To this end, there is the "Export query results" feature. It allows the user to specify the information that is exported by adding columns to the final output file. This is somewhat similar to `building queries <http://sct.readthedocs.io/en/latest/additional/buildingqueries.html>`_ , but not quite the same. Insttead of filters, pressing the "+" button will add a column to the exported file.
+While getting in-app results can be a quick way to visualize data, most often the user will want to further manipulate the data (i.e. in R, MatLab, etc.) To this end, there is the "Export query results" feature. It allows the user to specify the information that is exported by adding columns to the final output file. This is somewhat similar to :doc:`building queries <buildingqueries>` , but not quite the same. Insttead of filters, pressing the "+" button will add a column to the exported file.
 
 For example, if the user wanted the timing information (begin/end) and lables for the object found and the object before it, the export profile would look like:
 
@@ -41,7 +41,7 @@ Here, there are several commong options that can be selected by checking them. O
         :alt: Image cannot be displayed in your browser
 
 
-While many of the column options are the same as ones available for `building queries <http://sct.readthedocs.io/en/latest/additional/buildingqueries.html>`_ there are some differences :
+While many of the column options are the same as ones available for :doc:`building queries <buildingqueries>` there are some differences :
 
 * "alignment" and "subset" are not valid column options
 * column options do not change depending on the linguistic object that was chosen earlier

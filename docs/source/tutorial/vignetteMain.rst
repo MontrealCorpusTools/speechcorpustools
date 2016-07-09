@@ -21,7 +21,7 @@ Excel, should be possible).
 Example 1: Factors affecting vowel duration
 *******************************************
 
-:ref:`Example 1 <example1>` : factors affecting vowel duration
+:doc:`Example 1 <example1>` : factors affecting vowel duration
 
 Example 2: Polysyllabic shortening
 **********************************
@@ -66,7 +66,7 @@ For example, Menzerath's Law predicts that for English:
 
 (This exercise should be possible using pieces covered in Examples 1 and 2, or minor extensions.)
 
-:ref:`Next <example1>` 			:ref:`Previous <enrichment_tutorial>`
+:doc:`Next <example1>` 			:doc:`Previous <enrichment_tutorial>`
 
 
 

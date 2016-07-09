@@ -50,6 +50,6 @@ To import one of those corpora, press the "Import local corpus" button below the
 At the moment, importing ignores any connections to remote servers, and requires that a local version of Neo4j is running.  Sound files will be detected based on sharing a name with a text file or TextGrid.  If the location of the sound files is changed, you can update where SCT thinks they are through the "Find local audio files" button.
 
 
-:ref:`Next <enrichment_tutorial>`			:ref:`Previous <installation2>`
+:doc:`Next <enrichment_tutorial>`			:doc:`Previous <installation2>`
 
 
