@@ -24,7 +24,7 @@ Example 1: Factors affecting vowel duration
 *******************************************
 
 
-:doc:`Example 1 <example1>` : factors affecting vowel duration
+:ref:`Example 1 <example1>` : factors affecting vowel duration
 
 Example 2: Polysyllabic shortening
 **********************************
