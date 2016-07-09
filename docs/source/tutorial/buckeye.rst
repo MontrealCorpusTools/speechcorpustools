@@ -1,10 +1,8 @@
+.. _buckeye:
+
 ******************************************
 Speech Corpus Tools: Tutorial and examples
 ******************************************
-
-
-
-.. _buckeye:
 
 Buckeye database
 ################
@@ -13,13 +11,45 @@ To do the examples below, you will need a SCT database for the Buckeye corpus.  
 
 Use pre-made database
 *********************
-`<http://sct.readthedocs.io/en/latest/tutorial/premade.html#premade-database>`_
+
+Make sure you have opened the SCT application and started Neo4j, at least once.  This creates folders for Neo4j databases and for all SCT's local files (including SQL databases):
+
+* OS X: ``/Users/username/Documents/Neo4j``, ``/Users/username/Documents/SCT``
+* Windows: ``C:\Users\username\Documents\Neo4j``, ``C:\Users\username\Documents\SCT``
+
+Unzip the ``buckeyeDatabases.zip`` file.  It contains two folders,  ``buckeye.graphdb`` and ``buckeye``. Move these (using Finder on OS X, or File Explorer on Windows) to the ``Neo4j`` and ``SCT`` folders. After doing so, these directories should exist:
+
+* ``/Users/username/Documents/Neo4j/buckeye.graphdb``
+* ``/Users/username/Documents/SCT/buckeye``
+
+Some important information about the database (to replicate if you are building your own):
+
+* Utterances have been defined as speech chunks separated by non-speech (pauses, disfluencies, other person talking) chunks of at least 150 msec.
+
+* Syllabification has been performed using maximal onset.
 
 
 Build your own database
 ***********************
-`<http://sct.readthedocs.io/en/latest/tutorial/buildown.html#build-your-own-database>`_
 
-`Next <http://sct.readthedocs.io/en/latest/tutorial/enrichment.html>`_ 			`Previous <http://sct.readthedocs.io/en/latest/tutorial/installation2.html>`_
+Import
+====
+
+SCT currently supports the following corpus formats:
+
+* Buckeye
+* TIMIT
+* Force-aligned TextGrids
+    * FAVE (multiple talkers okay)
+    * LaBB-CAT TextGrid export
+    * Prosodylab 
+
+
+To import one of those corpora, press the "Import local corpus" button below the "Available corpora" list.  Once it has been pressed, select one of the three main options to import.  From there, you will have to select where on the local computer the corpus files live and they will be imported into the local server.
+
+At the moment, importing ignores any connections to remote servers, and requires that a local version of Neo4j is running.  Sound files will be detected based on sharing a name with a text file or TextGrid.  If the location of the sound files is changed, you can update where SCT thinks they are through the "Find local audio files" button.
+
+
+:ref:`Next <enrichment_tutorial>`			:ref:`Previous <installation2>`
 
 

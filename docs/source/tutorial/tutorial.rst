@@ -1,10 +1,8 @@
+.. _tutintroduction:
+
 ******************************************
 Speech Corpus Tools: Tutorial and examples
 ******************************************
-
-
-
-.. _tutintroduction:
 
 Introduction to Tutorial
 ########################
@@ -31,13 +29,13 @@ Ideally, the import and enrichment steps are only performed once for a given cor
 
 This document is structured as follows:
 
-* `Installation <http://sct.readthedocs.io/en/latest/tutorial/installation.html>`_: Install necessary software
+* :ref:`Installation <installation_tutorial>`: Install necessary software
 
-* `Librispeech database <http://sct.readthedocs.io/en/latest/tutorial/buckeye.html>`_: Obtain a database for the Librispeech Corpus where the *import* and *enrichment* steps have been completed , either by using `premade <http://sct.readthedocs.io/en/latest/tutorial/premade.html>`_ or doing the import and enrichment steps `yourself <http://sct.readthedocs.io/en/latest/tutorial/buildown.html>`_.
+* :ref:`Librispeech database <buckeye>`: Obtain a database for the Librispeech Corpus where the *import* and *enrichment* steps have been completed , either by using :ref:`premade <premade>` or doing the import and enrichment steps :ref:`yourself <buildown>`.
 
-* `Examples <http://sct.readthedocs.io/en/latest/tutorial/vignetteMain.html>`_: Two worked examples illustrating the *Query* and *Export* steps, including creating "Query profiles" and "Export profiles".
+* :ref:`Examples <vignetteMain>`: Two worked examples illustrating the *Query* and *Export* steps, including creating "Query profiles" and "Export profiles".
 
-* `Next steps <http://sct.readthedocs.io/en/latest/tutorial/nextsteps.html>`_ : Next steps with SCT after the tutorial: pointers to different places in the documentation and presentations where SCT is described.  Intended to kickstart carrying out your own analyses, or applying SCT to your own corpus.
+* :ref:`Next steps <nextsteps>` : Next steps with SCT after the tutorial: pointers to different places in the documentation and presentations where SCT is described.  Intended to kickstart carrying out your own analyses, or applying SCT to your own corpus.
 
-`Next <http://sct.readthedocs.io/en/latest/tutorial/installation.html>`_
+:ref:`Next <installation_tutorial>`
 

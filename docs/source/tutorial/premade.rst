@@ -1,10 +1,8 @@
+.. _premade:
+
 ******************************************
 Speech Corpus Tools: Tutorial and examples
 ******************************************
-
-
-
-.. _premade:
 
 Premade database
 ################
@@ -26,4 +24,4 @@ Some important information about the database (to replicate if you are building 
 * Syllabification has been performed using maximal onset.
 
 
-`Previous <http://sct.readthedocs.io/en/latest/tutorial/buckeye.html>`_
+:ref:`Previous <buckeye>`

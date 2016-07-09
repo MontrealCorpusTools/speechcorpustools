@@ -1,10 +1,8 @@
+.. _vignetteMain:
+
 ******************************************
 Speech Corpus Tools: Tutorial and examples
 ******************************************
-
-
-
-.. _vignetteMain:
 
 Vignettes
 ###################
@@ -22,7 +20,6 @@ Excel, should be possible).
 
 Example 1: Factors affecting vowel duration
 *******************************************
-
 
 :ref:`Example 1 <example1>` : factors affecting vowel duration
 
@@ -42,7 +39,7 @@ Polysyllabic shortening is often -- but not always -- defined as being restricte
 
 We show (1) here, and leave (2) as an exercise.
 
-Example 2: `<http://sct.readthedocs.io/en/latest/tutorial/example2.html>`_
+:ref:`Example 2 <example2>`
 
 Example 3: Menzerath's Law
 **************************
@@ -69,8 +66,7 @@ For example, Menzerath's Law predicts that for English:
 
 (This exercise should be possible using pieces covered in Examples 1 and 2, or minor extensions.)
 
-
-`Next <http://sct.readthedocs.io/en/latest/tutorial/example1.html>`_ 			`Previous <http://sct.readthedocs.io/en/latest/tutorial/enrichment.html>`_
+:ref:`Next <example1>` 			:ref:`Previous <enrichment_tutorial>`
 
 
 

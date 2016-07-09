@@ -1,10 +1,8 @@
+.. _enrichment_tutorial:
+
 ******************************************
 Speech Corpus Tools: Tutorial and examples
 ******************************************
-
-
-
-.. _enrichment_tutorial:
 
 Enriching databases
 ###################
@@ -207,8 +205,8 @@ current state of SCT.
 
 
 
-`Next <http://sct.readthedocs.io/en/latest/tutorial/vignetteMain.html>`_
-`Previous <http://sct.readthedocs.io/en/latest/tutorial/buckeye.html>`_
+:ref:`Next <vignetteMain>`
+:ref:`Previous <buckeye>`
 
 
 

@@ -1,10 +1,8 @@
+.. _example2:
+
 ******************************************
 Speech Corpus Tools: Tutorial and examples
 ******************************************
-
-
-
-.. _example2:
 
 Example 2	
 ###################
@@ -123,9 +121,9 @@ This plot is quite similar for 1-4 sylalbles to the plot where only initial-stre
 
 
 
-`Vignette <http://sct.readthedocs.io/en/latest/tutorial/vignetteMain.html>`_
+:ref:`Vignette <vignetteMain>`
 
-`Next <http://sct.readthedocs.io/en/latest/tutorial/tutorial2.html>`_ 			`Previous <http://sct.readthedocs.io/en/latest/tutorial/vignetteMain.html>`_
+:ref:`Next <tutorial2>`			:ref:`Previous <vignetteMain>`
 
 
 

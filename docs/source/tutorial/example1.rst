@@ -1,9 +1,8 @@
+.. _example1:
+
 ******************************************
 Speech Corpus Tools: Tutorial and examples
 ******************************************
-
-
-.. _example1:
 
 Example 1	
 ###################
@@ -200,6 +199,6 @@ For example, row 2 TODO. (comes at the end of the utterance "not ever been taugh
 TODO: R code to load data and see the basic results (big speech rate and frequency effects; small stop voicing effect; no neighborhood density effect).
 
 
-`Next <http://sct.readthedocs.io/en/latest/tutorial/example2.html>`_ 			`Previous <http://sct.readthedocs.io/en/latest/tutorial/vignetteMain.html>`_
+:ref:`Next <example2>` 			:ref:`Previous <vignetteMain>`
 
 

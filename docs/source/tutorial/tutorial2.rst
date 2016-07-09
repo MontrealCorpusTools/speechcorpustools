@@ -1,10 +1,9 @@
+.. _tutorial2:
+
 ******************************************
 Speech Corpus Tools: Tutorial and examples
 ******************************************
 
-
-
-.. _tutorial2:
 
 Tutorial	
 ###################
