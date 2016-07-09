@@ -9,9 +9,9 @@ Welcome to SpeechCorpusTools's documentation!
 Contents:
 
 .. toctree::
-      :maxdepth: 4
+   :maxdepth: 4
 
-   introduction.rst   
+   introduction.rst
 
    tutorial/tutorial.rst
    additional/tour.rst
@@ -23,7 +23,7 @@ Contents:
    additional/exconnecting.rst
    additional/enrichment.rst
    additional/filters.rst
-   
+
 
 
 Indices and tables

@@ -4,7 +4,7 @@ Speech Corpus Tools: Tutorial and examples
 
 
 
-.. _installation:
+.. _installation_tutorial:
 
 Installation Setup
 ##################
@@ -14,7 +14,7 @@ Installation Setup
 .. _GitHub repository: https://https://github.com/mmcauliffe/speechcorpustools
 
 This document assumes the following:
- 
+
  * Neo4j is installed
  * Speech Corpus Tools is installed
  * You have a database for the Librispeech Test Corpus on your local machine.
@@ -42,6 +42,6 @@ and save the file.  Neo4j should be ready to use.
 
 If security is enabled, you'll first have to click on the link in the Neo4j server (when it's running) that says ``localhost:7474`` which will take you to a browser page where you can set a password for the ``neo4j`` user.  If you leave it enabled, remember your password for when you connect via Speech Corpus Tools.
 
-`Next <http://sct.readthedocs.io/en/latest/tutorial/installation2.html>`_ 			`Previous <http://sct.readthedocs.io/en/latest/tutorial/tutorial.html>`_
+`Next <http://sct.readthedocs.io/en/latest/tutorial/installation2.html>`_           `Previous <http://sct.readthedocs.io/en/latest/tutorial/tutorial.html>`_
 
 
