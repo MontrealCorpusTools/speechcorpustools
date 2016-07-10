@@ -95,8 +95,8 @@ These do the following:
 
 Then, add three more filters:
 
-	.. image:: ex1Fig3.png
-		:width: 563px
+	.. figure:: ex1Fig3.png
+		:width: 563px	
 		:align: center
 		:alt: Image cannot be displayed in your browser
 
@@ -133,64 +133,59 @@ The next step is to export information about each vowel token as a CSV file.  We
 
 In addition, we want some identifying information (to debug, and potentially for building statistical models):
 
-* What *speaker* and *file* each token is from
+* What *speaker* each token is from
 
 * The *time* where the token occurs in the file
 
 * The *orthography* of the word.
 
-* The identity of the *preceding* and *following* consonants.
 
-Each of these 12 variables we would like to export corresponds to one row in an *export profile*. 
+
+Each of these 9 variables we would like to export corresponds to one row in an *export profile*. 
 
 To **create a new export profile**:
 
 1. Select "New export profile" from the "Export query results" menu.  
-
-2. Add one row per variable to be exported, as follows:
-
+2. Add one row per variable to be exported, as follows: [#f1]_
     * Press "+" (create a new row)
-
     * Make selections from drop-down menus to describe the variable.
-
     * Put the name of the variable in the `Output name` field.  (This will be the name of the corresponding column in the exported CSV. You can use whatever name makes sense to you.)
 
-The twelve rows to be added for the variables above result in the following export profile:
+
+The nine rows to be added for the variables above result in the following export profile:
 
 	.. figure:: ex1Fig4.png
 		:width: 600px
 		:align: center
-		:height: 450px
 		:alt: Image cannot be displayed in your browser
 
 
 
 Some explanation of these rows, for a single token:  (We use the [u] in /but/ as a running example)
 
-* Rows 1, 2, 9 are the ``duration``, ``label``, and the beginning time (``time``) of the *phone object* (the [u]), in the containing file.
+* Rows 1, 2, 8 are the ``duration``, ``label``, and the beginning time (``time``) of the *phone object* (the [u]), in the containing file.
 
-* Row 8 refers to the *name* of this file` (called a "discourse" in SCT).
+..
+   * Row 8 refers to the *name* of this file` (called a "discourse" in SCT).
 
-* Rows 3 and 12 refer to the *following phone* object (the [t]): its ``label``, and its ``voicing`` (whether it is voiced or voiceless).
+* Row 3 refers to the ``voicing`` of the *following phone* object (the [t])
     * Note that "following" automatically means "following phone"" (i.e., ``phone`` doesn't need to put put after `following`) because the linguistic objects being found are phones. If the linguistic objects being found were syllabes (as in Example 2 below), "following" would automatically mean "following syllable".
     
-* Row 11 refers, analogously, to the ``label`` of the *preceding phone* object (the [b]).
-
-* Rows 4, 5, and 10 refer to properties of the *word which contains the phone* object: its ``label`` (= orthography, here "boot"), ``neighborhood_density``, and ``frequency``.
+* Rows 4, 5, and 9 refer to properties of the *word which contains the
+  phone* object: its ``frequency``, ``neighborhood density``, and ``label`` (= orthography, here "boot")
     
 * Row 6 refers to the *utterance which contains the phone*: its ``speech_rate``, defined as syll`ables per second over the utterance.
 
 * Row 7 refers to the *speaker* (their ``name``) whose speech contains this phone.
 
-
 Each case can be thought of as a property (shown in ``teletype``) of a linguistic object or organizational unit (shown in *italics*).
-
 
 You can now:
 
-3. **Save the export profile** : Select "Save as...", then enter a name, such as "Buckeye CVC export".
+3. **Save the export profile** : Select "Save as...", then enter a name, such as "LibriSpeech CVC export".
 
-4. **Perform the export** : Select "Run".  You will be prompted to enter a filename to export to; make sure it ends in ``.csv`` (e.g. ``buckeyeCvc.csv``).
+4. **Perform the export** : Select "Run".  You will be prompted to
+   enter a filename to export to; make sure it ends in ``.csv`` (e.g. ``librispeechCvc.csv``).
 
 This will take a while (probably several minutes).
 
@@ -201,14 +196,12 @@ Here are the first few rows of the resulting data file, in Excel:
 	.. figure:: ex1Fig5.png
 		:width: 600px
 		:align: center
-		:height: 300px
 		:alt: Image cannot be displayed in your browser
 
+.. highlight:: r
 	
-For example, row 2 TODO. (comes at the end of the utterance "not ever been taught")
+.. include:: example1Analysis.rst
 
-
-TODO: R code to load data and see the basic results (big speech rate and frequency effects; small stop voicing effect; no neighborhood density effect).
 
 .. _example2:
 
@@ -222,11 +215,12 @@ Example 2: Polysyllabic shortening
 
 Polysyllabic shortening is often -- but not always -- defined as being restricted to accented syllables.  (As in the English, but not the French example.)  Using SCT, we can check whether a couple simple versions of polysyllabic shortening holds in the Buckeye corpus:
 
-1. Considering just utterance-final words with primary stress on the *initial* syllable, does the initial syllable duration decrease as word length increases?
+1. Considering all utterance-final words, does the initial syllable duration decrease as word length increases?
 
-2. Considering all utterance-final words, does the initial syllable duration decrease as word length increases?
+2. Considering just utterance-final words with primary stress on the *initial* syllable, does the initial syllable duration decrease as word length increases?
 
 We show (1) here, and leave (2) as an exercise.
+
 
 
 Step 1: Query profile
@@ -235,7 +229,6 @@ Step 1: Query profile
 In this case, we want to make a query for:
 
 * Word-initial syllables 
-* \.\.\.which are also primary-stressed
 * \.\.\.only in words at the end of utterances (fixed prosodic position)
 
 For this query profile:
@@ -244,14 +237,12 @@ For this query profile:
 * Filters are needed to restrict to:
     * Word-initial syllables
     * Utterance-final words
-    * Primary-stressed syllables
 
 This corresponds to the following query profile, which has been saved (in this screenshot) as "PSS: first syllable" in SCT:
 
 	.. image:: ex2Fig1.png
 		:width: 614px
 		:align: center
-		:height: 307px
 		:alt: Image cannot be displayed in your browser
 
 
@@ -259,19 +250,14 @@ The first and second filters are similar to those in Example 1:
 
 * *Restrict to word-initial syllables*
     * ``alignment``: something about the syllable's alignment
-    * ``left aligned with`` ``word``: what it sas
+    * ``left aligned with`` ``word``: what it says
 * *Restrict to utterance-final words*
     * ``word``: word containing the syllable
-    * ``right aligned with`` utterance``: the word and utterance have the same ending.
+    * ``right aligned with`` utterance``: the word and utterance have
+      the same end time.
     
-The third filter involves a regular expression:
-
-* *Restrict to initial-stressed words*
-    * ``word``: word containing the syllable
-    * ``stress pattern``: a pattern such as \#1002\#, \#1020\#, \#1\# describing the canonical stress pattern (1, 2, 0 = primary, secondary, none).
-    * ``regexp``: a regular expression describing the desired stress pattern. (Here: the string "\#1" followed by any other characters.)
-
-You should **input this query profile**, then **run it** (optionally saving first).  This will take a minute or two.
+You should **input this query profile**, then **run it** (optionally
+saving first).
 
 Step 2: Export profile
 ====
@@ -283,63 +269,27 @@ We want it to contain everything we need to examine how syllable duration (in se
 * The *duration* of the syllable
 * Various word duration measures: the *number of syllables* and *number of phones* in the word containing the syllable, as well as the *duration* (in seconds) of the word.
 
-We also export other information which may be useful (as in Example 1): the *syllable label*, the *speaker name*, the *file name*, the *time* the token occurs in the file, and the *word label* (its orthography). 
+We also export other information which may be useful (as in Example
+1): the *syllable label*, the *speaker name*, the
+*time* the token occurs in the file, the *word label* (its
+orthography), and the word's *stress pattern*
 
-The following export profile contains these seven variables:
+The following export profile contains these nine variables:
 
-TODO
+	.. image:: ex2Fig2.png
+		:width: 614px
+		:align: center
+		:alt: Image cannot be displayed in your browser
 
 After you **enter these rows** in the export profile, **run the export** (optionally saving the export profile first).  I exported it as ``polysyllabic.csv``.
 
 Step 3: examine the data
 ====
 
-In R\: load in the data\:
-
-	
-Exclude a few outliers (must be errors): syllables with durations > 1.5 sec; points from words with duration > 5 sec. We also exclude  points from words with 5 syllables (there are only 2 such points):
-
-	
+.. include:: example2Analysis.rst
 
 
-Plot of the duration of the initial stressed syllable as a function of word duration (in syllables):
 
-	.. image:: ex2Fig2.png
-		:width: 450px
-		:align: center
-		:height: 300px
-		:alt: Image cannot be displayed in your browser
-
-	
-
-Here we see a clear polysyllabic shortening effect from 1 to 2 syllables, and possibly one from 2 to 3 syllables. Nothing is clear between 3 and 4 syllables.
-
-This plot suggests that the effect is pretty robust across speakers:
-	.. image:: ex2Fig3.png
-		:width: 450px
-		:align: center
-		:height: 300px
-		:alt: Image cannot be displayed in your browser
-
-	
-**Exercise**: Try to make a plot like the penultimate one, using word duration on the x axis instead of number of syllables.  (You'll need to use ``geom_smooth()`` instead of ``geom_boxplot()``, if you are using ggplot.)  What issues do you run into?  After these are resolved, do you see the expected pattern? 
-
-
-Initial syllable duration
-=====
-
-**Exercise**: Try to instead export a CSV like the one just exported, but for all utterance-final words (not just restricting to those with initial stress).  I saved this as ``polysyllabic2.csv``.   
-
-The plot of initial syllable duration as a function of word length (in number of syllables) should now look like:
-
-	.. image:: ex2Fig4.png
-		:width: 450px
-		:align: center
-		:height: 300px
-		:alt: Image cannot be displayed in your browser
-
-
-This plot is quite similar for 1-4 sylalbles to the plot where only initial-stressed words are considered (NB: initial-stressed words make up about 82\% of tokens). For 4-5 syllables, there is no clear change  So at least at this coarse level, it looks like polysyllabic shortening effects for English initial syllables are restricted to relatively short words.
 
 
 .. _example3:
@@ -368,6 +318,9 @@ For example, Menzerath's Law predicts that for English:
 * Export word duration (seconds), number of syllables, anything else necessary.
 
 (This exercise should be possible using pieces covered in Examples 1 and 2, or minor extensions.)
+
+.. [#f1] Note that it is also possible to input some of these rows automatically, using the checkboxes in the `Simple exports` tab.
+
 
 :any:`Next <nextsteps>` 			:any:`Previous <enrichment_tutorial>`
 

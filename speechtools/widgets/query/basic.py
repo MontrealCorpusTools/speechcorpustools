@@ -282,10 +282,6 @@ class ValueWidget(QtWidgets.QWidget):
             self.mainLayout.addWidget(self.compWidget)
             self.mainLayout.addWidget(self.valueWidget)
 
-        #if new_type in [int, float, str, bool]:
-        #    self.switchWidget = QtWidgets.QPushButton('Switch')
-        #    self.mainLayout.addWidget(self.switchWidget)
-
     def updateValueWidget(self):
         boolean = False
         if self.levels is None:
@@ -297,6 +293,7 @@ class ValueWidget(QtWidgets.QWidget):
             self.valueWidget.deleteLater()
         if label == 'regex' or len(self.levels) == 0:
             self.valueWidget = QtWidgets.QLineEdit()
+            self.mainLayout.addWidget(self.valueWidget)
         else:
             if len(self.levels) < 10:
 
@@ -307,13 +304,13 @@ class ValueWidget(QtWidgets.QWidget):
                     self.valueWidget.addItem('False')
                     self.valueWidget.addItem('Null')
                     boolean = True
-                    #self.mainLayout.addWidget(self.compWidget)
-
 
                 else:
                     self.valueWidget = NonScrollingComboBox()
                     for l in self.levels:
                         self.valueWidget.addItem(l)
+                    self.mainLayout.addWidget(self.valueWidget)
+
             else:
                 self.valueWidget = QtWidgets.QLineEdit()
                 completer = QtWidgets.QCompleter(self.levels)
