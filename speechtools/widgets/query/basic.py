@@ -276,6 +276,7 @@ class ValueWidget(QtWidgets.QWidget):
             self.valueWidget.addItem('True')
             self.valueWidget.addItem('False')
             self.valueWidget.addItem('Null')
+
             self.mainLayout.addWidget(self.valueWidget)
         if new_type == str:
             pass
@@ -298,6 +299,7 @@ class ValueWidget(QtWidgets.QWidget):
             self.valueWidget.deleteLater()
         if label == 'regex' or len(self.levels) == 0:
             self.valueWidget = QtWidgets.QLineEdit()
+            self.mainLayout.addWidget(self.valueWidget)
         else:
             if len(self.levels) < 10:
                 
@@ -309,17 +311,20 @@ class ValueWidget(QtWidgets.QWidget):
                     self.valueWidget.addItem('Null')
                     boolean = True
                     #self.mainLayout.addWidget(self.compWidget)
-                    
+                    self.mainLayout.addWidget(self.valueWidget)
 
                 else:
                     self.valueWidget = NonScrollingComboBox()
                     for l in self.levels:
                         self.valueWidget.addItem(l)
+                    self.mainLayout.addWidget(self.valueWidget)
+
             else:
                 self.valueWidget = QtWidgets.QLineEdit()
                 completer = QtWidgets.QCompleter(self.levels)
                 completer.setCaseSensitivity(QtCore.Qt.CaseInsensitive)
                 self.valueWidget.setCompleter(completer)
+                self.mainLayout.addWidget(self.valueWidget)
         #self.mainLayout.addWidget(self.valueWidget)
         return boolean
 
