@@ -271,16 +271,14 @@ class ValueWidget(QtWidgets.QWidget):
             self.mainLayout.addWidget(self.compWidget)
             self.mainLayout.addWidget(self.valueWidget)
         elif new_type == bool:
-            print("in bool!!! \n\n\n\n")
             self.compWidget.addItem('==')
             self.valueWidget = QtWidgets.QComboBox()
             self.valueWidget.addItem('True')
             self.valueWidget.addItem('False')
             self.valueWidget.addItem('Null')
-            self.mainLayout.addWidget(self.valueWidget)
         if new_type == str:
             pass
-        elif new_type != bool:
+        else:
             self.mainLayout.addWidget(self.compWidget)
             self.mainLayout.addWidget(self.valueWidget)
 
@@ -321,7 +319,8 @@ class ValueWidget(QtWidgets.QWidget):
                 completer = QtWidgets.QCompleter(self.levels)
                 completer.setCaseSensitivity(QtCore.Qt.CaseInsensitive)
                 self.valueWidget.setCompleter(completer)
-        #self.mainLayout.addWidget(self.valueWidget)
+        self.mainLayout.addWidget(self.compWidget)
+        self.mainLayout.addWidget(self.valueWidget)
         return boolean
 
     def setToFind(self, to_find):
