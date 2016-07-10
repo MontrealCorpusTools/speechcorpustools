@@ -127,8 +127,9 @@ class AnalyzeAcousticsDialog(BaseDialog):
 
         self.acousticsWidget = RadioSelectWidget('Acoustics to encode',
                                             OrderedDict([
-                                            #('Probabilistic onsets and codas (language-independent)','probabilistic'),
-                                            ('Pitch','pitch'),]))
+                                            ('Pitch (REAPER)','pitch'),
+                                            #('Formants (LPC)','formants'),
+                                            ]))
 
         layout.addRow(self.acousticsWidget)
 
