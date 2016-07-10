@@ -21,6 +21,7 @@ class ClickableLabel(QtWidgets.QLabel):
         self.clicked.emit()
 
 class HierarchyWidget(QtWidgets.QWidget):
+    discourseHelpBroadcast = QtCore.pyqtSignal()
     toggleSpectrogram = QtCore.pyqtSignal()
     toggleFormants = QtCore.pyqtSignal()
     togglePitch = QtCore.pyqtSignal()
@@ -66,13 +67,19 @@ class HierarchyWidget(QtWidgets.QWidget):
         self.channelSelect.currentIndexChanged.connect(self.channelChanged.emit)
         self.spectrumLayout.addRow('Audio channel', self.channelSelect)
 
+        self.helpButton = QtWidgets.QPushButton()
+        self.helpButton.setText("help")
+        self.helpButton.clicked.connect(self.discourseHelpBroadcast.emit)
+        self.helpButton.setSizePolicy(QtWidgets.QSizePolicy.Fixed,QtWidgets.QSizePolicy.Fixed)
+        self.spectrumLayout.addRow(self.helpButton)
+
         #self.spectrumLayout.addWidget(v)
         #self.spectrumLayout.addWidget(i)
         self.hWidget = QtWidgets.QWidget()
         self.hWidget.setLayout(self.hierarchyLayout)
 
-        
-        
+
+
         layout.addWidget(self.hWidget)
 
         layout.addLayout(self.spectrumLayout)
