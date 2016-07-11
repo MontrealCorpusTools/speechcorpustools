@@ -2,25 +2,16 @@
 
 
 
-
-
-::
-
-    cvc <- read.csv("librispeechCvc.txt")
-
-
-
-
 In R: **load in the data**:
 
 
 ::
 
-    pss <- read.csv("polysyllabic.csv")
+    pss <- read.csv("librispeechCvc.csv")
 
 
 
-There are very few words with 6 syllables:
+There are very few words with 6+ syllables:
 
 
 ::

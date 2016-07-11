@@ -1,7 +1,9 @@
 
 
 
-In R: **load the data file**:
+We will load the data and do basic visualization in R.  (Make sure that you have the ggplot2 library.)
+
+First, **load the data file**:
 
 
 ::
@@ -10,7 +12,8 @@ In R: **load the data file**:
 
 
 
-**Voicing**
+Voicing
+^^^^^^
 
 A plot of the basic voicing effect, by vowel:
 
@@ -28,7 +31,8 @@ A plot of the basic voicing effect, by vowel:
 
 It looks like there is generally an effect in the expected direction, but the size of the effect may differ by vowel.
 
-**Speech rate**
+Speech rate
+^^^^^^^^^^^
 
 A plot of the basic speech rate effect, divided up by consonant voicing:
 
@@ -46,9 +50,10 @@ A plot of the basic speech rate effect, divided up by consonant voicing:
 
     
 
-There is a large (and apparently nonlinear) speech rate effect. The size of the voicing effect is small compared to speech rate, and the voicing effect may be modulated by speech rate.
+There is a large (and possibly nonlinear) speech rate effect. The size of the voicing effect is small compared to speech rate, and the voicing effect may be modulated by speech rate.
 
-**Frequency**
+Frequency
+^^^^^^^^^
 
 A plot of the basic frequency effect, divided up by consonant voicing:
 
@@ -70,7 +75,8 @@ A plot of the basic frequency effect, divided up by consonant voicing:
 
 The basic frequency effect is as expected: shorter duration for higher frequency words. The voicing effect is (again) small in comparison, and may be modulated by word frequency: more frequent words (more reduced?) show a smaller effect.
 
-**Neighborhood density**
+Neighborhood density
+^^^^^^^^^^^^^^^^^^
 
 In contrast, there is no clear effect of neighborhood density:
 

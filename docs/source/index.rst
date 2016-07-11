@@ -19,9 +19,10 @@ Contents:
    additional/exporting.rst
    additional/viewingdiscourses.rst
    additional/viewingresults.rst
-   additional/exconnecting.rst
+   additional/exconnecting.rst	  
    additional/enrichment.rst
    additional/filters.rst
+   additional/buildown.rst
 
 
 
