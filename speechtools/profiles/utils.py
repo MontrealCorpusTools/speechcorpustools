@@ -7,11 +7,12 @@ from .premade import (Lab1QueryProfile, Lab2QueryProfile, Lab3QueryProfile,
 
 def ensure_existence():
     os.makedirs(PROFILE_DIR, exist_ok = True)
-    for profile in [Lab1QueryProfile(),
-                    Lab2QueryProfile(),
-                    Lab3QueryProfile(),
-                    WordFinalTappingQueryProfile(),
-                    WordFinalTappingExportProfile()]:
+    for profile in [#Lab1QueryProfile(),
+                    #Lab2QueryProfile(),
+                    #Lab3QueryProfile(),
+                    #WordFinalTappingQueryProfile(),
+                    #WordFinalTappingExportProfile()
+                    ]:
         if not os.path.exists(profile.path):
             profile.save_profile()
 

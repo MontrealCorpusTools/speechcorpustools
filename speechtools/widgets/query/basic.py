@@ -9,6 +9,7 @@ from ..base import NonScrollingComboBox
 
 from ...profiles import QueryProfile, Filter
 
+from ...helper import get_system_font_height
 
 class AttributeSelect(NonScrollingComboBox):
     def __init__(self, hierarchy, to_find, alignment):
@@ -580,7 +581,6 @@ class BasicFilterBox(QtWidgets.QGroupBox):
         scroll.setWidgetResizable(True)
         scroll.setWidget(mainWidget)
         scroll.setMinimumHeight(10)
-        #scroll.setMinimumWidth(10)
         scroll.setMaximumHeight(100)
         scroll.setSizePolicy(QtWidgets.QSizePolicy.MinimumExpanding,QtWidgets.QSizePolicy.MinimumExpanding)
         policy = scroll.sizePolicy()
@@ -962,7 +962,7 @@ class FilterBox(QtWidgets.QGroupBox):
 
         if len(label) > 5 and label != ['phone', 'subset', '==', 'syllabic', 'delete', 'delete2'] and label != ['phone', 'alignment', 'Right aligned with', 'word', 'delete', 'delete2']:
 
-            unchecked = []   
+            unchecked = []
             for i in range(len(self.mainLayout)):
                 match = self.mainLayout.itemAt(i)
                 if match.widget().attributeWidget.mainLayout.itemAt(1) != None:
@@ -1022,7 +1022,7 @@ class BasicQuery(QtWidgets.QWidget):
 
         self.filterWidget = FilterBox()
         self.basicFilterWidget = BasicFilterBox()
-        self.basicFilterWidget.setMaximumHeight(200)
+        self.basicFilterWidget.setMaximumHeight(get_system_font_height() * 11)
 
         self.changetofind.connect(self.filterWidget.clearFilters)
         self.changeconfig.connect(self.basicFilterWidget.store)
