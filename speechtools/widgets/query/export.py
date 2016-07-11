@@ -254,6 +254,8 @@ class BasicColumnBox(QtWidgets.QGroupBox):
                     if k[0] != 'id' and k[0] not in properties:
                         properties.append(k[0])
             hierarchydict[i] = properties
+        for i in hierarchydict.values():
+            i.append('duration')
 
         dictlengths = []
         for key in hierarchydict:
@@ -280,37 +282,6 @@ class BasicColumnBox(QtWidgets.QGroupBox):
 
         self.positions = [(i, j) for i in range(len(hierarchydict)+2) for j in range(self.numcolumns)]
         self.positions2 = [(i, j) for i in range(2) for j in range(1)]
-
-        '''self.grid = QtWidgets.QGridLayout()
-        layout = QtWidgets.QVBoxLayout()
-        self.mainLayout = QtWidgets.QVBoxLayout()
-        self.mainLayout.addLayout(self.grid)
-        self.mainLayout.setSpacing(0)
-        self.mainLayout.setContentsMargins(0,0,0,0)
-        self.mainLayout.setAlignment(QtCore.Qt.AlignTop)
-        mainWidget = QtWidgets.QWidget()
-
-        mainWidget.setSizePolicy(QtWidgets.QSizePolicy.MinimumExpanding,QtWidgets.QSizePolicy.MinimumExpanding)
-        mainWidget.setLayout(self.mainLayout)
-        scroll = QtWidgets.QScrollArea()
-        scroll.setWidgetResizable(True)
-        scroll.setWidget(mainWidget)
-        scroll.setMinimumHeight(10)
-        scroll.setMinimumWidth(10)
-        scroll.setSizePolicy(QtWidgets.QSizePolicy.MinimumExpanding,QtWidgets.QSizePolicy.MinimumExpanding)
-        policy = scroll.sizePolicy()
-        policy.setVerticalStretch(1)
-        scroll.setSizePolicy(policy)
-        layout.addWidget(scroll)
-
-        self.setLayout(layout)
-
-        self.setSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
-        policy = self.sizePolicy()
-        policy.setVerticalStretch(1)
-        self.setSizePolicy(policy)
-
-        self.initUI()'''
 
         self.tab_widget = QtWidgets.QTabWidget()
         self.tab1 = QtWidgets.QWidget()
@@ -349,8 +320,8 @@ class BasicColumnBox(QtWidgets.QGroupBox):
         scroll = QtWidgets.QScrollArea()
         scroll.setWidgetResizable(True)
         scroll.setWidget(mainWidget)
-        scroll.setMinimumHeight(10)
-        scroll.setMinimumWidth(10)
+        scroll.setMinimumHeight(150)
+        scroll.setMaximumHeight(150)
         scroll.setSizePolicy(QtWidgets.QSizePolicy.MinimumExpanding,QtWidgets.QSizePolicy.MinimumExpanding)
         policy = scroll.sizePolicy()
         policy.setVerticalStretch(1)
@@ -696,9 +667,11 @@ class ExportProfileDialog(QtWidgets.QDialog):
         layout.addRow('Linguistic objects to find', self.toFindWidget)
 
         self.BasicColumnBox = BasicColumnBox(hierarchy, to_find)
+        self.BasicColumnBox.setMaximumHeight(250)
         layout.addRow(self.BasicColumnBox)
 
         self.columnWidget = ColumnBox(hierarchy, to_find)
+
         layout.addRow(self.columnWidget)
         self.BasicColumnBox.columnToAdd.connect(self.columnWidget.fillInColumn)
         self.columnWidget.checkboxToUncheck.connect(self.BasicColumnBox.uncheck)
