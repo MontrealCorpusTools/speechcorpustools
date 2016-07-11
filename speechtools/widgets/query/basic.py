@@ -214,14 +214,19 @@ class ValueWidget(QtWidgets.QWidget):
             item.widget().deleteLater()
         self.compWidget = NonScrollingComboBox()
         self.compWidget.setSizePolicy(QtWidgets.QSizePolicy.Fixed,QtWidgets.QSizePolicy.Fixed)
+
+
+
         if new_type == 'alignment':
             self.compWidget.addItem('Right aligned with')
             self.compWidget.addItem('Left aligned with')
             self.compWidget.addItem('Not right aligned with')
             self.compWidget.addItem('Not left aligned with')
             self.valueWidget = AttributeWidget(self.config, self.to_find, alignment = True)
+
         elif new_type == 'subset':
             self.compWidget.addItem('==')
+            self.compWidget.addItem('!=')
             self.valueWidget = NonScrollingComboBox()
             if annotation in self.hierarchy.subset_types:
                 for s in self.hierarchy.subset_types[annotation]:
@@ -239,30 +244,32 @@ class ValueWidget(QtWidgets.QWidget):
             self.compWidget.addItem('<=')
             self.valueWidget = QtWidgets.QLineEdit()
         elif new_type == str:
-            self.compWidget.currentIndexChanged.connect(self.updateValueWidget)
-            self.compWidget.addItem('==')
-            self.compWidget.addItem('!=')
-            self.compWidget.addItem('regex')
-            self.mainLayout.addWidget(self.compWidget)
+
             if self.hierarchy.has_type_property(annotation, label):
                 with CorpusContext(self.config) as c:
                     if label == 'label':
                         self.levels = c.lexicon.list_labels(annotation)
                     else:
                         self.levels = c.lexicon.get_property_levels(label, annotation)
-                self.updateValueWidget()
+                boolean = self.updateValueWidget()
             elif annotation == 'speaker':
                 with CorpusContext(self.config) as c:
                     self.levels = c.speakers
-                self.updateValueWidget()
+                boolean = self.updateValueWidget()
             elif annotation == 'discourse':
                 with CorpusContext(self.config) as c:
                     self.levels = c.discourses
-                self.updateValueWidget()
+                boolean = self.updateValueWidget()
             else:
                 self.levels = []
-                self.updateValueWidget()
-
+                boolean = self.updateValueWidget()
+            if not boolean:
+                self.compWidget.currentIndexChanged.connect(self.updateValueWidget)
+                self.compWidget.addItem('==')
+                self.compWidget.addItem('!=')
+                self.compWidget.addItem('regex')
+            self.mainLayout.addWidget(self.compWidget)
+            self.mainLayout.addWidget(self.valueWidget)
         elif new_type == bool:
             self.compWidget.addItem('==')
             self.valueWidget = QtWidgets.QComboBox()
@@ -271,14 +278,12 @@ class ValueWidget(QtWidgets.QWidget):
             self.valueWidget.addItem('Null')
         if new_type == str:
             pass
-        elif new_type != bool:
+        else:
             self.mainLayout.addWidget(self.compWidget)
             self.mainLayout.addWidget(self.valueWidget)
-        #if new_type in [int, float, str, bool]:
-        #    self.switchWidget = QtWidgets.QPushButton('Switch')
-        #    self.mainLayout.addWidget(self.switchWidget)
 
     def updateValueWidget(self):
+        boolean = False
         if self.levels is None:
             return
 
@@ -288,18 +293,32 @@ class ValueWidget(QtWidgets.QWidget):
             self.valueWidget.deleteLater()
         if label == 'regex' or len(self.levels) == 0:
             self.valueWidget = QtWidgets.QLineEdit()
+            self.mainLayout.addWidget(self.valueWidget)
         else:
             if len(self.levels) < 10:
-                self.valueWidget = NonScrollingComboBox()
-                for l in self.levels:
-                    self.valueWidget.addItem(l)
+
+                if len(self.levels) == 1 and self.levels[0] == 'True' or self.levels[0] == 'False':
+                    self.compWidget.addItem('==')
+                    self.valueWidget = QtWidgets.QComboBox()
+                    self.valueWidget.addItem('True')
+                    self.valueWidget.addItem('False')
+                    self.valueWidget.addItem('Null')
+                    boolean = True
+
+                else:
+                    self.valueWidget = NonScrollingComboBox()
+                    for l in self.levels:
+                        self.valueWidget.addItem(l)
+                    self.mainLayout.addWidget(self.valueWidget)
+
             else:
                 self.valueWidget = QtWidgets.QLineEdit()
                 completer = QtWidgets.QCompleter(self.levels)
                 completer.setCaseSensitivity(QtCore.Qt.CaseInsensitive)
                 self.valueWidget.setCompleter(completer)
+        self.mainLayout.addWidget(self.compWidget)
         self.mainLayout.addWidget(self.valueWidget)
-
+        return boolean
 
     def setToFind(self, to_find):
         self.to_find = to_find
@@ -348,7 +367,7 @@ class ValueWidget(QtWidgets.QWidget):
 
 
 class FilterWidget(QtWidgets.QWidget):
-   
+
     needsDelete = QtCore.pyqtSignal()
     needsHelp = QtCore.pyqtSignal(object)
     def __init__(self, config, to_find):
@@ -380,7 +399,7 @@ class FilterWidget(QtWidgets.QWidget):
         self.helpButton.setText("help")
         self.helpButton.clicked.connect(self.needHelp)
         self.helpButton.setSizePolicy(QtWidgets.QSizePolicy.Fixed,QtWidgets.QSizePolicy.Fixed)
-        
+
         mainLayout.addWidget(self.helpButton)
 
 
@@ -390,14 +409,14 @@ class FilterWidget(QtWidgets.QWidget):
         self.valueWidget.changeType(self.to_find, self.attributeWidget.label(), self.attributeWidget.type())
 
     def needHelp(self, to_find):
-        options = [self.attributeWidget.attribute(), self.valueWidget.operator(), self.valueWidget.value()]   
+        options = [self.attributeWidget.attribute(), self.valueWidget.operator(), self.valueWidget.value()]
         self.needsHelp.emit(options)
 
     def setToFind(self, to_find):
         self.to_find = to_find
         self.attributeWidget.setToFind(to_find)
         self.valueWidget.setToFind(to_find)
-        
+
 
 
     def toFilter(self):
@@ -431,6 +450,7 @@ class FilterWidget(QtWidgets.QWidget):
             value = tuple(list(filter.value)[:-1])
             a = filter.attribute[-1]
             op = filter.operator
+
             if a == 'begin':
                 if op == '==':
                     operator = 'Left aligned with'
@@ -839,15 +859,15 @@ class FilterBox(QtWidgets.QGroupBox):
 
         mainWidget.setSizePolicy(QtWidgets.QSizePolicy.Preferred,QtWidgets.QSizePolicy.Preferred)
         mainWidget.setLayout(self.mainLayout)
-        scroll = QtWidgets.QScrollArea()
-        scroll.setWidgetResizable(True)
-        scroll.setWidget(mainWidget)
-        scroll.setMinimumHeight(10)
-        scroll.setSizePolicy(QtWidgets.QSizePolicy.Preferred,QtWidgets.QSizePolicy.Preferred)
-        policy = scroll.sizePolicy()
+        self.scroll = QtWidgets.QScrollArea()
+        self.scroll.setWidgetResizable(True)
+        self.scroll.setWidget(mainWidget)
+        self.scroll.setMinimumHeight(10)
+        self.scroll.setSizePolicy(QtWidgets.QSizePolicy.Preferred,QtWidgets.QSizePolicy.Preferred)
+        policy = self.scroll.sizePolicy()
         policy.setVerticalStretch(1)
-        scroll.setSizePolicy(policy)
-        layout.addWidget(scroll)
+        self.scroll.setSizePolicy(policy)
+        layout.addWidget(self.scroll)
 
         self.config = None
         self.to_find = None
@@ -902,6 +922,7 @@ class FilterBox(QtWidgets.QGroupBox):
         widget = FilterWidget(self.config, self.to_find)
         widget.needsDelete.connect(self.deleteWidget)
         self.mainLayout.insertWidget(self.mainLayout.count(), widget)
+        self.scroll.verticalScrollBar().setValue(self.scroll.verticalScrollBar().maximum())
         widget.needsHelp.connect(self.needsHelp.emit)
 
     def setFilters(self, filters):
@@ -940,6 +961,7 @@ class FilterBox(QtWidgets.QGroupBox):
                     todelete.deleteLater()
 
         if len(label) > 5 and label != ['phone', 'subset', '==', 'syllabic', 'delete', 'delete2'] and label != ['phone', 'alignment', 'Right aligned with', 'word', 'delete', 'delete2']:
+
             unchecked = []   
             for i in range(len(self.mainLayout)):
                 match = self.mainLayout.itemAt(i)

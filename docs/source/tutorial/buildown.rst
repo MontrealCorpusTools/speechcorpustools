@@ -1,10 +1,8 @@
+.. _buildown:
+
 ******************************************
 Speech Corpus Tools: Tutorial and examples
 ******************************************
-
-
-
-.. _buildown:
 
 Build your own database
 #######################
@@ -26,4 +24,4 @@ To import one of those corpora, press the "Import local corpus" button below the
 
 At the moment, importing ignores any connections to remote servers, and requires that a local version of Neo4j is running.  Sound files will be detected based on sharing a name with a text file or TextGrid.  If the location of the sound files is changed, you can update where SCT thinks they are through the "Find local audio files" button.
 
-`Previous <http://sct.readthedocs.io/en/latest/tutorial/buckeye.html>`_
+:ref:`Previous <buckeye>`

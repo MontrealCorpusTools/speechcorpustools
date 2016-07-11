@@ -25,7 +25,6 @@ class SelectableAudioWidget(QtWidgets.QWidget):
     acousticsSelected = QtCore.pyqtSignal(object)
     def __init__(self, parent = None):
         super(SelectableAudioWidget, self).__init__(parent)
-        #self.setMinimumHeight(600)
         self.discourse_model = None
         self.hierarchy = None
         self.config = None
@@ -44,8 +43,6 @@ class SelectableAudioWidget(QtWidgets.QWidget):
 
         toplayout = QtWidgets.QHBoxLayout()
         bottomlayout = QtWidgets.QHBoxLayout()
-
-
 
         self.setFocusPolicy(QtCore.Qt.StrongFocus)
 
@@ -69,40 +66,22 @@ class SelectableAudioWidget(QtWidgets.QWidget):
         w = self.spectrumWidget.native
         w.setFocusPolicy(QtCore.Qt.NoFocus)
         bottomlayout.addWidget(w)
-
-        self.helpButton = QtWidgets.QPushButton()
-        self.helpButton.setText("help")
-        self.helpButton.clicked.connect(self.discourseHelpBroadcast.emit)
-        self.helpButton.setSizePolicy(QtWidgets.QSizePolicy.Fixed,QtWidgets.QSizePolicy.Fixed)
-
-        vhelpLayout = QtWidgets.QHBoxLayout()
-        vhelpLayout.addStretch(1)
-        vhelpLayout.addWidget(self.helpButton)
-
-        helpLayout = QtWidgets.QVBoxLayout()
-        helpLayout.addStretch(1)
-        helpLayout.addLayout(vhelpLayout)
-
         layout.addLayout(bottomlayout)
-
-
 
         mainlayout = QtWidgets.QHBoxLayout()
         mainlayout.addLayout(layout)
-        mainlayout.setStretchFactor(helpLayout, 2)
-        mainlayout.addLayout(helpLayout)
 
         self.hierarchyWidget = HierarchyWidget()
         self.hierarchyWidget.toggleSpectrogram.connect(self.spectrumWidget.toggle_spectrogram)
         self.hierarchyWidget.togglePitch.connect(self.spectrumWidget.toggle_pitch)
         self.hierarchyWidget.toggleFormants.connect(self.spectrumWidget.toggle_formants)
         self.hierarchyWidget.channelChanged.connect(self.updateChannel)
+        self.hierarchyWidget.discourseHelpBroadcast.connect(self.discourseHelpBroadcast.emit)
 
         mainlayout.addWidget(self.hierarchyWidget)
 
         self.setLayout(mainlayout)
 
-        #self.m_audioOutput = AudioOutput()
         self.m_audioOutput = MediaPlayer()
         self.m_audioOutput.error.connect(self.showError)
         self.m_audioOutput.positionChanged.connect(self.notified)
@@ -248,7 +227,6 @@ class SelectableAudioWidget(QtWidgets.QWidget):
                     max_time = self.max_selected_time
                 self.m_audioOutput.setMinTime(min_time)
                 self.m_audioOutput.setMaxTime(max_time)
-                #self.m_audioOutput.stop()
                 if self.m_audioOutput.state() == QtMultimedia.QMediaPlayer.StoppedState:
                     self.m_audioOutput.play()
             elif self.m_audioOutput.state() == QtMultimedia.QMediaPlayer.PlayingState:
@@ -332,7 +310,6 @@ class SelectableAudioWidget(QtWidgets.QWidget):
         self.setFocus(True)
         self.selected_annotation = None
         self.selected_boundary = None
-        #self.selectionChanged.emit(None)
 
         if event.handled:
             return
@@ -505,7 +482,6 @@ class SelectableAudioWidget(QtWidgets.QWidget):
                         if ind != -1:
                             self.selected_time = p[0]
                             break
-                #self.updatePlayTime(self.view_begin)
                 self.audioWidget.update_selected_boundary(self.selected_time, *self.selected_boundary)
 
                 self.audioWidget.update_selection_time(self.selected_time)

@@ -64,7 +64,8 @@ However, recall that our query asked for **word-final fricatives**, and not all 
 		:align: center
 		:alt: Image cannot be displayed in your browser
 
-\* **NB** the "fricative" property is only availably through `enrichment <http://sct.readthedocs.io/en/latest/additional/enrichment.html>`_
+\* **NB** the "fricative" property is only available through
+:doc:`enrichment <enrichment>`.
 
 Now the following phones are found:
 
@@ -109,5 +110,5 @@ This is where the "following" and "previous" options come into play. We can use 
 
 
 
-For a full list of filters and their uses, see the section on `building queries <http://sct.readthedocs.io/en/latest/additional/buildingqueries.html>`_
+For a full list of filters and their uses, see the section on :any:`building queries <buildingqueries>`
 
