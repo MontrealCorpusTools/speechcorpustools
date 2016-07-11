@@ -26,7 +26,7 @@ Example 1: Factors affecting vowel duration
 *******************************************
 
 Motivation
-=======
+==========
 
 A number of factors affect the duration of vowels, including:
 
@@ -43,7 +43,7 @@ voicing is compared to other factors.
 
 
 Step 1: Creating a query profile
-===================
+================================
 
 Based on the motivation above, we want to make a query for:
 
@@ -59,23 +59,23 @@ To perform a query, you need a *query profile*.  This consists of:
 
 Once a query profile has been constructed, it can be saved ("Save query profile"). Thus, to carry out a query, you can either create a new one or select an existing one (under "Query profiles").  We'll assume here that a new profile is being created:
 
-1. **Make a new profile**: Under "Query profiles", select "New Query".  
+1. **Make a new profile**: Under "Query profiles", select "New Query".
 
 2. **Find phones**: Select "phone" under "Linguistic objects to find". The screen should now look like:
 
-	.. image:: ex1Fig1.png
-		:width: 563px
-		:align: center
-		:alt: Image cannot be displayed in your browser
+    .. image:: ex1Fig1.png
+        :width: 563px
+        :align: center
+        :alt: Image cannot be displayed in your browser
 
 3. **Add filters** to the query.  A single filter is added by pressing "+" and constructing it, by making selections from drop-down menus which appear. For more information on filters, see :any:`this page <../additional/filters>`.
 
-The first three filters are: 
+The first three filters are:
 
-	.. image:: ex1Fig2.png
-		:width: 563px
-		:align: center
-		:alt: Image cannot be displayed in your browser
+    .. image:: ex1Fig2.png
+        :width: 563px
+        :align: center
+        :alt: Image cannot be displayed in your browser
 
 These do the following:
 
@@ -95,10 +95,10 @@ These do the following:
 
 Then, add three more filters:
 
-	.. figure:: ex1Fig3.png
-		:width: 563px	
-		:align: center
-		:alt: Image cannot be displayed in your browser
+    .. figure:: ex1Fig3.png
+        :width: 563px
+        :align: center
+        :alt: Image cannot be displayed in your browser
 
 These do the following:
 
@@ -110,7 +110,7 @@ These do the following:
 
 * *Restrict to phones which precede a word-final phone*
 
-These filters together form a query corresponding to the desired set of linguistic objects (vowels in utterance-final CVC words, where C\ :sub:`2` \ is a stop).  
+These filters together form a query corresponding to the desired set of linguistic objects (vowels in utterance-final CVC words, where C\ :sub:`2` \ is a stop).
 
 You should now:
 
@@ -121,7 +121,7 @@ You should now:
 This will take a while (0.5-2 minutes).
 
 Step 2: Creating an export profile
-=====================
+==================================
 
 The next step is to export information about each vowel token as a CSV file.  We would like the vowel's *duration* and *identity*, as well as the following factors which are expected to affect the vowel's duration:
 
@@ -141,11 +141,11 @@ In addition, we want some identifying information (to debug, and potentially for
 
 
 
-Each of these 9 variables we would like to export corresponds to one row in an *export profile*. 
+Each of these 9 variables we would like to export corresponds to one row in an *export profile*.
 
 To **create a new export profile**:
 
-1. Select "New export profile" from the "Export query results" menu.  
+1. Select "New export profile" from the "Export query results" menu.
 2. Add one row per variable to be exported, as follows: [#f1]_
     * Press "+" (create a new row)
     * Make selections from drop-down menus to describe the variable.
@@ -154,10 +154,10 @@ To **create a new export profile**:
 
 The nine rows to be added for the variables above result in the following export profile:
 
-	.. figure:: ex1Fig4.png
-		:width: 600px
-		:align: center
-		:alt: Image cannot be displayed in your browser
+    .. figure:: ex1Fig4.png
+        :width: 600px
+        :align: center
+        :alt: Image cannot be displayed in your browser
 
 
 
@@ -170,10 +170,10 @@ Some explanation of these rows, for a single token:  (We use the [u] in /but/ as
 
 * Row 3 refers to the ``voicing`` of the *following phone* object (the [t])
     * Note that "following" automatically means "following phone"" (i.e., ``phone`` doesn't need to put put after `following`) because the linguistic objects being found are phones. If the linguistic objects being found were syllabes (as in Example 2 below), "following" would automatically mean "following syllable".
-    
+
 * Rows 4, 5, and 9 refer to properties of the *word which contains the
   phone* object: its ``frequency``, ``neighborhood density``, and ``label`` (= orthography, here "boot")
-    
+
 * Row 6 refers to the *utterance which contains the phone*: its ``speech_rate``, defined as syll`ables per second over the utterance.
 
 * Row 7 refers to the *speaker* (their ``name``) whose speech contains this phone.
@@ -190,16 +190,16 @@ You can now:
 This will take a while (probably several minutes).
 
 Step 3: Examine the data file; basic analysis
-===========================
+=============================================
 
 Here are the first few rows of the resulting data file, in Excel:
-	.. figure:: ex1Fig5.png
-		:width: 600px
-		:align: center
-		:alt: Image cannot be displayed in your browser
+    .. figure:: ex1Fig5.png
+        :width: 600px
+        :align: center
+        :alt: Image cannot be displayed in your browser
 
 .. highlight:: r
-	
+
 .. include:: example1Analysis.rst
 
 
@@ -224,11 +224,11 @@ We show (1) here, and leave (2) as an exercise.
 
 
 Step 1: Query profile
-====
+=====================
 
 In this case, we want to make a query for:
 
-* Word-initial syllables 
+* Word-initial syllables
 * \.\.\.only in words at the end of utterances (fixed prosodic position)
 
 For this query profile:
@@ -240,10 +240,10 @@ For this query profile:
 
 This corresponds to the following query profile, which has been saved (in this screenshot) as "PSS: first syllable" in SCT:
 
-	.. image:: ex2Fig1.png
-		:width: 614px
-		:align: center
-		:alt: Image cannot be displayed in your browser
+    .. image:: ex2Fig1.png
+        :width: 614px
+        :align: center
+        :alt: Image cannot be displayed in your browser
 
 
 The first and second filters are similar to those in Example 1:
@@ -255,12 +255,12 @@ The first and second filters are similar to those in Example 1:
     * ``word``: word containing the syllable
     * ``right aligned with`` utterance``: the word and utterance have
       the same end time.
-    
+
 You should **input this query profile**, then **run it** (optionally
 saving first).
 
 Step 2: Export profile
-====
+======================
 
 This query has found all word-initial stressed syllables for words in utterance-final position. We now want to export information about these linguistic objects to a CSV file, for which we again need to construct a query profile.  (You should now **Start a new export profile**.)
 
@@ -276,15 +276,15 @@ orthography), and the word's *stress pattern*
 
 The following export profile contains these nine variables:
 
-	.. image:: ex2Fig2.png
-		:width: 614px
-		:align: center
-		:alt: Image cannot be displayed in your browser
+    .. image:: ex2Fig2.png
+        :width: 614px
+        :align: center
+        :alt: Image cannot be displayed in your browser
 
 After you **enter these rows** in the export profile, **run the export** (optionally saving the export profile first).  I exported it as ``polysyllabic.csv``.
 
 Step 3: examine the data
-====
+========================
 
 .. include:: example2Analysis.rst
 
@@ -322,7 +322,7 @@ For example, Menzerath's Law predicts that for English:
 .. [#f1] Note that it is also possible to input some of these rows automatically, using the checkboxes in the `Simple exports` tab.
 
 
-:any:`Next <nextsteps>` 			:any:`Previous <enrichment_tutorial>`
+:any:`Next <nextsteps>`             :any:`Previous <librispeech>`
 
 
 
