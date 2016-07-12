@@ -1,4 +1,4 @@
-.. _installation_tutorial:
+.. _installation_tutorial2:
 
 Tutorial: Installation Setup
 ############################
@@ -6,6 +6,8 @@ Tutorial: Installation Setup
 .. _PGDB website: http://montrealcorpustools.github.io/PolyglotDB/
 
 .. _GitHub repository: https://https://github.com/MontrealCorpusTools/speechcorpustools
+
+.. _`SCT releases`: https://github.com/MontrealCorpusTools/speechcorpustools/releases
 
 Installing Neo4j
 ****************

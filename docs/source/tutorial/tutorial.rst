@@ -1,7 +1,7 @@
 .. _tutintroduction:
 
 Tutorial
-########################
+########
 
 .. _PGDB website: http://montrealcorpustools.github.io/PolyglotDB/
 
@@ -10,13 +10,13 @@ Tutorial
 Speech Corpus Tools is a system for going from a raw speech corpus to a data file (CSV) ready for further analysis (e.g. in R), which conceptually consists of a pipeline of four steps:
 
 1. **Import** the corpus into SCT
-	* Result: a structured database of linguistic objects (words, phones, discourses).
+    * Result: a structured database of linguistic objects (words, phones, discourses).
 
 2. **Enrich** the database
-    * Result: Further linguistic objects (utterances, syllables), and information about objects (e.g. speech rate, word frequencies). 
+    * Result: Further linguistic objects (utterances, syllables), and information about objects (e.g. speech rate, word frequencies).
 
 3. **Query** the database
-    * Result: A set of linguistic objects of interest (e.g. utterance-final words ending with a stop), 
+    * Result: A set of linguistic objects of interest (e.g. utterance-final words ending with a stop),
 
 4. **Export** the results
     * Result: A CSV file containing information about the set of objects of interest
@@ -33,10 +33,11 @@ This tutorial is structured as follows:
   been completed , either by using a :ref:`premade <premade>` version,
   or doing the import and enrichment steps :ref:`yourself <buildownlibrispeech>`.
 
-* :ref:`Examples <vignetteMain>`: 
+* :ref:`Examples <vignetteMain>`:
       * Two worked examples (:ref:`1 <example1>`, :ref:`2 <example2>`)
-	illustrating the *Query* and *Export* steps, as well as
-	(optional) basic analysis of the resulting data files (CSV's) in R.
+        illustrating the *Query* and *Export* steps, as well as
+        (optional) basic analysis of the resulting data files (CSV's) in R.
+
       * One additional example (:ref:`3 <example3>`) left as an exercise.
 
 
@@ -48,16 +49,12 @@ This tutorial is structured as follows:
 .. _installation_tutorial:
 
 Installation
-********
-
-.. _PGDB website: http://montrealcorpustools.github.io/PolyglotDB/
-
-.. _GitHub repository: https://https://github.com/MontrealCorpusTools/speechcorpustools
+************
 
 .. _neo4j_install:
 
 Installing Neo4j
-========
+================
 
 SCT currently requires that `Neo4j <https://neo4j.com/>`_ version 3.0 be installed locally and running.
 To install Neo4j, please use the following links:
@@ -197,7 +194,7 @@ doing the following **once**, before running SCT:
 .. _sct_install:
 
 Installing SCT
-=========
+==============
 
 Once Neo4j is set up as above, the latest version of SCT can be downloaded from
 the `SCT releases
@@ -205,7 +202,7 @@ the `SCT releases
 page. As of 12 July 2016, the most current release is v0.5.
 
 Windows
-------
+-------
 
 1. Download the zip archive for Windows
 2. Extract the folder
@@ -235,7 +232,7 @@ Mac
 .. _librispeech:
 
 LibriSpeech database
-*******
+********************
 
 The examples in this tutorial use a subset of the `LibriSpeech ASR
 corpus <http://www.openslr.org/12/>`_, a corpus of read English speech
@@ -267,7 +264,9 @@ tutorial, just use the pre-made copy.)
 .. _premade:
 
 Use pre-made database
-=======
+=====================
+
+.. _`librispeechDatabase.zip`: https://github.com/MontrealCorpusTools/speechcorpustools/releases/download/v0.5/librispeechDatabase.zip
 
 Make sure you have opened the SCT application and started Neo4j, at least once.  This creates
 folders for Neo4j databases and for all SCT's local files (including SQL databases):
@@ -275,7 +274,7 @@ folders for Neo4j databases and for all SCT's local files (including SQL databas
 * OS X: ``/Users/username/Documents/Neo4j``, ``/Users/username/Documents/SCT``
 * Windows: ``C:\Users\username\Documents\Neo4j``, ``C:\Users\username\Documents\SCT``
 
-Unzip the ``librispeechDatabases.zip`` file.  It contains two folders,
+Unzip the `librispeechDatabase.zip`_ file.  It contains two folders,
 ``librispeech.graphdb`` and ``LibriSpeech``. Move these (using Finder on
 OS X, or File Explorer on Windows) to the ``Neo4j`` and ``SCT`` folders.
 After doing so, these directories should exist:
@@ -296,7 +295,7 @@ Some important information about the database (to replicate if you are building 
 .. _buildownlibrispeech:
 
 Building your own Librispeech database
-========
+======================================
 
 **Coming soon!**  Some general information on building a database in
 SCT (= importing data) is :any:`here <../additional/buildown>`.
@@ -306,7 +305,7 @@ SCT (= importing data) is :any:`here <../additional/buildown>`.
 .. _vignetteMain:
 
 Examples
-******
+********
 
 Several worked examples follow, which demonstrate the workflow of SCT
 and how to construct queries and exports. You should be able to
@@ -327,10 +326,10 @@ visualization in R are given.
 .. _example1:
 
 Example 1: Factors affecting vowel duration
-=======
+===========================================
 
 Motivation
--------
+----------
 
 A number of factors affect the duration of vowels, including:
 
@@ -347,7 +346,7 @@ voicing is compared to other factors.
 
 
 Step 1: Creating a query profile
--------
+--------------------------------
 
 Based on the motivation above, we want to make a query for:
 
@@ -429,7 +428,7 @@ You should now:
 
 
 Step 2: Creating an export profile
--------
+----------------------------------
 
 The next step is to export information about each vowel token as a CSV file.  We would like the vowel's *duration* and *identity*, as well as the following factors which are expected to affect the vowel's duration:
 
@@ -499,7 +498,7 @@ You can now:
 
 
 Step 3: Examine the data
--------
+------------------------
 
 
 Here are the first few rows of the resulting data file, in Excel:
@@ -517,11 +516,11 @@ Here are the first few rows of the resulting data file, in Excel:
 .. _example2:
 
 Example 2: Polysyllabic shortening
-=========
+==================================
 
 Motivation
---------
-  
+----------
+
 *Polysyllabic shortening* refers to the "same" rhymic unit (syllable or vowel) becoming shorter as the size of the containing domain (word or prosodic domain) increases. Two classic examples:
 
 * English: *stick*, *stick*\y, *stick*\iness (Lehiste, 1972)
@@ -541,7 +540,7 @@ We show (1) here, and leave (2) as an exercise.
 
 
 Step 1: Query profile
------------
+---------------------
 
 In this case, we want to make a query for:
 
@@ -579,7 +578,7 @@ You should **input this query profile**, then **run it** (optionally
 saving first).
 
 Step 2: Export profile
---------
+----------------------
 
 This query has found all word-initial stressed syllables for words in utterance-final position. We now want to export information about these linguistic objects to a CSV file, for which we again need to construct a query profile.  (You should now **Start a new export profile**.)
 
@@ -603,7 +602,7 @@ The following export profile contains these nine variables:
 After you **enter these rows** in the export profile, **run the export** (optionally saving the export profile first).  I exported it as ``librispeechCvc.csv``.
 
 Step 3: Examine the data
-------------
+------------------------
 
 .. include:: example2Analysis.rst
 
@@ -614,7 +613,7 @@ Step 3: Examine the data
 .. _example3:
 
 Example 3: Menzerath's Law
-========
+==========================
 
 **Motivation**: Menzerath's Law (Menzerath 1928, 1954) refers to the general finding that segments and syllables are shorter in longer words, both in terms of
 
@@ -642,8 +641,8 @@ data file which lets you test Menzerath's law for the LibriSpeech corpus.  For e
 .. [#f1] Note that it is also possible to input some of these rows automatically, using the checkboxes in the `Simple exports` tab.
 
 .. [#f2] Technically, this database consists of two sub-databases: a
-	 Neo4j database (which contains the hierarchical
-	 representation of discourses), and a SQL database (which contains lexical and featural information, and cached acoustic measurements). 
+     Neo4j database (which contains the hierarchical
+     representation of discourses), and a SQL database (which contains lexical and featural information, and cached acoustic measurements).
 
 
 
