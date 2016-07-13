@@ -13,19 +13,26 @@ Introduction
 
 .. _general_background:
 
-General Background
-==================
 
-*Speech Corpus Tools* is an application for interacting with large scale
-datasets.  It uses PolyglotDB as the underlying data storage, which allows
-for consistent queries across a wide range of possible input formats.
+`Speech Corpus Tools
+<https://github.com/MontrealCorpusTools/PolyglotDB>`_ is an
+application for working with speech datasets, with a focus on
+large-scale speech corpora. It uses
+`PolyglotDB <https://github.com/MontrealCorpusTools/PolyglotDB/>`_ as
+the underlying data storage, which allows for consistent queries
+across a range of possible input formats.  `This presentation
+<http://people.linguistics.mcgill.ca/~morgan/molt2016.pdf>`_ describes
+the motivation and design of SCT, as well as its application in a case
+study of speech from 12 languages.
 
-Speech Corpus Tools is written in Python, which allows for Python scripts
-to be written using its API, so advanced users can create their own queries
-using Python, rather than SQL or Cypher (the underlying database languages).
+This site consists of two parts:
 
-In addition, Speech Corpus Tools provides a graphical user interface for
-easily displaying annotations and speech in the database and the results
-of queries.
+1. :any:`Tutorial <tutintroduction>`: a stand-alone page containing
+   full instructions for installation of SCT, and worked examples
+   using a sample dataset, providing an introduction to SCT's basic
+   functionality.  We recommend the tutorial for first-time users of SCT.
+
+2. :any:`Documentation <tour>`: the rest of the site, beginning at :any:`Navigation Tour <tour>`, provides documentation of SCT's functionality. The documentation is still in progress (July 2016), and questions not addressed here should be sent to michael.mcauliffe@gmail.com.
+
 
 
