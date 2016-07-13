@@ -32,7 +32,7 @@ Another option is to use the "simple export" window.
         :height: 650px
         :alt: Image cannot be displayed in your browser
 
-Here, there are several commong options that can be selected by checking them. Once checked, they will appear as columns in the query profile:
+Here, there are several common options that can be selected by checking them. Once checked, they will appear as columns in the query profile:
 
     .. image:: simpleexportfull.png
         :width: 720px
