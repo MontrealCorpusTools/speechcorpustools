@@ -1,6 +1,7 @@
 pytest
 sphinx>=1.3b3
 numpydoc
+pyqt5
 https://github.com/vispy/vispy/archive/master.zip
 https://github.com/pyinstaller/pyinstaller/archive/develop.zip
 https://github.com/MontrealCorpusTools/PolyglotDB/archive/master.zip
