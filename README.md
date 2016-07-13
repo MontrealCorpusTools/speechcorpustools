@@ -11,3 +11,11 @@ Please see the online documentation (http://speech-corpus-tools.readthedocs.io/)
 
 This application is under development, please report any issues to
 michael.e.mcauliffe@gmail.com.
+
+To install from source (or to set up a development environment):
+
+1. Download or clone the repository
+2. Install Python requirements (`pip install -r requirements.txt`)
+3. Install Neo4j and set it up (see http://speech-corpus-tools.readthedocs.io/en/latest/tutorial/tutorial.html#installation-tutorial)
+4. Run the debug script from the root of repository (`python bin/qt_debug.py`)
+5. To build an executable run `freezing/freeze.sh` (for Mac/Linux) or `freezing/freeze.bat` (for Windows)
