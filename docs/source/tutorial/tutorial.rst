@@ -253,11 +253,11 @@ dataset, in two steps: [#f2]_
 1. *Importing* the LibriSpeech dataset using SCT, into a database containing information about words, phones, speakers, and files.
 2. *Enriching* the database to include additional information about other linguistic objects (utterances, syllables) and properties of objects (e.g. speech rate).
 
+.. _`librispeechDatabase.zip`: https://github.com/MontrealCorpusTools/speechcorpustools/releases/download/v0.5/librispeechDatabase.zip
 
-Instructions are below for using a :ref:`pre-made copy <premade>`
-(LINK TODO) of
-the LibriSpeech database, where steps (1) and (2) have been carried
-out for you.  Instructions for :ref:`making your own
+Instructions are below for using a premade copy of the
+LibriSpeech database, where steps (1) and (2) have been carried out
+for you.  Instructions for :ref:`making your own
 <buildownlibrispeech>` are coming soon. (For **BigPhon 2016**
 tutorial, just use the pre-made copy.)
 
@@ -266,7 +266,6 @@ tutorial, just use the pre-made copy.)
 Use pre-made database
 =====================
 
-.. _`librispeechDatabase.zip`: https://github.com/MontrealCorpusTools/speechcorpustools/releases/download/v0.5/librispeechDatabase.zip
 
 Make sure you have opened the SCT application and started Neo4j, at least once.  This creates
 folders for Neo4j databases and for all SCT's local files (including SQL databases):
@@ -274,7 +273,7 @@ folders for Neo4j databases and for all SCT's local files (including SQL databas
 * OS X: ``/Users/username/Documents/Neo4j``, ``/Users/username/Documents/SCT``
 * Windows: ``C:\Users\username\Documents\Neo4j``, ``C:\Users\username\Documents\SCT``
 
-Unzip the `librispeechDatabase.zip`_ file.  It contains two folders,
+Download and unzip the `librispeechDatabase.zip`_ file.  It contains two folders,
 ``librispeech.graphdb`` and ``LibriSpeech``. Move these (using Finder on
 OS X, or File Explorer on Windows) to the ``Neo4j`` and ``SCT`` folders.
 After doing so, these directories should exist:
