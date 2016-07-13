@@ -395,7 +395,7 @@ These do the following:
     * ``subset``: refer to a "phone subset", which has been previously defined. Those available in this example include ``syllabics`` and ``consonants``.
     * ``==``, ``syllabic``: this phone should be a syllabic.
 
-* *Restrict to phones followed by a stop*
+* *Restrict to phones followed by a stop* (i.e., not a syllabic)
 
     * ``following``: refer to the following phone
     * ``manner_of_articulation``: refer to a property of phones, which has been previously defined. Those available here include "manner_of_articulation" and "place_of_articulation"
