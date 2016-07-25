@@ -1,4 +1,5 @@
 import os
+import shutil
 import pickle
 
 from PyQt5 import QtGui, QtCore, QtWidgets
@@ -130,6 +131,9 @@ class MainWindow(QtWidgets.QMainWindow):
         super(MainWindow, self).__init__()
         #vispy.sys_info(os.path.join(BASE_DIR, 'vispy.info'), overwrite = True)
         self.corpusConfig = None
+        pesky = os.path.expanduser('~/.neo4j')
+        if os.path.exists(pesky):
+            shutil.rmtree(pesky, ignore_errors = True)
 
         self.leftPane = LeftPane()
         self.configUpdated.connect(self.leftPane.updateConfig)

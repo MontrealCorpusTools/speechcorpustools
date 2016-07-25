@@ -1,9 +1,8 @@
-.. _tutorial2:
+.. _nextsteps:
 
 ******************************************
 Speech Corpus Tools: Tutorial and examples
 ******************************************
-
 
 Tutorial	
 ###################

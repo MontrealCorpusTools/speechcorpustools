@@ -9,6 +9,7 @@ from ..base import NonScrollingComboBox
 
 from ...profiles import QueryProfile, Filter
 
+from ...helper import get_system_font_height
 
 class AttributeSelect(NonScrollingComboBox):
     def __init__(self, hierarchy, to_find, alignment):
@@ -214,7 +215,7 @@ class ValueWidget(QtWidgets.QWidget):
             item.widget().deleteLater()
         self.compWidget = NonScrollingComboBox()
         self.compWidget.setSizePolicy(QtWidgets.QSizePolicy.Fixed,QtWidgets.QSizePolicy.Fixed)
-        
+
 
 
         if new_type == 'alignment':
@@ -226,6 +227,7 @@ class ValueWidget(QtWidgets.QWidget):
 
         elif new_type == 'subset':
             self.compWidget.addItem('==')
+            self.compWidget.addItem('!=')
             self.valueWidget = NonScrollingComboBox()
             if annotation in self.hierarchy.subset_types:
                 for s in self.hierarchy.subset_types[annotation]:
@@ -243,7 +245,7 @@ class ValueWidget(QtWidgets.QWidget):
             self.compWidget.addItem('<=')
             self.valueWidget = QtWidgets.QLineEdit()
         elif new_type == str:
-            
+
             if self.hierarchy.has_type_property(annotation, label):
                 with CorpusContext(self.config) as c:
                     if label == 'label':
@@ -262,7 +264,7 @@ class ValueWidget(QtWidgets.QWidget):
             else:
                 self.levels = []
                 boolean = self.updateValueWidget()
-            if not boolean: 
+            if not boolean:
                 self.compWidget.currentIndexChanged.connect(self.updateValueWidget)
                 self.compWidget.addItem('==')
                 self.compWidget.addItem('!=')
@@ -270,23 +272,17 @@ class ValueWidget(QtWidgets.QWidget):
             self.mainLayout.addWidget(self.compWidget)
             self.mainLayout.addWidget(self.valueWidget)
         elif new_type == bool:
-            print("in bool!!! \n\n\n\n")
             self.compWidget.addItem('==')
             self.valueWidget = QtWidgets.QComboBox()
             self.valueWidget.addItem('True')
             self.valueWidget.addItem('False')
             self.valueWidget.addItem('Null')
 
-            self.mainLayout.addWidget(self.valueWidget)
         if new_type == str:
             pass
-        elif new_type != bool:
+        else:
             self.mainLayout.addWidget(self.compWidget)
             self.mainLayout.addWidget(self.valueWidget)
-
-        #if new_type in [int, float, str, bool]:
-        #    self.switchWidget = QtWidgets.QPushButton('Switch')
-        #    self.mainLayout.addWidget(self.switchWidget)
 
     def updateValueWidget(self):
         boolean = False
@@ -302,7 +298,7 @@ class ValueWidget(QtWidgets.QWidget):
             self.mainLayout.addWidget(self.valueWidget)
         else:
             if len(self.levels) < 10:
-                
+
                 if len(self.levels) == 1 and self.levels[0] == 'True' or self.levels[0] == 'False':
                     self.compWidget.addItem('==')
                     self.valueWidget = QtWidgets.QComboBox()
@@ -310,8 +306,7 @@ class ValueWidget(QtWidgets.QWidget):
                     self.valueWidget.addItem('False')
                     self.valueWidget.addItem('Null')
                     boolean = True
-                    #self.mainLayout.addWidget(self.compWidget)
-                    self.mainLayout.addWidget(self.valueWidget)
+
 
                 else:
                     self.valueWidget = NonScrollingComboBox()
@@ -324,8 +319,10 @@ class ValueWidget(QtWidgets.QWidget):
                 completer = QtWidgets.QCompleter(self.levels)
                 completer.setCaseSensitivity(QtCore.Qt.CaseInsensitive)
                 self.valueWidget.setCompleter(completer)
-                self.mainLayout.addWidget(self.valueWidget)
-        #self.mainLayout.addWidget(self.valueWidget)
+
+        self.mainLayout.addWidget(self.compWidget)
+        self.mainLayout.addWidget(self.valueWidget)
+
         return boolean
 
     def setToFind(self, to_find):
@@ -375,7 +372,7 @@ class ValueWidget(QtWidgets.QWidget):
 
 
 class FilterWidget(QtWidgets.QWidget):
-   
+
     needsDelete = QtCore.pyqtSignal()
     needsHelp = QtCore.pyqtSignal(object)
     def __init__(self, config, to_find):
@@ -407,7 +404,7 @@ class FilterWidget(QtWidgets.QWidget):
         self.helpButton.setText("help")
         self.helpButton.clicked.connect(self.needHelp)
         self.helpButton.setSizePolicy(QtWidgets.QSizePolicy.Fixed,QtWidgets.QSizePolicy.Fixed)
-        
+
         mainLayout.addWidget(self.helpButton)
 
 
@@ -417,14 +414,14 @@ class FilterWidget(QtWidgets.QWidget):
         self.valueWidget.changeType(self.to_find, self.attributeWidget.label(), self.attributeWidget.type())
 
     def needHelp(self, to_find):
-        options = [self.attributeWidget.attribute(), self.valueWidget.operator(), self.valueWidget.value()]   
+        options = [self.attributeWidget.attribute(), self.valueWidget.operator(), self.valueWidget.value()]
         self.needsHelp.emit(options)
 
     def setToFind(self, to_find):
         self.to_find = to_find
         self.attributeWidget.setToFind(to_find)
         self.valueWidget.setToFind(to_find)
-        
+
 
 
     def toFilter(self):
@@ -547,8 +544,9 @@ class BasicFilterBox(QtWidgets.QGroupBox):
         scroll = QtWidgets.QScrollArea()
         scroll.setWidgetResizable(True)
         scroll.setWidget(mainWidget)
-        scroll.setMinimumHeight(10)
-        scroll.setMinimumWidth(10)
+        scroll.setMinimumHeight(100)
+        #scroll.setMinimumWidth(10)
+        scroll.setMaximumHeight(100)
         scroll.setSizePolicy(QtWidgets.QSizePolicy.MinimumExpanding,QtWidgets.QSizePolicy.MinimumExpanding)
         policy = scroll.sizePolicy()
         policy.setVerticalStretch(1)
@@ -587,7 +585,7 @@ class BasicFilterBox(QtWidgets.QGroupBox):
         scroll.setWidgetResizable(True)
         scroll.setWidget(mainWidget)
         scroll.setMinimumHeight(10)
-        scroll.setMinimumWidth(10)
+        scroll.setMaximumHeight(100)
         scroll.setSizePolicy(QtWidgets.QSizePolicy.MinimumExpanding,QtWidgets.QSizePolicy.MinimumExpanding)
         policy = scroll.sizePolicy()
         policy.setVerticalStretch(1)
@@ -967,7 +965,8 @@ class FilterBox(QtWidgets.QGroupBox):
                     todelete.deleteLater()
 
         if len(label) > 5 and label != ['phone', 'subset', '==', 'syllabic', 'delete', 'delete2'] and label != ['phone', 'alignment', 'Right aligned with', 'word', 'delete', 'delete2']:
-            unchecked = []   
+
+            unchecked = []
             for i in range(len(self.mainLayout)):
                 match = self.mainLayout.itemAt(i)
                 if match.widget().attributeWidget.mainLayout.itemAt(1) != None:
@@ -1027,6 +1026,7 @@ class BasicQuery(QtWidgets.QWidget):
 
         self.filterWidget = FilterBox()
         self.basicFilterWidget = BasicFilterBox()
+        self.basicFilterWidget.setMaximumHeight(get_system_font_height() * 11)
 
         self.changetofind.connect(self.filterWidget.clearFilters)
         self.changeconfig.connect(self.basicFilterWidget.store)

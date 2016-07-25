@@ -19,7 +19,7 @@ class PyTest(TestCommand):
             sys.exit(errcode)
 
 setup(name='speechtools',
-      version='0.0.1',
+      version='0.5.0',
       description='',
       long_description='',
       classifiers=[
@@ -40,8 +40,8 @@ setup(name='speechtools',
                 'speechtools.widgets',
                 'speechtools.widgets.query'],
       install_requires=[
-          #'polyglotdb',
-          #'vispy',
+          'polyglotdb',
+          'vispy',
           'librosa',
       ],
       entry_points = {

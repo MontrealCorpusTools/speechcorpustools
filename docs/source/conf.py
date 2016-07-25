@@ -34,9 +34,7 @@ MOCK_MODULES = ['polyglotdb', 'polyglotdb.config', 'polyglotdb.exceptions',
 for mod_name in MOCK_MODULES:
     sys.modules[mod_name] = mock.Mock()
 
-
 import shlex
-import alabaster
 
 # If extensions (or modules to document with autodoc) are in another directory,
 # add these directories to sys.path here. If the directory is relative to the
@@ -54,7 +52,6 @@ import speechtools
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
 extensions = [
-    'alabaster',
     'sphinx.ext.autodoc',
     'sphinx.ext.intersphinx',
     'sphinx.ext.mathjax',
@@ -64,7 +61,7 @@ extensions = [
     'numpydoc',]
 
 autosummary_generate = True
-autodoc_default_flags = ['members', 'inherited-members']
+autodoc_default_flags = ['members']
 
 numpydoc_show_class_members = False
 
@@ -84,8 +81,8 @@ master_doc = 'index'
 
 # General information about the project.
 project = 'Speech Corpus Tools'
-copyright = '2015, Montreal Corpus Tools'
-author = 'Montreal Corpus Tools'
+copyright = '2016, Speech Corpus Tools'
+author = 'Michael McAuliffe, Morgan Sonderegger'
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
@@ -145,18 +142,18 @@ todo_include_todos = False
 
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
-html_theme = 'alabaster'
+html_theme = 'sphinx_rtd_theme'
 
 # Theme options are theme-specific and customize the look and feel of a theme
 # further.  For a list of options available for each theme, see the
 # documentation.
-html_theme_options = {
-    'github_user': 'MontrealCorpusTools',
-    'github_repo': 'speechcorpustools',
-}
+#html_theme_options = {
+#    'github_user': 'MontrealCorpusTools',
+#    'github_repo': 'speechcorpustools',
+#}
 
 # Add any paths that contain custom themes here, relative to this directory.
-html_theme_path = [alabaster.get_path()]
+#html_theme_path = [alabaster.get_path()]
 
 # The name for this set of Sphinx documents.  If None, it defaults to
 # "<project> v<release> documentation".
@@ -193,15 +190,15 @@ html_static_path = ['_static']
 #html_use_smartypants = True
 
 # Custom sidebar templates, maps document names to template names.
-html_sidebars = {
-    '**': [
-        'about.html',
-        'navigation.html',
-        'relations.html',
-        'searchbox.html',
-        'donate.html',
-    ]
-}
+#html_sidebars = {
+#    '**': [
+#        'about.html',
+#        'navigation.html',
+#        'relations.html',
+#        'searchbox.html',
+#        'donate.html',
+#    ]
+#}
 
 # Additional templates that should be rendered to pages, maps page names to
 # template names.
