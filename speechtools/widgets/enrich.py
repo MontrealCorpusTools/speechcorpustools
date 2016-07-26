@@ -342,3 +342,26 @@ class EncodeHierarchicalPropertiesDialog(BaseDialog):
         return {'higher': self.higherSelect.currentText(), 'type':self.typeSelect.currentText(),
                 'lower': lower, 'subset': subset, 'name': self.nameEdit.text()}
 
+class EncodeRelativizedMeasuresDialog(BaseDialog):
+    def __init__(self, config, parent):
+        super(EncodeRelativizedMeasuresDialog, self).__init__(parent)
+        with CorpusContext(config) as c:
+            hierarchy = c.hierarchy
+        layout = QtWidgets.QFormLayout()
+       
+        self.optionWidget = RadioSelectWidget('Desired measure:', OrderedDict([('Word Mean Duration', 'word_mean_duration'),
+            ('Word Median Duration', 'word_median'),
+            ('Word Mean Duration by Speaker', 'word_mean_by_speaker'),
+            ('Word Standard Deviation','word_std_dev'),
+            ('Baseline Duration', 'baseline_duration'),
+            ('Phone Mean Duration','phone_mean'),
+            ('Phone Mean Duration by Speaker', 'phone_mean_duration_with_speaker'),
+            ('Phone Median Duration','phone_median'),
+            ('Phone Standard Deviation', 'phone_std_dev')]))
+            
+
+        layout.addWidget(self.optionWidget)
+
+        self.layout().insertLayout(0, layout)
+    def value(self):
+        return self.optionWidget.value()

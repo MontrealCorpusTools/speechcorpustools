@@ -74,7 +74,10 @@ class QueryWorker(FunctionWorker):
                 try:
                     results = self.run_query()
                     success = True
-                except (ConnectionError, NetworkAddressError, TemporaryConnectionError):
+                except (ConnectionError, NetworkAddressError, TemporaryConnectionError) as e:
+                    exc_type, exc_value, exc_traceback = sys.exc_info()
+                    e = ''.join(traceback.format_exception(exc_type, exc_value,exc_traceback))
+                    print(e)
                     tries += 1
                     if tries == 2:
                         self.connectionIssues.emit()
@@ -82,11 +85,11 @@ class QueryWorker(FunctionWorker):
             if not success:
                 raise(ConnectionError('The query could not be completed.  Please check your internet connectivity.'))
 
+        
         except Exception as e:
             if not isinstance(e, PGError):
                 exc_type, exc_value, exc_traceback = sys.exc_info()
-                e = ''.join(traceback.format_exception(exc_type, exc_value,
-                                          exc_traceback))
+                e = ''.join(traceback.format_exception(exc_type, exc_value,exc_traceback))
             self.finished = True
             self.errorEncountered.emit(e)
             return
@@ -98,11 +101,10 @@ class QueryWorker(FunctionWorker):
         print('finished')
         self.dataReady.emit(results)
         self.finished = True
-
+        
     def run_query(self):
         profile = self.kwargs['profile']
         config = self.kwargs['config']
-
         with CorpusContext(config) as c:
             a_type = getattr(c, profile.to_find)
             query = c.query_graph(a_type)
@@ -385,6 +387,49 @@ class HierarchicalPropertiesWorker(QueryWorker):
             if stop_check():
                 return False
         return True
+
+class RelativizedMeasuresWorker(QueryWorker):
+    def run_query(self):
+        res  = ""
+        data_type = 'word'
+        config = self.kwargs['config']
+        with CorpusContext(config) as c:
+            if self.kwargs['measure'] == 'word_median':
+                res = c.word_median()
+            elif self.kwargs['measure'] == 'all_word_median':
+                res = c.all_word_median()
+            elif self.kwargs['measure'] == 'word_mean_duration':
+                res = c.word_mean_duration()
+            elif self.kwargs['measure'] == 'word_std_dev':
+                res = c.word_std_dev()
+            elif self.kwargs['measure'] == 'baseline_duration':
+                res = c.baseline_duration()
+            elif self.kwargs['measure'] == 'phone_mean':
+                data_type = 'phone'
+                res = c.phone_mean_duration()
+            elif self.kwargs['measure'] == 'phone_median':
+                data_type = 'phone'
+                res = c.phone_median()
+            elif self.kwargs['measure'] == 'phone_std_dev':
+                data_type = 'phone'
+                res = c.phone_std_dev()
+            elif self.kwargs['measure'] == 'all_word_median':
+                res = c.all_word_median()
+            elif self.kwargs['measure'] == 'phone_mean_duration_with_speaker':
+                data_type = 'speaker'
+                res = c.phone_mean_duration_with_speaker()
+            elif self.kwargs['measure'] == 'word_mean_by_speaker':
+                data_type = 'speaker'
+                res = c.word_mean_duration_with_speaker()
+            elif self.kwargs['measure'] == 'all_phone_median':
+                data_type = 'phone'
+                res = c.all_phone_median()
+            else:
+                print("error")
+            c.encode_measure(res, data_type)
+
+
+
 
 class PrecedingCacheWorker(QueryWorker):
     def run_query(self):
