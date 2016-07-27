@@ -424,6 +424,16 @@ class RelativizedMeasuresWorker(QueryWorker):
             elif self.kwargs['measure'] == 'all_phone_median':
                 data_type = 'phone'
                 res = c.all_phone_median()
+            elif self.kwargs['measure'] == 'syllable_mean':
+                data_type = 'syllable'
+                res = c.syllable_mean_duration()
+            elif self.kwargs['measure'] == 'syllable_median':
+                data_type = 'syllable'
+                res = c.syllable_median()
+            elif self.kwargs['measure'] == 'syllable_std_dev':
+                data_type = 'syllable'
+                res = c.syllable_std_dev()
+
             else:
                 print("error")
             c.encode_measure(res, data_type)

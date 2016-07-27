@@ -345,23 +345,52 @@ class EncodeHierarchicalPropertiesDialog(BaseDialog):
 class EncodeRelativizedMeasuresDialog(BaseDialog):
     def __init__(self, config, parent):
         super(EncodeRelativizedMeasuresDialog, self).__init__(parent)
-        with CorpusContext(config) as c:
-            hierarchy = c.hierarchy
+        
         layout = QtWidgets.QFormLayout()
        
-        self.optionWidget = RadioSelectWidget('Desired measure:', OrderedDict([('Word Mean Duration', 'word_mean_duration'),
+        self.optionWidget = QtWidgets.QComboBox(self)
+        self.optionWidget.addItem("Word")
+        self.optionWidget.addItem("Phone")
+        self.optionWidget.addItem("Speaker")
+        with CorpusContext(config) as c:
+            if c.hierarchy.has_type_subset(c.phone_name, 'syllabic'): 
+                self.optionWidget.addItem("Syllable")
+
+        self.optionWidget.currentTextChanged.connect(self.change_view)
+        layout.addWidget(self.optionWidget)
+
+        self.radioWidget = RadioSelectWidget('Desired measure:', OrderedDict([
+            ('Word Mean Duration', 'word_mean_duration'),
             ('Word Median Duration', 'word_median'),
             ('Word Mean Duration by Speaker', 'word_mean_by_speaker'),
             ('Word Standard Deviation','word_std_dev'),
-            ('Baseline Duration', 'baseline_duration'),
-            ('Phone Mean Duration','phone_mean'),
+            ('Baseline Duration', 'baseline_duration')]))
+        layout.addWidget(self.radioWidget)
+
+        self.layout().insertLayout(0, layout)
+
+    def change_view(self, text):
+        layout = QtWidgets.QFormLayout()
+        self.radioWidget.setParent(None)
+
+        if text == 'Phone':
+            print("in phone")
+            self.radioWidget = RadioSelectWidget('Desired measure:', OrderedDict([('Phone Mean Duration','phone_mean'),
             ('Phone Mean Duration by Speaker', 'phone_mean_duration_with_speaker'),
             ('Phone Median Duration','phone_median'),
             ('Phone Standard Deviation', 'phone_std_dev')]))
-            
+        if text == "Syllable":
+            self.radioWidget = RadioSelectWidget('Desired measure:', OrderedDict([('Syllable Mean Duration', 'syllable_mean'),
+            ('Syllable Median Duration', 'syllable_median'),
+            ('Syllable Standard Deviation', 'syllable_std_dev')]))
 
+        self.optionWidget.setParent(None)
         layout.addWidget(self.optionWidget)
-
+        layout.addWidget(self.radioWidget)
         self.layout().insertLayout(0, layout)
+
+
+
+
     def value(self):
-        return self.optionWidget.value()
+        return self.radioWidget.value()
