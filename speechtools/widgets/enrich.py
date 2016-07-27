@@ -374,7 +374,6 @@ class EncodeRelativizedMeasuresDialog(BaseDialog):
         self.radioWidget.setParent(None)
 
         if text == 'Phone':
-            print("in phone")
             self.radioWidget = RadioSelectWidget('Desired measure:', OrderedDict([('Phone Mean Duration','phone_mean'),
             ('Phone Mean Duration by Speaker', 'phone_mean_duration_with_speaker'),
             ('Phone Median Duration','phone_median'),
