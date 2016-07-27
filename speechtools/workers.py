@@ -433,6 +433,9 @@ class RelativizedMeasuresWorker(QueryWorker):
             elif self.kwargs['measure'] == 'syllable_std_dev':
                 data_type = 'syllable'
                 res = c.syllable_std_dev()
+            elif self.kwargs['measure'] == 'mean_speech_rate':
+                data_type = 'speaker'
+                res = c.average_speech_rate()
 
             else:
                 print("error")

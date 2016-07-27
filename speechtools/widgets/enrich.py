@@ -382,7 +382,9 @@ class EncodeRelativizedMeasuresDialog(BaseDialog):
             self.radioWidget = RadioSelectWidget('Desired measure:', OrderedDict([('Syllable Mean Duration', 'syllable_mean'),
             ('Syllable Median Duration', 'syllable_median'),
             ('Syllable Standard Deviation', 'syllable_std_dev')]))
-
+        if text == "Speaker":
+            self.radioWidget = RadioSelectWidget('Desired measure:', OrderedDict([('Mean Speech Rate', 'mean_speech_rate')]))
+            
         self.optionWidget.setParent(None)
         layout.addWidget(self.optionWidget)
         layout.addWidget(self.radioWidget)

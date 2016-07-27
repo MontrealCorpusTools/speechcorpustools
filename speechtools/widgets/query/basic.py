@@ -68,10 +68,12 @@ class AttributeSelect(NonScrollingComboBox):
 
 class SpeakerAttributeSelect(AttributeSelect):
     def __init__(self, hierarchy):
+        self.types = []
         QtWidgets.QComboBox.__init__(self)
-        self.addItem('name')
-        self.types = [str]
-
+        #self.addItem('name')
+        for k,v in sorted(hierarchy.speaker_properties, key = lambda x: x[0]):
+            self.addItem(k)
+            self.types.append(v)
 
 class AttributeWidget(QtWidgets.QWidget):
     attributeTypeChanged = QtCore.pyqtSignal(object, object, object)
