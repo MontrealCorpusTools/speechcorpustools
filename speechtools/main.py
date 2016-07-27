@@ -466,8 +466,9 @@ class MainWindow(QtWidgets.QMainWindow):
 
         #self.enhancementMenu.addAction(self.speechRateAct)
         #self.enhancementMenu.addAction(self.utterancePositionAct)
-        self.enhancementMenu.addAction(self.analyzeAcousticsAct)
         self.enhancementMenu.addAction(self.encodeRelativizedMeasuresAct)
+        self.enhancementMenu.addAction(self.analyzeAcousticsAct)
+        
         self.enhancementMenu.addAction(self.enrichHelpAct)
 
 
@@ -575,9 +576,8 @@ class MainWindow(QtWidgets.QMainWindow):
             kwargs = ({'config': self.corpusConfig,
                         'measure': measure})    
             self.relativizedMeasuresWorker.setParams(kwargs)
-            self.progressWidget.createProgressBar('speech_rate', self.relativizedMeasuresWorker)
+            self.progressWidget.createProgressBar('relativized', self.relativizedMeasuresWorker)
             self.progressWidget.show()
-
             self.relativizedMeasuresWorker.start()
         
 

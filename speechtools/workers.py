@@ -393,6 +393,10 @@ class RelativizedMeasuresWorker(QueryWorker):
         res  = ""
         data_type = 'word'
         config = self.kwargs['config']
+        stop_check = self.kwargs['stop_check']
+        call_back = self.kwargs['call_back']
+        call_back('Encoding {}...'.format(self.kwargs['measure']))
+        call_back(0, 0)
         with CorpusContext(config) as c:
             if self.kwargs['measure'] == 'word_median':
                 res = c.word_median()
@@ -440,6 +444,9 @@ class RelativizedMeasuresWorker(QueryWorker):
             else:
                 print("error")
             c.encode_measure(res, data_type)
+            if stop_check():
+                return False
+        return True
 
 
 
