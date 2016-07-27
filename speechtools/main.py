@@ -573,8 +573,7 @@ class MainWindow(QtWidgets.QMainWindow):
             measure = dialog.value()
 
             kwargs = ({'config': self.corpusConfig,
-                        'measure': measure})
-            print(measure)    
+                        'measure': measure})    
             self.relativizedMeasuresWorker.setParams(kwargs)
             self.progressWidget.createProgressBar('speech_rate', self.relativizedMeasuresWorker)
             self.progressWidget.show()
