@@ -28,6 +28,7 @@ class FunctionWorker(QtCore.QThread):
     updateProgressText = QtCore.pyqtSignal(str)
     errorEncountered = QtCore.pyqtSignal(object)
     finishedCancelling = QtCore.pyqtSignal()
+    actionCompleted= QtCore.pyqtSignal(object)
 
     dataReady = QtCore.pyqtSignal(object)
 
@@ -59,6 +60,10 @@ class FunctionWorker(QtCore.QThread):
             if len(args) > 1:
                 self.updateMaximum.emit(args[1])
             self.updateProgress.emit(progress)
+
+    #def emitActionCompleted(self, string):
+        #print("emitting "+ string)
+        #self.actionCompleted.emit(string)
 
 class QueryWorker(FunctionWorker):
     connectionIssues = QtCore.pyqtSignal()
@@ -121,6 +126,7 @@ class QueryWorker(FunctionWorker):
 
 
 class ImportCorpusWorker(QueryWorker):
+
     def run_query(self):
         time.sleep(0.1)
         name = self.kwargs['name']
@@ -149,6 +155,7 @@ class ImportCorpusWorker(QueryWorker):
             if reset:
                 c.reset(call_back = self.kwargs['call_back'], stop_check = self.kwargs['stop_check'])
             could_not_parse = c.load(parser, directory)
+            self.actionCompleted.emit('importing corpus') 
         return could_not_parse
 
 class ExportQueryWorker(QueryWorker):
@@ -172,7 +179,7 @@ class ExportQueryWorker(QueryWorker):
                 results = query.to_csv(export_path)
             except PermissionError:
                 raise(PGError('The file you specified could not be written to. Please ensure you have proper permissions and programs that lock the file (i.e., Excel) do not have it open.'))
-
+            self.actionCompleted.emit('exporting') 
         return True
 
 class DiscourseQueryWorker(QueryWorker):
@@ -210,6 +217,7 @@ class AcousticAnalysisWorker(QueryWorker):
                             stop_check = self.kwargs['stop_check'],
                             call_back = self.kwargs['call_back'],
                             acoustics = acoustics)
+            self.actionCompleted.emit('analysing acousics')         
         return True
 
 class PauseEncodingWorker(QueryWorker):
@@ -222,6 +230,7 @@ class PauseEncodingWorker(QueryWorker):
             c.encode_pauses(pause_words,
                             stop_check = stop_check,
                             call_back = call_back)
+            self.actionCompleted.emit('encoding pauses') 
             if stop_check():
                 call_back('Resetting pauses...')
                 call_back(0, 0)
@@ -240,6 +249,7 @@ class UtteranceEncodingWorker(QueryWorker):
             c.encode_utterances(min_pause_length, min_utterance_length,
                             stop_check = stop_check,
                             call_back = call_back)
+            self.actionCompleted.emit('encoding utterances') 
             if stop_check():
                 call_back('Resetting utterances...')
                 call_back(0, 0)
@@ -256,6 +266,7 @@ class SpeechRateWorker(QueryWorker):
         with CorpusContext(config) as c:
             c.encode_speech_rate(to_count, stop_check = stop_check,
                             call_back = call_back)
+            self.actionCompleted.emit('encoding speech rate') 
             if stop_check():
                 call_back('Resetting speech rate...')
                 call_back(0, 0)
@@ -271,6 +282,7 @@ class UtterancePositionWorker(QueryWorker):
         with CorpusContext(config) as c:
             c.encode_utterance_position(stop_check = stop_check,
                             call_back = call_back)
+            self.actionCompleted.emit('encoding utterance position')            
             if stop_check():
                 call_back('Resetting utterance positions...')
                 call_back(0, 0)
@@ -289,6 +301,7 @@ class SyllabicEncodingWorker(QueryWorker):
         with CorpusContext(config) as c:
             c.reset_class('syllabic')
             c.encode_class(segments, 'syllabic')
+            self.actionCompleted.emit('encoding syllabics')
             if stop_check():
                 call_back('Resetting syllabics...')
                 call_back(0, 0)
@@ -306,6 +319,8 @@ class SyllableEncodingWorker(QueryWorker):
         call_back(0, 0)
         with CorpusContext(config) as c:
             c.encode_syllables(algorithm = algorithm, call_back = call_back, stop_check = stop_check)
+            self.actionCompleted.emit('encoding syllables')
+
             if stop_check():
                 call_back('Resetting syllables...')
                 call_back(0, 0)
@@ -325,6 +340,7 @@ class PhoneSubsetEncodingWorker(QueryWorker):
         with CorpusContext(config) as c:
             c.reset_class(label)
             c.encode_class(segments, label)
+            self.actionCompleted.emit('encoding '+ self.kwargs['label'].replace('_',' '))
             if stop_check():
                 call_back('Resetting {}s...'.format(label))
                 call_back(0, 0)
@@ -334,6 +350,7 @@ class PhoneSubsetEncodingWorker(QueryWorker):
 
 class LexiconEnrichmentWorker(QueryWorker):
     def run_query(self):
+        print("in the lexical worker")
         config = self.kwargs['config']
         case_sensitive = self.kwargs['case_sensitive']
         path = self.kwargs['path']
@@ -343,10 +360,13 @@ class LexiconEnrichmentWorker(QueryWorker):
         call_back(0, 0)
         with CorpusContext(config) as c:
             enrich_lexicon_from_csv(c, path)
+            self.actionCompleted.emit('enriching lexicon')
             if stop_check():
                 call_back('Resetting lexicon...')
                 call_back(0, 0)
                 c.reset_lexicon()
+                
+                print("emitted {}".format(actionCompleted))
                 return False
         return True
 
@@ -360,6 +380,7 @@ class FeatureEnrichmentWorker(QueryWorker):
         call_back(0, 0)
         with CorpusContext(config) as c:
             enrich_features_from_csv(c, path)
+            self.actionCompleted.emit('enriching phonological inventory')
             if stop_check():
                 call_back('Resetting phonological inventory...')
                 call_back(0, 0)
@@ -384,12 +405,14 @@ class HierarchicalPropertiesWorker(QueryWorker):
             elif self.kwargs['type'] == 'rate':
                 c.encode_rate(self.kwargs['higher'], self.kwargs['lower'],
                             self.kwargs['name'], subset = self.kwargs['subset'])
+            self.actionCompleted.emit('getting '+ self.kwargs['name'].replace('_',' '))
             if stop_check():
                 return False
         return True
 
 class RelativizedMeasuresWorker(QueryWorker):
     def run_query(self):
+        print("running relativized")
         res  = ""
         data_type = 'word'
         config = self.kwargs['config']
@@ -398,6 +421,7 @@ class RelativizedMeasuresWorker(QueryWorker):
         call_back('Encoding {}...'.format(self.kwargs['measure']))
         call_back(0, 0)
         with CorpusContext(config) as c:
+            string = "!"
             if self.kwargs['measure'] == 'word_median':
                 res = c.word_median()
             elif self.kwargs['measure'] == 'all_word_median':
@@ -444,6 +468,7 @@ class RelativizedMeasuresWorker(QueryWorker):
             else:
                 print("error")
             c.encode_measure(res, data_type)
+            self.actionCompleted.emit('getting '+ self.kwargs['measure'].replace('_',' '))
             if stop_check():
                 return False
         return True

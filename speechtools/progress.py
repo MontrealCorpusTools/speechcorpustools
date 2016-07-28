@@ -10,10 +10,11 @@ class SCTProgressBar(QtWidgets.QWidget):
         self.progressBar = QtWidgets.QProgressBar()
         self.label = QtWidgets.QLabel()
         self.worker = worker
+        self.worker.actionCompleted.connect(self.finish)
         self.worker.updateProgress.connect(self.progressBar.setValue)
         self.worker.updateMaximum.connect(self.progressBar.setMaximum)
         self.worker.updateProgressText.connect(self.label.setText)
-        self.worker.dataReady.connect(self.finish)
+        #self.worker.dataReady.connect(self.finish)
 
         pglayout = QtWidgets.QHBoxLayout()
 
@@ -43,9 +44,9 @@ class SCTProgressBar(QtWidgets.QWidget):
         self.label.setText('Cancelled')
         self.done = True
 
-    def finish(self):
+    def finish(self, text):
         self.done = True
-        self.label.setText('Finished!')
+        self.label.setText('Finished %s'%text)
         if self.progressBar.maximum() == 0:
             self.progressBar.setMaximum(1)
         self.progressBar.setValue(self.progressBar.maximum())
