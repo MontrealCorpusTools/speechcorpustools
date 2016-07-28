@@ -405,14 +405,13 @@ class HierarchicalPropertiesWorker(QueryWorker):
             elif self.kwargs['type'] == 'rate':
                 c.encode_rate(self.kwargs['higher'], self.kwargs['lower'],
                             self.kwargs['name'], subset = self.kwargs['subset'])
-            self.actionCompleted.emit('getting '+ self.kwargs['name'].replace('_',' '))
+            self.actionCompleted.emit('encoding '+ self.kwargs['name'].replace('_',' '))
             if stop_check():
                 return False
         return True
 
 class RelativizedMeasuresWorker(QueryWorker):
     def run_query(self):
-        print("running relativized")
         res  = ""
         data_type = 'word'
         config = self.kwargs['config']
@@ -468,7 +467,7 @@ class RelativizedMeasuresWorker(QueryWorker):
             else:
                 print("error")
             c.encode_measure(res, data_type)
-            self.actionCompleted.emit('getting '+ self.kwargs['measure'].replace('_',' '))
+            self.actionCompleted.emit('encoding '+ self.kwargs['measure'].replace('_',' '))
             if stop_check():
                 return False
         return True
