@@ -61,10 +61,6 @@ class FunctionWorker(QtCore.QThread):
                 self.updateMaximum.emit(args[1])
             self.updateProgress.emit(progress)
 
-    #def emitActionCompleted(self, string):
-        #print("emitting "+ string)
-        #self.actionCompleted.emit(string)
-
 class QueryWorker(FunctionWorker):
     connectionIssues = QtCore.pyqtSignal()
     def run(self):
@@ -105,6 +101,7 @@ class QueryWorker(FunctionWorker):
             return
         print('finished')
         self.dataReady.emit(results)
+        self.actionCompleted.emit('query')
         self.finished = True
         
     def run_query(self):
@@ -122,6 +119,7 @@ class QueryWorker(FunctionWorker):
             results = query.all()
             if results is not None:
                 print(len(results))
+        #self.actionCompleted.emit('query')
         return query, results
 
 
