@@ -22,7 +22,11 @@ from .widgets.enrich import (EncodePauseDialog, EncodeUtteranceDialog,
                             AnalyzeAcousticsDialog, EncodeSyllabicsDialog,
                             EncodePhoneSubsetDialog, EncodeSyllablesDialog,
                             EnrichLexiconDialog, EnrichFeaturesDialog,
+<<<<<<< HEAD
                             EncodeHierarchicalPropertiesDialog, EncodeRelativizedMeasuresDialog, EnrichSpeakersDialog, EncodeStressDialog)
+=======
+                            EncodeHierarchicalPropertiesDialog, EncodeRelativizedMeasuresDialog, EnrichSpeakersDialog)
+>>>>>>> master
 
 from .helper import get_system_font_height
 
