@@ -101,7 +101,7 @@ class QueryWorker(FunctionWorker):
             return
         print('finished')
         self.dataReady.emit(results)
-        self.actionCompleted.emit('query')
+        
         self.finished = True
         
     def run_query(self):
@@ -119,7 +119,7 @@ class QueryWorker(FunctionWorker):
             results = query.all()
             if results is not None:
                 print(len(results))
-        #self.actionCompleted.emit('query')
+        self.actionCompleted.emit('query')
         return query, results
 
 
