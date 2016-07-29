@@ -452,3 +452,20 @@ class AudioCacheWorker(QueryWorker):
         f = LongSoundFile(sound_file, begin, end)
         print('finished audio caching')
         return f
+
+class StressEncodingWorking(QueryWorker):
+    def run_query(self):
+        config = self.kwargs['config']
+        path = self.kwargs['path']
+        stop_check = self.kwargs['stop_check']
+        call_back = self.kwargs['call_back']
+        call_back('Enriching phonological inventory...')
+        call_back(0, 0)
+        with CorpusContext(config) as c:
+            enrich_features_from_csv(c, path)
+            if stop_check():
+                call_back('Resetting phonological inventory...')
+                call_back(0, 0)
+                c.reset_lexicon()
+                return False
+        return True

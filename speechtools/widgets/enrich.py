@@ -342,3 +342,13 @@ class EncodeHierarchicalPropertiesDialog(BaseDialog):
         return {'higher': self.higherSelect.currentText(), 'type':self.typeSelect.currentText(),
                 'lower': lower, 'subset': subset, 'name': self.nameEdit.text()}
 
+class EncodeStressDialog(BaseDialog):
+    def __init__(self, config, parent):
+        super(EncodeStressDialog, self).__init__(parent)
+
+        layout = QtWidgets.QFormLayout()
+
+
+        self.layout().insertLayout(0, layout)
+
+        self.setWindowTitle('Encode stress')
