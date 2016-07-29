@@ -75,6 +75,15 @@ class SpeakerAttributeSelect(AttributeSelect):
             self.addItem(k)
             self.types.append(v)
 
+class DiscourseAttributeSelect(AttributeSelect):
+    def __init__(self, hierarchy):
+        self.types = []
+        QtWidgets.QComboBox.__init__(self)
+
+        for k,v in sorted(hierarchy.discourse_properties, key = lambda x : x[0]):
+            self.addItem(k)
+            self.types.append(v)
+
 class AttributeWidget(QtWidgets.QWidget):
     attributeTypeChanged = QtCore.pyqtSignal(object, object, object)
 
@@ -129,12 +138,17 @@ class AttributeWidget(QtWidgets.QWidget):
                 widget = AttributeSelect(self.hierarchy, current_annotation_type, self.alignment)
             widget.currentIndexChanged.connect(self.updateAttribute)
             self.mainLayout.addWidget(widget)
-        elif combobox.currentText() in ['speaker', 'discourse']:
+        elif combobox.currentText() == 'speaker':
             widget = SpeakerAttributeSelect(self.hierarchy)
             widget.currentIndexChanged.connect(self.updateAttribute)
             self.mainLayout.addWidget(widget)
             self.attributeTypeChanged.emit(combobox.currentText(), widget.label(), widget.type())
 
+        elif combobox.currentText() == 'discourse':
+            widget = DiscourseAttributeSelect(self.hierarchy)
+            widget.currentIndexChanged.connect(self.updateAttribute)
+            self.mainLayout.addWidget(widget)
+            self.attributeTypeChanged.emit(combobox.currentText(), widget.label(), widget.type())
         else:
             self.attributeTypeChanged.emit(current_annotation_type, combobox.label(), combobox.type())
 

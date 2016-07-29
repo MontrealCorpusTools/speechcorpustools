@@ -15,7 +15,7 @@ from polyglotdb.config import CorpusConfig
 from polyglotdb.io import (inspect_buckeye, inspect_textgrid, inspect_timit,
                         inspect_labbcat, inspect_mfa, inspect_fave,
                         guess_textgrid_format)
-from polyglotdb.io.enrichment import enrich_lexicon_from_csv, enrich_features_from_csv
+from polyglotdb.io.enrichment import enrich_lexicon_from_csv, enrich_features_from_csv, enrich_speakers_from_csv
 
 from polyglotdb.utils import update_sound_files, gp_language_stops, gp_speakers
 
@@ -386,6 +386,21 @@ class FeatureEnrichmentWorker(QueryWorker):
                 call_back(0, 0)
                 c.reset_lexicon()
                 return False
+        return True
+
+
+class SpeakerEnrichmentWorker(QueryWorker):
+    def run_query(self):
+        config = self.kwargs['config']
+        path = self.kwargs['path']
+        stop_check = self.kwargs['stop_check']
+        call_back = self.kwargs['call_back']
+        call_back('Enriching speakers...')
+        call_back(0,0)
+        with CorpusContext(config) as c:
+            enrich_speakers_from_csv(c, path)
+            self.actionCompleted.emit('enriching speakers')
+            
         return True
 
 class HierarchicalPropertiesWorker(QueryWorker):

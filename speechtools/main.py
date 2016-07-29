@@ -22,7 +22,7 @@ from .widgets.enrich import (EncodePauseDialog, EncodeUtteranceDialog,
                             AnalyzeAcousticsDialog, EncodeSyllabicsDialog,
                             EncodePhoneSubsetDialog, EncodeSyllablesDialog,
                             EnrichLexiconDialog, EnrichFeaturesDialog,
-                            EncodeHierarchicalPropertiesDialog, EncodeRelativizedMeasuresDialog)
+                            EncodeHierarchicalPropertiesDialog, EncodeRelativizedMeasuresDialog, EnrichSpeakersDialog)
 
 from .helper import get_system_font_height
 
@@ -34,7 +34,7 @@ from .workers import (AcousticAnalysisWorker, ImportCorpusWorker,
                     SyllabicEncodingWorker, PhoneSubsetEncodingWorker,
                     SyllableEncodingWorker, LexiconEnrichmentWorker,
                     FeatureEnrichmentWorker, HierarchicalPropertiesWorker,
-                    QueryWorker, ExportQueryWorker, RelativizedMeasuresWorker)
+                    QueryWorker, ExportQueryWorker, RelativizedMeasuresWorker, SpeakerEnrichmentWorker)
 
 sct_config_pickle_path = os.path.join(BASE_DIR, 'config')
 
@@ -234,6 +234,10 @@ class MainWindow(QtWidgets.QMainWindow):
         self.enrichFeaturesWorker = FeatureEnrichmentWorker()
         self.enrichFeaturesWorker.errorEncountered.connect(self.showError)
         self.enrichFeaturesWorker.dataReady.connect(self.updateStatus)
+
+        self.enrichSpeakersWorker = SpeakerEnrichmentWorker()
+        self.enrichSpeakersWorker.errorEncountered.connect(self.showError)
+        self.enrichSpeakersWorker.dataReady.connect(self.updateStatus)
 
         self.hierarchicalPropertiesWorker = HierarchicalPropertiesWorker()
         self.hierarchicalPropertiesWorker.errorEncountered.connect(self.showError)
@@ -443,6 +447,11 @@ class MainWindow(QtWidgets.QMainWindow):
         self.encodeRelativizedMeasuresAct = QtWidgets.QAction("Encode Relativized Measures",
             self,
             statusTip="Calculate relatized measures such as mean, standard deviation, baseline duration", triggered=self.encodeRelativizedMeasures)
+        
+        self.enrichSpeakersAct = QtWidgets.QAction("Enrich speakers...",
+            self,
+            statusTip="Enrich speakers from a CSV file", triggered=self.enrichSpeakers)
+
         self.enrichHelpAct = QtWidgets.QAction( "Help",
                 self,
                 statusTip="getHelp", triggered = self.getEnrichHelp) #, triggered=self.encodeUtterances
@@ -458,6 +467,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.enhancementMenu.addAction(self.encodeHierarchicalPropertiesAct)
         self.enhancementMenu.addAction(self.enrichLexiconAct)
         self.enhancementMenu.addAction(self.enrichFeaturesAct)
+        self.enhancementMenu.addAction(self.enrichSpeakersAct)
         self.enhancementMenu.addAction(self.syllabicsAct)
         self.enhancementMenu.addAction(self.syllablesAct)
         self.enhancementMenu.addAction(self.phoneSubsetAct)
@@ -500,6 +510,17 @@ class MainWindow(QtWidgets.QMainWindow):
             self.progressWidget.createProgressBar('features', self.enrichFeaturesWorker)
             self.progressWidget.show()
             self.enrichFeaturesWorker.start()
+
+    def enrichSpeakers(self):
+        dialog = EnrichSpeakersDialog(self.corpusConfig, self)
+        if dialog.exec_() == QtWidgets.QDialog.Accepted:
+            path = dialog.value()
+            kwargs = {'config': self.corpusConfig,
+                        'path': path}
+            self.enrichSpeakersWorker.setParams(kwargs)
+            self.progressWidget.createProgressBar('speakers', self.enrichSpeakersWorker)
+            self.progressWidget.show()
+            self.enrichSpeakersWorker.start()
 
     def encodeSyllabics(self):
         dialog = EncodeSyllabicsDialog(self.corpusConfig, self)

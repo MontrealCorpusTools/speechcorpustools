@@ -393,3 +393,49 @@ class EncodeRelativizedMeasuresDialog(BaseDialog):
 
     def value(self):
         return self.radioWidget.value()
+
+class EnrichSpeakersDialog(BaseDialog):
+    def __init__(self, config, parent):
+        super(EnrichSpeakersDialog, self).__init__(parent)
+
+        layout = QtWidgets.QFormLayout()
+        self.layout().insertLayout(0, layout)
+
+        self.setWindowTitle('Enrich phones with features')
+        self.path = None
+
+    def accept(self):
+        self.path, _ = QtWidgets.QFileDialog.getOpenFileName(self, "Select feature file", filter = "CSV (*.txt  *.csv)")
+        if not self.path:
+            return
+        QtWidgets.QDialog.accept(self)
+
+    def value(self):
+        return self.path   
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
