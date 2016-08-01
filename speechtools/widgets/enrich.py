@@ -347,11 +347,20 @@ class EncodeStressDialog(BaseDialog):
         super(EncodeStressDialog, self).__init__(parent)
 
         layout = QtWidgets.QFormLayout()
-
-
+        self.stressTone = RadioSelectWidget('Type of enrichment',OrderedDict([('Tone','tone'),('Stress','stress')]))
+        self.wordSelectWidget = WordSelectWidget(config)
+        self.wordSelectWidget.regexWidget.regexEdit.setText("_T[0-9]")
+        layout.addRow(self.stressTone)
+        if self.stressTone.value() == 'tone':
+            layout.addRow(self.wordSelectWidget)
+        else:
+            self.wordSelectWidget.setParent(None)
         self.layout().insertLayout(0, layout)
 
         self.setWindowTitle('Encode stress')
+    def value(self):
+        return (self.stressTone.value(), self.wordSelectWidget.value())
+
 class EncodeRelativizedMeasuresDialog(BaseDialog):
     def __init__(self, config, parent):
         super(EncodeRelativizedMeasuresDialog, self).__init__(parent)

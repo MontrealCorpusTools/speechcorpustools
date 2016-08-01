@@ -348,7 +348,6 @@ class PhoneSubsetEncodingWorker(QueryWorker):
 
 class LexiconEnrichmentWorker(QueryWorker):
     def run_query(self):
-        print("in the lexical worker")
         config = self.kwargs['config']
         case_sensitive = self.kwargs['case_sensitive']
         path = self.kwargs['path']
@@ -558,14 +557,20 @@ class AudioCacheWorker(QueryWorker):
 class StressEncodingWorker(QueryWorker):
     def run_query(self):
         config = self.kwargs['config']
+        encode_type = self.kwargs['type']
+        regex = self.kwargs['regex']
         stop_check = self.kwargs['stop_check']
         call_back = self.kwargs['call_back']
-        call_back('Enriching phonological inventory...')
+        call_back('Encoding stress...')
         call_back(0, 0)
         with CorpusContext(config) as c:
-            print("starting to encode stress")
-            c.encode_stress()
-
+            if encode_type == 'stress':
+                if regex == "":
+                    c.encode_stress()
+                else:
+                    c.encode_stress(regex)
+            else:
+                c.encode_tone(regex)
             if stop_check():
                 call_back('Resetting phonological inventory...')
                 call_back(0, 0)

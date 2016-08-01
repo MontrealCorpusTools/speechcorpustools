@@ -663,7 +663,9 @@ class MainWindow(QtWidgets.QMainWindow):
        
         dialog = EncodeStressDialog(self.corpusConfig, self)
         if dialog.exec_() == QtWidgets.QDialog.Accepted:
-            kwargs = {'config': self.corpusConfig}
+            kwargs = {'config': self.corpusConfig, 'type':dialog.value()[0], 'regex':dialog.value()[1]}
+            
+
             self.encodeStressWorker.setParams(kwargs)
             self.progressWidget.createProgressBar('stress', self.encodeStressWorker)
             self.progressWidget.show()
