@@ -265,7 +265,12 @@ class ValueWidget(QtWidgets.QWidget):
             if self.hierarchy.has_type_property(annotation, label):
                 with CorpusContext(self.config) as c:
                     if label == 'label':
-                        self.levels = c.lexicon.list_labels(annotation)
+                        self.levels = c.lexicon.list_labels(annotation)                   
+                    elif label == 'stress':
+                        self.valueWidget= QtWidgets.QComboBox()
+                        self.valueWidget.addItem("primary")
+                        self.valueWidget.addItem("secondary")
+                        self.valueWidget.addItem("unstressed")
                     else:
                         self.levels = c.lexicon.get_property_levels(label, annotation)
                 boolean = self.updateValueWidget()
