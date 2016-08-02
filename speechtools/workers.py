@@ -566,14 +566,13 @@ class StressEncodingWorker(QueryWorker):
         with CorpusContext(config) as c:
             if encode_type == 'stress':
                 if regex == "":
-                    c.encode_stress()
+                    c.encode_stress('[0-9]')
                 else:
                     c.encode_stress(regex)
             else:
                 c.encode_tone(regex)
-            if stop_check():
-                call_back('Resetting phonological inventory...')
-                call_back(0, 0)
-                
-                return False
+            call_back("Removing extraneous info")
+            call_back(0,0)
+            c.remove_pattern(regex)
+            self.actionCompleted.emit('encoding stress')
         return True

@@ -268,13 +268,7 @@ class ValueWidget(QtWidgets.QWidget):
                 with CorpusContext(self.config) as c:
                     if label == 'label':
                         self.levels = c.lexicon.list_labels(annotation)                   
-                        """
-                        elif label == 'stress':
-                        self.valueWidget= QtWidgets.QComboBox()
-                        self.valueWidget.addItem("primary")
-                        self.valueWidget.addItem("secondary")
-                        self.valueWidget.addItem("unstressed")
-                        """
+                        
                     else:
                         self.levels = c.lexicon.get_property_levels(label, annotation)
                 boolean = self.updateValueWidget()
@@ -310,7 +304,7 @@ class ValueWidget(QtWidgets.QWidget):
         else:
             self.mainLayout.addWidget(self.compWidget)
             self.mainLayout.addWidget(self.valueWidget)
-            self.ann_type = str
+            #self.ann_type = str
     def updateValueWidget(self):
         boolean = False
         if self.levels is None:
@@ -383,7 +377,6 @@ class ValueWidget(QtWidgets.QWidget):
                 value = text
         else:
             value = text
-        print("value is {}".format(value))
         return value
 
     def setOperator(self, operator):

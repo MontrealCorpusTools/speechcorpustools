@@ -346,6 +346,7 @@ class EncodeStressDialog(BaseDialog):
     def __init__(self, config, parent):
         super(EncodeStressDialog, self).__init__(parent)
 
+        self.config = config
         layout = QtWidgets.QFormLayout()
         self.stressTone = RadioSelectWidget('Type of enrichment',OrderedDict([('Tone','tone'),('Stress','stress')]))
         self.wordSelectWidget = WordSelectWidget(config)
@@ -355,11 +356,22 @@ class EncodeStressDialog(BaseDialog):
             layout.addRow(self.wordSelectWidget)
         else:
             self.wordSelectWidget.setParent(None)
+
+        self.resetButton = QtWidgets.QPushButton()
+        self.resetButton.setText('Reset')
+        self.resetButton.setSizePolicy(QtWidgets.QSizePolicy.Fixed,QtWidgets.QSizePolicy.Fixed)
+        self.resetButton.clicked.connect(self.reset)
+
+        layout.addRow(self.resetButton)
         self.layout().insertLayout(0, layout)
 
         self.setWindowTitle('Encode stress')
     def value(self):
         return (self.stressTone.value(), self.wordSelectWidget.value())
+    def reset(self):
+        with CorpusContext(self.config) as c:
+            c.reset_to_old_label()
+
 
 class EncodeRelativizedMeasuresDialog(BaseDialog):
     def __init__(self, config, parent):
