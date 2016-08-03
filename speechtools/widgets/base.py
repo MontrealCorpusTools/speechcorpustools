@@ -102,6 +102,7 @@ class DataListWidget(QtWidgets.QListWidget):
 
 
 class RadioSelectWidget(QtWidgets.QGroupBox):
+    optionChanged = QtCore.pyqtSignal(object)
     def __init__(self,title, options, actions=None, enabled=None,parent=None):
         super(RadioSelectWidget, self).__init__(title, parent)
         self.is_enabled = True
@@ -114,8 +115,9 @@ class RadioSelectWidget(QtWidgets.QGroupBox):
         self.widgets = []
         for key in self.options.keys():
             w = QtWidgets.QRadioButton(key)
+            w.clicked.connect(self.sendOptionChanged)   
             if self.actions is not None:
-                w.clicked.connect(self.actions[key])
+                w.clicked.connect(self.actions[key])     
             if self.enabled is not None:
                 w.setEnabled(self.enabled[key])
             if not self.is_enabled:
@@ -137,6 +139,9 @@ class RadioSelectWidget(QtWidgets.QGroupBox):
             self.enabled = enabled
         self.initOptions()
 
+    def sendOptionChanged(self):
+        self.optionChanged.emit(self.value())
+        
 
     def initialClick(self):
         self.widgets[0].click()

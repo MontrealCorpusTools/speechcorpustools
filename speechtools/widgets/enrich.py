@@ -1,4 +1,6 @@
 
+import re
+
 from collections import OrderedDict
 
 from PyQt5 import QtGui, QtCore, QtWidgets
@@ -7,9 +9,9 @@ from polyglotdb import CorpusContext
 
 from .base import RadioSelectWidget
 
-from .lexicon import WordSelectWidget
+from .lexicon import StressToneSelectWidget
 
-from .inventory import PhoneSelectWidget, PhoneSubsetSelectWidget
+from .inventory import PhoneSelectWidget, PhoneSubsetSelectWidget, RegexPhoneSelectWidget
 
 class BaseDialog(QtWidgets.QDialog):
     def __init__(self, parent):
@@ -349,13 +351,17 @@ class EncodeStressDialog(BaseDialog):
         self.config = config
         layout = QtWidgets.QFormLayout()
         self.stressTone = RadioSelectWidget('Type of enrichment',OrderedDict([('Tone','tone'),('Stress','stress')]))
-        self.wordSelectWidget = WordSelectWidget(config)
-        self.wordSelectWidget.regexWidget.regexEdit.setText("_T[0-9]")
+        self.stressToneSelectWidget = StressToneSelectWidget(config)
+
+        self.stressToneSelectWidget.vowelRegexWidget.regexEdit.setText("[A-Z][A-Z]")
+        self.stressToneSelectWidget.regexWidget.regexEdit.setText("_T[0-9]")
+        self.stressToneSelectWidget.regexWidget.testButton.clicked.connect(self.testRegex)
         layout.addRow(self.stressTone)
-        if self.stressTone.value() == 'tone':
-            layout.addRow(self.wordSelectWidget)
-        else:
-            self.wordSelectWidget.setParent(None)
+        
+        self.stressTone.optionChanged.connect(self.change_view)
+        
+        layout.addRow(self.stressToneSelectWidget)
+        
 
         self.resetButton = QtWidgets.QPushButton()
         self.resetButton.setText('Reset')
@@ -366,8 +372,37 @@ class EncodeStressDialog(BaseDialog):
         self.layout().insertLayout(0, layout)
 
         self.setWindowTitle('Encode stress')
+    
+    def change_view(self, text):
+        if text == 'stress':
+            self.stressToneSelectWidget.regexWidget.regexEdit.setText('[0-2]')
+        elif text == 'tone':
+            self.stressToneSelectWidget.regexWidget.regexEdit.setText("_T[0-9]")
+
+    def testRegex(self):
+        if isinstance(self.layout().itemAt(0),QtWidgets.QHBoxLayout):
+            self.layout().itemAt(0).setParent(None)
+        newLayout = QtWidgets.QHBoxLayout()
+        regexPhoneSelect = RegexPhoneSelectWidget(self.config)
+        with CorpusContext(self.config) as c:
+            q = c.query_graph(c.phone).filter(c.phone.label.regex(self.stressToneSelectWidget.combo_value()))
+            results = q.all()
+            for c in results.cursors:
+                for item in c:
+                    phone_label = item[0].properties['label']
+                    r = re.search(self.stressToneSelectWidget.regexWidget.regexEdit.text(), phone_label)
+                    if r is not None:
+                        index = r.start(0)
+                    else:
+                        index = len(phone_label)-1
+                    regexPhoneSelect.selectWidget.addItem(phone_label)
+                    regexPhoneSelect.secondSelect.addItem(phone_label[index:]) #change to length
+
+        newLayout.addWidget(regexPhoneSelect)
+        self.layout().insertLayout(0, newLayout)
     def value(self):
-        return (self.stressTone.value(), self.wordSelectWidget.value())
+        return (self.stressTone.value(), self.stressToneSelectWidget.value(), self.stressToneSelectWidget.combo_value())
+   
     def reset(self):
         with CorpusContext(self.config) as c:
             c.reset_to_old_label()

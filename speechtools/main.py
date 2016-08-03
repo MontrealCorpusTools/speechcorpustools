@@ -659,11 +659,11 @@ class MainWindow(QtWidgets.QMainWindow):
         self.importWorker.start()
         self.updateStatus()
 
-    def encodeStress(self):\
+    def encodeStress(self):
        
         dialog = EncodeStressDialog(self.corpusConfig, self)
         if dialog.exec_() == QtWidgets.QDialog.Accepted:
-            kwargs = {'config': self.corpusConfig, 'type':dialog.value()[0], 'regex':dialog.value()[1]}
+            kwargs = {'config': self.corpusConfig, 'type':dialog.value()[0], 'regex':dialog.value()[1], 'full_regex':dialog.value()[2]}
             
 
             self.encodeStressWorker.setParams(kwargs)
