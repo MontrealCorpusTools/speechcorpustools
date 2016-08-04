@@ -458,7 +458,7 @@ class MainWindow(QtWidgets.QMainWindow):
             self,
             statusTip="Calculate relatized measures such as mean, standard deviation, baseline duration", triggered=self.encodeRelativizedMeasures)
         
-        self.encodeStressAct = QtWidgets.QAction("Encode stress", 
+        self.encodeStressAct = QtWidgets.QAction("Encode stress/tone", 
             self,
             statusTip="just a test", triggered = self.encodeStress)
 

@@ -9,7 +9,7 @@ from polyglotdb import CorpusContext
 
 from .base import RadioSelectWidget
 
-from .lexicon import StressToneSelectWidget
+from .lexicon import StressToneSelectWidget, WordSelectWidget
 
 from .inventory import PhoneSelectWidget, PhoneSubsetSelectWidget, RegexPhoneSelectWidget
 
@@ -353,7 +353,7 @@ class EncodeStressDialog(BaseDialog):
         self.stressTone = RadioSelectWidget('Type of enrichment',OrderedDict([('Tone','tone'),('Stress','stress')]))
         self.stressToneSelectWidget = StressToneSelectWidget(config)
 
-        self.stressToneSelectWidget.vowelRegexWidget.regexEdit.setText("[A-Z][A-Z]")
+        self.stressToneSelectWidget.vowelRegexWidget.regexEdit.setText("[a-z][a-z0-9][a-z0-9]?")
         self.stressToneSelectWidget.regexWidget.regexEdit.setText("_T[0-9]")
         self.stressToneSelectWidget.regexWidget.testButton.clicked.connect(self.testRegex)
         layout.addRow(self.stressTone)
@@ -375,15 +375,19 @@ class EncodeStressDialog(BaseDialog):
     
     def change_view(self, text):
         if text == 'stress':
-            self.stressToneSelectWidget.regexWidget.regexEdit.setText('[0-2]')
+            self.stressToneSelectWidget.vowelRegexWidget.regexEdit.setText("^[A-Z][A-Z]")
+            self.stressToneSelectWidget.regexWidget.regexEdit.setText('[0-2]$')
         elif text == 'tone':
-            self.stressToneSelectWidget.regexWidget.regexEdit.setText("_T[0-9]")
+            self.stressToneSelectWidget.vowelRegexWidget.regexEdit.setText("^[a-z][a-z0-9][a-z0-9]?")
+            self.stressToneSelectWidget.regexWidget.regexEdit.setText("_T[0-9]$")
 
     def testRegex(self):
         if isinstance(self.layout().itemAt(0),QtWidgets.QHBoxLayout):
             self.layout().itemAt(0).setParent(None)
         newLayout = QtWidgets.QHBoxLayout()
-        regexPhoneSelect = RegexPhoneSelectWidget(self.config)
+        
+        allphones = []
+     
         with CorpusContext(self.config) as c:
             q = c.query_graph(c.phone).filter(c.phone.label.regex(self.stressToneSelectWidget.combo_value()))
             results = q.all()
@@ -395,10 +399,23 @@ class EncodeStressDialog(BaseDialog):
                         index = r.start(0)
                     else:
                         index = len(phone_label)-1
-                    regexPhoneSelect.selectWidget.addItem(phone_label)
-                    regexPhoneSelect.secondSelect.addItem(phone_label[index:]) #change to length
+                    allphones.append(phone_label)        
+            allphones =set(allphones)
+            allphones=list(allphones)
+            data = OrderedDict([
+            ('stripped vowel', []),
+            ('whole vowel', []),
+            ('ending', [])])
+            data.update({"whole vowel":[]})
+            data.update({"stripped vowel":[]})
+            data.update({"ending":[]})
+            for phone in allphones:
+                data['whole vowel'].append(phone)
+                data['stripped vowel'].append(phone[:index])
+                data['ending'].append(phone[index:])
+            regexPhoneSelect = RegexPhoneSelectWidget(data, 3,len(allphones))
 
-        newLayout.addWidget(regexPhoneSelect)
+            newLayout.addWidget(regexPhoneSelect)
         self.layout().insertLayout(0, newLayout)
     def value(self):
         return (self.stressTone.value(), self.stressToneSelectWidget.value(), self.stressToneSelectWidget.combo_value())
@@ -437,7 +454,12 @@ class EncodeRelativizedMeasuresDialog(BaseDialog):
     def change_view(self, text):
         layout = QtWidgets.QFormLayout()
         self.radioWidget.setParent(None)
-
+        if text == 'Word':
+            self.radioWidget = RadioSelectWidget('Desired measure:', OrderedDict([
+            ('Word Mean Duration', 'word_mean_duration'),
+            ('Word Median Duration', 'word_median'),
+            ('Word Standard Deviation','word_std_dev'),
+            ('Baseline Duration', 'baseline_duration')]))
         if text == 'Phone':
             self.radioWidget = RadioSelectWidget('Desired measure:', OrderedDict([('Phone Mean Duration','phone_mean'),
             ('Phone Median Duration','phone_median'),

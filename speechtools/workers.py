@@ -561,18 +561,19 @@ class StressEncodingWorker(QueryWorker):
         regex = self.kwargs['regex']
         stop_check = self.kwargs['stop_check']
         call_back = self.kwargs['call_back']
-        call_back('Encoding stress...')
+        call_back('Encoding stress/tone...')
         call_back(0, 0)
         with CorpusContext(config) as c:
             if encode_type == 'stress':
                 if regex == "":
-                    c.encode_stress('[0-9]')
+                    enrich_dict = c.encode_stress('[0-9]')
                 else:
-                    c.encode_stress(regex)
+                    enrich_dict = c.encode_stress(regex)
             else:
-                c.encode_tone(regex)
+                enrich_dict = c.encode_tone(regex)
             call_back("Removing extraneous info")
             call_back(0,0)
             c.remove_pattern(regex)
+            c.enrich_syllables(enrich_dict)
             self.actionCompleted.emit('encoding stress')
         return True

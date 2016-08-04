@@ -46,42 +46,22 @@ class PhoneSelectWidget(QtWidgets.QWidget):
         phones = [x.text() for x in self.selectWidget.selectedItems()]
         return phones
 
-class RegexPhoneSelectWidget(QtWidgets.QWidget):
-    def __init__(self, config, parent = None):
-        super(RegexPhoneSelectWidget, self).__init__(parent)
+class RegexPhoneSelectWidget(QtWidgets.QTableWidget):
+    def __init__(self, data, x,y):
+        QtWidgets.QTableWidget.__init__(self,y,x)
+        self.data = data
+        self.setdata()
+        self.resizeRowsToContents()
 
-        layout = QtWidgets.QHBoxLayout()
-        vlayout1 = QtWidgets.QVBoxLayout()
-        vlayout2 = QtWidgets.QVBoxLayout()
+    def setdata(self):
+        
+        headers = [col for col in self.data.keys()]
 
-        vowelLabel = QtWidgets.QLabel()
-        endingLabel = QtWidgets.QLabel()
-
-        vowelLabel.setText('full vowel')
-        endingLabel.setText('stress/tone ending')
-
-        self.selectWidget = QtWidgets.QListWidget()
-        self.selectWidget.setSelectionMode(QtWidgets.QAbstractItemView.MultiSelection)
-
-        self.secondSelect = QtWidgets.QListWidget()
-        self.secondSelect.setSelectionMode(QtWidgets.QAbstractItemView.MultiSelection)
-
-        vlayout1.addWidget(vowelLabel)
-        vlayout1.addWidget(self.selectWidget)
-        vlayout2.addWidget(endingLabel)
-        vlayout2.addWidget(self.secondSelect)
-
-        layout.addLayout(vlayout1)
-        layout.addLayout(vlayout2)
-
-       
-
-        self.setLayout(layout)
-
-        self.selectWidget.setSizePolicy(QtWidgets.QSizePolicy.MinimumExpanding,QtWidgets.QSizePolicy.MinimumExpanding)
-
-        self.setSizePolicy(QtWidgets.QSizePolicy.MinimumExpanding,QtWidgets.QSizePolicy.MinimumExpanding)
-
+        for i, k in enumerate(self.data.keys()):
+            for j, v in enumerate(self.data[k]):
+                item = QtWidgets.QTableWidgetItem(v)
+                self.setItem(j,i,item)
+        self.setHorizontalHeaderLabels(headers)
 
 
 

@@ -38,8 +38,9 @@ class WordSelectWidget(QtWidgets.QWidget):
 class StressToneSelectWidget(QtWidgets.QWidget):
     def __init__(self,config,parent=None):
         super(StressToneSelectWidget, self).__init__(parent)
-
+        
         layout = QtWidgets.QFormLayout()
+   
         rowLayout = QtWidgets.QHBoxLayout()
         vlayout1 = QtWidgets.QVBoxLayout()
         vlayout2 = QtWidgets.QVBoxLayout()
@@ -60,7 +61,7 @@ class StressToneSelectWidget(QtWidgets.QWidget):
         
         rowLayout.addLayout(vlayout1)
         rowLayout.addLayout(vlayout2)
-
+    
         layout.addRow(rowLayout)
 
         self.setLayout(layout)

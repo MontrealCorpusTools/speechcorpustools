@@ -265,12 +265,17 @@ class ValueWidget(QtWidgets.QWidget):
         elif new_type == str:
 
             if self.hierarchy.has_type_property(annotation, label):
+                self.levels = []
                 with CorpusContext(self.config) as c:
                     if label == 'label':
                         self.levels = c.lexicon.list_labels(annotation)                   
-                        
                     else:
-                        self.levels = c.lexicon.get_property_levels(label, annotation)
+                        self.valueWidget = NonScrollingComboBox()
+                            #self.valueWidget.addItem(s[1])
+                            #self.levels.append(s[1])
+                    #else:
+                       # self.levels = c.lexicon.get_property_levels(label, annotation)
+                    print("levels is {}".format(self.levels))
                 boolean = self.updateValueWidget()
             elif annotation == 'speaker':
                 with CorpusContext(self.config) as c:
@@ -284,6 +289,7 @@ class ValueWidget(QtWidgets.QWidget):
                 self.levels = []
                 boolean = self.updateValueWidget()
             if not boolean:
+                print("not boolean")
                 self.compWidget.currentIndexChanged.connect(self.updateValueWidget)
                 self.compWidget.addItem('==')
                 self.compWidget.addItem('!=')
@@ -300,7 +306,10 @@ class ValueWidget(QtWidgets.QWidget):
             self.valueWidget.addItem('Null')
             self.ann_type = bool
         if new_type == str:
-            pass
+
+            print("length: {}".format(len(self.levels)))
+            self.updateValueWidget()
+            #pass
         else:
             self.mainLayout.addWidget(self.compWidget)
             self.mainLayout.addWidget(self.valueWidget)
@@ -330,10 +339,12 @@ class ValueWidget(QtWidgets.QWidget):
                     self.ann_type = bool
 
                 else:
+                    print("in else")
                     self.valueWidget = NonScrollingComboBox()
                     for l in self.levels:
                         self.valueWidget.addItem(l)
                     self.mainLayout.addWidget(self.valueWidget)
+                    self.ann_type = str
 
             else:
                 self.valueWidget = QtWidgets.QLineEdit()
