@@ -143,7 +143,7 @@ class AnalyzeAcousticsDialog(BaseDialog):
 class EncodeSyllabicsDialog(BaseDialog):
     def __init__(self, config, parent):
         super(EncodeSyllabicsDialog, self).__init__(parent)
-
+        print("in init")
         layout = QtWidgets.QFormLayout()
 
         self.phoneSelect = PhoneSelectWidget(config)
@@ -160,9 +160,11 @@ class EncodeSyllabicsDialog(BaseDialog):
         self.layout().insertLayout(0, layout)
 
         self.setWindowTitle('Encode syllabic segments')
-
+        self.acceptButton.clicked.connect(self.printTest)
     def value(self):
         return self.phoneSelect.value()
+    def printTest(self):
+        print("accept clicked")
 
 class EncodeSyllablesDialog(BaseDialog):
     def __init__(self, config, parent):
@@ -353,8 +355,8 @@ class EncodeStressDialog(BaseDialog):
         self.stressTone = RadioSelectWidget('Type of enrichment',OrderedDict([('Tone','tone'),('Stress','stress')]))
         self.stressToneSelectWidget = StressToneSelectWidget(config)
 
-        self.stressToneSelectWidget.vowelRegexWidget.regexEdit.setText("[a-z][a-z0-9][a-z0-9]?")
-        self.stressToneSelectWidget.regexWidget.regexEdit.setText("_T[0-9]")
+        self.stressToneSelectWidget.vowelRegexWidget.regexEdit.setText("^[a-z][a-z0-9][a-z0-9]?[a-z0-9]?")
+        self.stressToneSelectWidget.regexWidget.regexEdit.setText("_T[0-9]$")
         self.stressToneSelectWidget.regexWidget.testButton.clicked.connect(self.testRegex)
         layout.addRow(self.stressTone)
         
@@ -378,7 +380,7 @@ class EncodeStressDialog(BaseDialog):
             self.stressToneSelectWidget.vowelRegexWidget.regexEdit.setText("^[A-Z][A-Z]")
             self.stressToneSelectWidget.regexWidget.regexEdit.setText('[0-2]$')
         elif text == 'tone':
-            self.stressToneSelectWidget.vowelRegexWidget.regexEdit.setText("^[a-z][a-z0-9][a-z0-9]?")
+            self.stressToneSelectWidget.vowelRegexWidget.regexEdit.setText("^[a-z][a-z0-9][a-z0-9]?[a-z0-9]?")
             self.stressToneSelectWidget.regexWidget.regexEdit.setText("_T[0-9]$")
 
     def testRegex(self):
@@ -389,17 +391,21 @@ class EncodeStressDialog(BaseDialog):
         allphones = []
      
         with CorpusContext(self.config) as c:
-            q = c.query_graph(c.phone).filter(c.phone.label.regex(self.stressToneSelectWidget.combo_value()))
-            results = q.all()
-            for c in results.cursors:
-                for item in c:
-                    phone_label = item[0].properties['label']
-                    r = re.search(self.stressToneSelectWidget.regexWidget.regexEdit.text(), phone_label)
-                    if r is not None:
-                        index = r.start(0)
-                    else:
-                        index = len(phone_label)-1
-                    allphones.append(phone_label)        
+        #   q = c.query_graph(c.phone).filter(c.phone.label.regex(self.stressToneSelectWidget.combo_value()))
+            statement = "MATCH (n:phone_type:{corpus}) return n.label as label".format(corpus = c.corpus_name)
+
+
+            results = c.execute_cypher(statement)
+            #for c in results.cursors:
+            for label in results:
+                    #phone_label = item[0].properties['label']
+                phone_label = label['label']
+                r = re.search(self.stressToneSelectWidget.regexWidget.regexEdit.text(), phone_label)
+                    #s = re.search(self.stressToneSelectWidget.vowelRegexWidget.regexEdit.text(), phone_label)
+                if r is not None:
+                    index = r.start(0)
+                   
+                    allphones.append((phone_label,index))        
             allphones =set(allphones)
             allphones=list(allphones)
             data = OrderedDict([
@@ -409,10 +415,10 @@ class EncodeStressDialog(BaseDialog):
             data.update({"whole vowel":[]})
             data.update({"stripped vowel":[]})
             data.update({"ending":[]})
-            for phone in allphones:
-                data['whole vowel'].append(phone)
-                data['stripped vowel'].append(phone[:index])
-                data['ending'].append(phone[index:])
+            for tup in allphones:
+                data['whole vowel'].append(tup[0])
+                data['stripped vowel'].append(tup[0][:tup[1]])
+                data['ending'].append(tup[0][tup[1]:])
             regexPhoneSelect = RegexPhoneSelectWidget(data, 3,len(allphones))
 
             newLayout.addWidget(regexPhoneSelect)

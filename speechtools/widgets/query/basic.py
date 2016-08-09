@@ -211,6 +211,7 @@ class ValueWidget(QtWidgets.QWidget):
         self.config = config
         with CorpusContext(self.config) as c:
             self.hierarchy = c.hierarchy
+        print(self.hierarchy.has_type_property("syllable","stress"))
         self.to_find = to_find
         self.levels = None
         self.ann_type = None
@@ -263,29 +264,27 @@ class ValueWidget(QtWidgets.QWidget):
             self.valueWidget = QtWidgets.QLineEdit()
             self.ann_type = float
         elif new_type == str:
-
+            print("it's a string")
             if self.hierarchy.has_type_property(annotation, label):
-                self.levels = []
+                print("has type property {} {}".format(annotation,label))
                 with CorpusContext(self.config) as c:
                     if label == 'label':
-                        self.levels = c.lexicon.list_labels(annotation)                   
+                        self.levels = c.lexicon.list_labels(annotation)
                     else:
-                        self.valueWidget = NonScrollingComboBox()
-                            #self.valueWidget.addItem(s[1])
-                            #self.levels.append(s[1])
-                    #else:
-                       # self.levels = c.lexicon.get_property_levels(label, annotation)
-                    print("levels is {}".format(self.levels))
+                        self.levels = c.lexicon.get_property_levels(label, annotation)
                 boolean = self.updateValueWidget()
+                print("length is : {}".format(len(self.levels)))
             elif annotation == 'speaker':
                 with CorpusContext(self.config) as c:
-                    self.levels = c.speakers
+                    self.levels = c.census.get_speaker_property_levels(label)
+                    print("length is : {}".format(len(self.levels)))
                 boolean = self.updateValueWidget()
             elif annotation == 'discourse':
                 with CorpusContext(self.config) as c:
                     self.levels = c.discourses
                 boolean = self.updateValueWidget()
             else:
+                print("in else")
                 self.levels = []
                 boolean = self.updateValueWidget()
             if not boolean:
@@ -306,14 +305,13 @@ class ValueWidget(QtWidgets.QWidget):
             self.valueWidget.addItem('Null')
             self.ann_type = bool
         if new_type == str:
-
-            print("length: {}".format(len(self.levels)))
             self.updateValueWidget()
             #pass
         else:
             self.mainLayout.addWidget(self.compWidget)
             self.mainLayout.addWidget(self.valueWidget)
             #self.ann_type = str
+
     def updateValueWidget(self):
         boolean = False
         if self.levels is None:

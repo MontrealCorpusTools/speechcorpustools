@@ -290,6 +290,7 @@ class UtterancePositionWorker(QueryWorker):
 
 class SyllabicEncodingWorker(QueryWorker):
     def run_query(self):
+        print("syllablics encoded")
         config = self.kwargs['config']
         segments = self.kwargs['segments']
         stop_check = self.kwargs['stop_check']
@@ -309,6 +310,7 @@ class SyllabicEncodingWorker(QueryWorker):
 
 class SyllableEncodingWorker(QueryWorker):
     def run_query(self):
+        print("syllables encoded")
         config = self.kwargs['config']
         algorithm = self.kwargs['algorithm']
         stop_check = self.kwargs['stop_check']
@@ -556,6 +558,7 @@ class AudioCacheWorker(QueryWorker):
 
 class StressEncodingWorker(QueryWorker):
     def run_query(self):
+       
         config = self.kwargs['config']
         encode_type = self.kwargs['type']
         regex = self.kwargs['regex']
@@ -571,9 +574,12 @@ class StressEncodingWorker(QueryWorker):
                     enrich_dict = c.encode_stress(regex)
             else:
                 enrich_dict = c.encode_tone(regex)
+
             call_back("Removing extraneous info")
             call_back(0,0)
             c.remove_pattern(regex)
             c.enrich_syllables(enrich_dict)
+            c.encode_hierarchy()
+            c.refresh_hierarchy()
             self.actionCompleted.emit('encoding stress')
         return True

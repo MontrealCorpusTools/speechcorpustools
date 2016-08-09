@@ -537,6 +537,7 @@ class MainWindow(QtWidgets.QMainWindow):
             self.enrichSpeakersWorker.start()
 
     def encodeSyllabics(self):
+        print("triggered")
         dialog = EncodeSyllabicsDialog(self.corpusConfig, self)
         if dialog.exec_() == QtWidgets.QDialog.Accepted:
             segments = dialog.value()

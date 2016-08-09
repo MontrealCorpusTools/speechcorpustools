@@ -1,7 +1,7 @@
 import pytest
 import os
 
-from polyglotdb.io import inspect_textgrid
+from polyglotdb.io import inspect_textgrid,inspect_mfa
 
 from polyglotdb import CorpusContext
 from polyglotdb.config import CorpusConfig
@@ -45,4 +45,17 @@ def acoustic_config(graph_db, textgrid_test_dir):
         parser = inspect_textgrid(acoustic_path)
         c.load(parser, acoustic_path)
         #c.analyze_acoustics()
+    return config
+
+
+
+@pytest.fixture(scope='session')
+def stressed_config(graph_db, textgrid_test_dir):
+    config = CorpusConfig('stressed', **graph_db)
+
+    stressed_path = os.path.join(textgrid_test_dir,'stressed_corpus.TextGrid')
+    with CorpusContext(config) as c:
+        c.reset()
+        parser = inspect_mfa(stressed_path)
+        c.load(parser, stressed_path)
     return config
