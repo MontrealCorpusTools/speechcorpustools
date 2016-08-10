@@ -15,7 +15,6 @@ class AttributeSelect(NonScrollingComboBox):
     def __init__(self, hierarchy, to_find, alignment):
         super(AttributeSelect, self).__init__()
         if not alignment:
-            print(hierarchy.type_properties[to_find])
             self.addItem('alignment')
             self.addItem('following')
             self.addItem('previous')

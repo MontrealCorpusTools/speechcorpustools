@@ -290,7 +290,6 @@ class UtterancePositionWorker(QueryWorker):
 
 class SyllabicEncodingWorker(QueryWorker):
     def run_query(self):
-        print("syllablics encoded")
         config = self.kwargs['config']
         segments = self.kwargs['segments']
         stop_check = self.kwargs['stop_check']
@@ -310,7 +309,6 @@ class SyllabicEncodingWorker(QueryWorker):
 
 class SyllableEncodingWorker(QueryWorker):
     def run_query(self):
-        print("syllables encoded")
         config = self.kwargs['config']
         algorithm = self.kwargs['algorithm']
         stop_check = self.kwargs['stop_check']
@@ -365,7 +363,6 @@ class LexiconEnrichmentWorker(QueryWorker):
                 call_back(0, 0)
                 c.reset_lexicon()
                 
-                print("emitted {}".format(actionCompleted))
                 return False
         return True
 
