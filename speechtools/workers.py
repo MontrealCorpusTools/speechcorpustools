@@ -426,8 +426,6 @@ class HierarchicalPropertiesWorker(QueryWorker):
 
 class RelativizedMeasuresWorker(QueryWorker):
     def run_query(self):
-        res  = ""
-        data_type = 'word'
         config = self.kwargs['config']
         stop_check = self.kwargs['stop_check']
         call_back = self.kwargs['call_back']
@@ -435,52 +433,7 @@ class RelativizedMeasuresWorker(QueryWorker):
         call_back(0, 0)
         with CorpusContext(config) as c:
             string = "!"
-            if self.kwargs['measure'] == 'word_median':
-                res = c.word_median()
-            elif self.kwargs['measure'] == 'all_word_median':
-                res = c.all_word_median()
-            elif self.kwargs['measure'] == 'word_mean_duration':
-                res = c.word_mean_duration()
-            elif self.kwargs['measure'] == 'word_std_dev':
-                res = c.word_std_dev()
-            elif self.kwargs['measure'] == 'baseline_duration':
-                res = c.baseline_duration()
-            elif self.kwargs['measure'] == 'phone_mean':
-                data_type = 'phone'
-                res = c.phone_mean_duration()
-            elif self.kwargs['measure'] == 'phone_median':
-                data_type = 'phone'
-                res = c.phone_median()
-            elif self.kwargs['measure'] == 'phone_std_dev':
-                data_type = 'phone'
-                res = c.phone_std_dev()
-            elif self.kwargs['measure'] == 'all_word_median':
-                res = c.all_word_median()
-            elif self.kwargs['measure'] == 'phone_mean_duration_with_speaker':
-                data_type = 'speaker'
-                res = c.phone_mean_duration_with_speaker()
-            elif self.kwargs['measure'] == 'word_mean_by_speaker':
-                data_type = 'speaker'
-                res = c.word_mean_duration_with_speaker()
-            elif self.kwargs['measure'] == 'all_phone_median':
-                data_type = 'phone'
-                res = c.all_phone_median()
-            elif self.kwargs['measure'] == 'syllable_mean':
-                data_type = 'syllable'
-                res = c.syllable_mean_duration()
-            elif self.kwargs['measure'] == 'syllable_median':
-                data_type = 'syllable'
-                res = c.syllable_median()
-            elif self.kwargs['measure'] == 'syllable_std_dev':
-                data_type = 'syllable'
-                res = c.syllable_std_dev()
-            elif self.kwargs['measure'] == 'mean_speech_rate':
-                data_type = 'speaker'
-                res = c.average_speech_rate()
-
-            else:
-                print("error")
-            c.encode_measure(res, data_type)
+            c.encode_measure(self.kwargs['measure'])
             self.actionCompleted.emit('encoding '+ self.kwargs['measure'].replace('_',' '))
             if stop_check():
                 return False
@@ -567,19 +520,5 @@ class StressEncodingWorker(QueryWorker):
         call_back('Encoding stress/tone...')
         call_back(0, 0)
         with CorpusContext(config) as c:
-            if encode_type == 'stress':
-                if regex == "":
-                    enrich_dict = c.encode_stress('[0-9]')
-                else:
-                    enrich_dict = c.encode_stress(regex)
-            else:
-                enrich_dict = c.encode_tone(regex)
-
-            call_back("Removing extraneous info")
-            call_back(0,0)
-            c.remove_pattern(regex)
-            c.enrich_syllables(enrich_dict)
-            c.encode_hierarchy()
-            c.refresh_hierarchy()
-            self.actionCompleted.emit('encoding stress')
+            c.encode_stresstone_to_syllables(encode_type, regex)
         return True

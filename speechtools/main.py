@@ -241,10 +241,6 @@ class MainWindow(QtWidgets.QMainWindow):
         self.enrichSpeakersWorker.errorEncountered.connect(self.showError)
         self.enrichSpeakersWorker.dataReady.connect(self.updateStatus)
 
-        self.enrichSpeakersWorker = SpeakerEnrichmentWorker()
-        self.enrichSpeakersWorker.errorEncountered.connect(self.showError)
-        self.enrichSpeakersWorker.dataReady.connect(self.updateStatus)
-
         self.encodeStressWorker = StressEncodingWorker()
         self.encodeStressWorker.errorEncountered.connect(self.showError)
         self.encodeStressWorker.dataReady.connect(self.updateStatus)
@@ -537,7 +533,6 @@ class MainWindow(QtWidgets.QMainWindow):
             self.enrichSpeakersWorker.start()
 
     def encodeSyllabics(self):
-        print("triggered")
         dialog = EncodeSyllabicsDialog(self.corpusConfig, self)
         if dialog.exec_() == QtWidgets.QDialog.Accepted:
             segments = dialog.value()

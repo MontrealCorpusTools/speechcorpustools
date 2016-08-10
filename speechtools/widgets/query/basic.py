@@ -15,6 +15,7 @@ class AttributeSelect(NonScrollingComboBox):
     def __init__(self, hierarchy, to_find, alignment):
         super(AttributeSelect, self).__init__()
         if not alignment:
+            print(hierarchy.type_properties[to_find])
             self.addItem('alignment')
             self.addItem('following')
             self.addItem('previous')
@@ -211,7 +212,6 @@ class ValueWidget(QtWidgets.QWidget):
         self.config = config
         with CorpusContext(self.config) as c:
             self.hierarchy = c.hierarchy
-        print(self.hierarchy.has_type_property("syllable","stress"))
         self.to_find = to_find
         self.levels = None
         self.ann_type = None
@@ -264,31 +264,25 @@ class ValueWidget(QtWidgets.QWidget):
             self.valueWidget = QtWidgets.QLineEdit()
             self.ann_type = float
         elif new_type == str:
-            print("it's a string")
             if self.hierarchy.has_type_property(annotation, label):
-                print("has type property {} {}".format(annotation,label))
                 with CorpusContext(self.config) as c:
                     if label == 'label':
                         self.levels = c.lexicon.list_labels(annotation)
                     else:
                         self.levels = c.lexicon.get_property_levels(label, annotation)
                 boolean = self.updateValueWidget()
-                print("length is : {}".format(len(self.levels)))
             elif annotation == 'speaker':
                 with CorpusContext(self.config) as c:
                     self.levels = c.census.get_speaker_property_levels(label)
-                    print("length is : {}".format(len(self.levels)))
                 boolean = self.updateValueWidget()
             elif annotation == 'discourse':
                 with CorpusContext(self.config) as c:
                     self.levels = c.discourses
                 boolean = self.updateValueWidget()
             else:
-                print("in else")
                 self.levels = []
                 boolean = self.updateValueWidget()
             if not boolean:
-                print("not boolean")
                 self.compWidget.currentIndexChanged.connect(self.updateValueWidget)
                 self.compWidget.addItem('==')
                 self.compWidget.addItem('!=')
@@ -337,7 +331,6 @@ class ValueWidget(QtWidgets.QWidget):
                     self.ann_type = bool
 
                 else:
-                    print("in else")
                     self.valueWidget = NonScrollingComboBox()
                     for l in self.levels:
                         self.valueWidget.addItem(l)

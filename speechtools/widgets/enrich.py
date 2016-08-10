@@ -143,7 +143,6 @@ class AnalyzeAcousticsDialog(BaseDialog):
 class EncodeSyllabicsDialog(BaseDialog):
     def __init__(self, config, parent):
         super(EncodeSyllabicsDialog, self).__init__(parent)
-        print("in init")
         layout = QtWidgets.QFormLayout()
 
         self.phoneSelect = PhoneSelectWidget(config)
@@ -160,11 +159,8 @@ class EncodeSyllabicsDialog(BaseDialog):
         self.layout().insertLayout(0, layout)
 
         self.setWindowTitle('Encode syllabic segments')
-        self.acceptButton.clicked.connect(self.printTest)
     def value(self):
         return self.phoneSelect.value()
-    def printTest(self):
-        print("accept clicked")
 
 class EncodeSyllablesDialog(BaseDialog):
     def __init__(self, config, parent):
