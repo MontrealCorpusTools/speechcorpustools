@@ -32,4 +32,5 @@ Databases can be enriched by encoding various elements. Usually, the database st
 		* Standard deviation of duration
 	* **Speaker**
 		* Average speech rate
+* **Encode stress/tone** Certain corpus alphabets will come with stress or tone information embedded in vowel characters. For example, in some CMUdict corpora primary stress on the vowel "AA" is represented by "AA1". This enrichment function allows the user to specify a regular expression to split this information off of the vowel and encode it onto the syllable. The default expressions are for LibriSpeech (stress) and GlobalPhone (tone)
 * **Analyze acousticcs** This will encode pitch and formants into the corpus. This is necessary to view the waveforms and spectrogram. 
