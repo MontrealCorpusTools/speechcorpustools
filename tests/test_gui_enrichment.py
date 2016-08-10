@@ -24,3 +24,14 @@ def test_enrich_stress(stressed_config, qtbot):
 	
 
 	assert(len(query.levels)>0)
+
+def test_enrich_relativized(acoustic_config, qtbot):
+
+	with CorpusContext(acoustic_config) as c:
+		c.encode_measure("word_median")
+
+	query =ValueWidget(acoustic_config, 'word')
+	qtbot.addWidget(query)
+	query.changeType('word','median_duration',float)
+
+	assert(isinstance(query.valueWidget,QtWidgets.QLineEdit))

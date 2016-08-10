@@ -518,4 +518,5 @@ class StressEncodingWorker(QueryWorker):
         call_back(0, 0)
         with CorpusContext(config) as c:
             c.encode_stresstone_to_syllables(encode_type, regex)
+        self.actionCompleted.emit('encoding stress/tone')  
         return True
