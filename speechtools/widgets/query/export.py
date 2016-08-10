@@ -250,6 +250,7 @@ class BasicColumnBox(QtWidgets.QGroupBox):
         self.checked = []
 
         hierarchydict = collections.OrderedDict()
+
         for i in sorted(hierarchy.annotation_types):
             properties = []
             for j in sorted(hierarchy.token_properties[i]):
@@ -261,7 +262,10 @@ class BasicColumnBox(QtWidgets.QGroupBox):
             hierarchydict[i] = properties
         for i in hierarchydict.values():
             i.append('duration')
-
+        hierarchydict['speaker'] = []
+        
+        for i in hierarchy.speaker_properties:
+            hierarchydict['speaker'].append(i[0])
         dictlengths = []
         for key in hierarchydict:
             dictlengths.append(len(hierarchydict[key]))
@@ -281,7 +285,7 @@ class BasicColumnBox(QtWidgets.QGroupBox):
         self.names.append('discourse')
         for i in range(self.maxboxes):
             self.names.append('')
-        self.names.append('speaker')
+        #self.names.append('speaker')
 
         self.complexnames = ['syllable position of previous phone', 'duration of the second syllable after the current one']
 
@@ -346,11 +350,11 @@ class BasicColumnBox(QtWidgets.QGroupBox):
                 continue
             labelposition = self.names.index(name)/self.numcolumns
 
-            if labelposition != int(labelposition) and name != 'discourse' and name != 'speaker':
+            if labelposition != int(labelposition) and name != 'discourse': #and name != 'speaker'
                 widget = QtWidgets.QCheckBox(name)
                 widget.setMinimumSize(175, 35)
                 widget.toggled.connect(self.addColumn)
-            elif name == 'discourse' or name == 'speaker':
+            elif name == 'discourse': # or name == 'speaker'
                 widget = QtWidgets.QCheckBox(name)
                 widget.setMinimumSize(175, 35)
                 widget.toggled.connect(self.addColumn)
@@ -575,7 +579,7 @@ class ColumnBox(QtWidgets.QGroupBox):
                 defaultwidget2 = widget.attributeWidget.mainLayout.itemAt(1).widget()
                 index2 = defaultwidget2.findText(label[1])
                 defaultwidget2.setCurrentIndex(index2)
-            if defaultwidget.currentText() == 'discourse' or defaultwidget.currentText() == 'speaker':
+            if defaultwidget.currentText() == 'discourse': # or defaultwidget.currentText() == 'speaker'
                 defaultwidget2 = widget.attributeWidget.mainLayout.itemAt(1).widget()
                 index2 = defaultwidget2.findText('name')
                 defaultwidget2.setCurrentIndex(index2)
@@ -594,14 +598,14 @@ class ColumnBox(QtWidgets.QGroupBox):
             for i in range(len(self.mainLayout)):
                 match = self.mainLayout.itemAt(i)
                 checkdefault = match.widget().attributeWidget.mainLayout.itemAt(0).widget().currentText()
-                if len(label) == 3 and label[0] != 'discourse' and label[0] != 'speaker':
+                if len(label) == 3 and label[0] != 'discourse': # and label[0] != 'speaker'
                     if checkdefault == label[0]:
                         unchecked.append(match.widget())
                 if len(label) == 4 and match.widget().attributeWidget.mainLayout.itemAt(1) != None:
                     checkdefault2 = match.widget().attributeWidget.mainLayout.itemAt(1).widget().currentText()
                     if checkdefault2 == label[1] and checkdefault == label[0]:
                         unchecked.append(match.widget())
-                if label[0] == 'discourse' or label[0] == 'speaker':
+                if label[0] == 'discourse': # or label[0] == 'speaker'
                     if checkdefault == label[0]:
                         unchecked.append(match.widget())
         if len(label) > 4:
