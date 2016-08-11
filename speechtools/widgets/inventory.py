@@ -33,8 +33,16 @@ class PhoneSelectWidget(QtWidgets.QWidget):
         self.selectWidget.setSelectionMode(QtWidgets.QAbstractItemView.MultiSelection)
 
         with CorpusContext(config) as c:
-            for p in c.lexicon.phones():
-                self.selectWidget.addItem(p)
+            statement = 'MATCH (n:phone_type:{corpus_name}) RETURN n.label as label'.format(corpus_name=c.corpus_name)
+            res = c.execute_cypher(statement)
+            phones = []
+            for item in res:
+                phones.append(item['label'])
+            phones = sorted(phones, key = lambda x : x[0])    
+            for phone in phones:
+                self.selectWidget.addItem(phone)
+            #for p in c.lexicon.phones():
+                #self.selectWidget.addItem(p)
         layout.addWidget(self.selectWidget)
         self.setLayout(layout)
 

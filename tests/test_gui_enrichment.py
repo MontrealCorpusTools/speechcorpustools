@@ -1,10 +1,6 @@
 import pytest
 from PyQt5 import QtCore, QtWidgets
-from speechtools.main import MainWindow
-from speechtools.widgets.enrich import EncodeStressDialog, EncodeSyllabicsDialog, EncodeSyllablesDialog
-from speechtools.widgets.base import RadioSelectWidget
 from speechtools.widgets.query.basic import ValueWidget
-from speechtools.widgets.query.main import QueryWidget, QueryForm, QueryResults
 from polyglotdb import CorpusContext
 import collections
 
