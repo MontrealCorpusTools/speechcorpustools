@@ -15,7 +15,7 @@ from polyglotdb.config import CorpusConfig
 from polyglotdb.io import (inspect_buckeye, inspect_textgrid, inspect_timit,
                         inspect_labbcat, inspect_mfa, inspect_fave,
                         guess_textgrid_format)
-from polyglotdb.io.enrichment import enrich_lexicon_from_csv, enrich_features_from_csv
+from polyglotdb.io.enrichment import enrich_lexicon_from_csv, enrich_features_from_csv, enrich_speakers_from_csv
 
 from polyglotdb.utils import update_sound_files, gp_language_stops, gp_speakers
 
@@ -28,6 +28,7 @@ class FunctionWorker(QtCore.QThread):
     updateProgressText = QtCore.pyqtSignal(str)
     errorEncountered = QtCore.pyqtSignal(object)
     finishedCancelling = QtCore.pyqtSignal()
+    actionCompleted= QtCore.pyqtSignal(object)
 
     dataReady = QtCore.pyqtSignal(object)
 
@@ -74,7 +75,10 @@ class QueryWorker(FunctionWorker):
                 try:
                     results = self.run_query()
                     success = True
-                except (ConnectionError, NetworkAddressError, TemporaryConnectionError):
+                except (ConnectionError, NetworkAddressError, TemporaryConnectionError) as e:
+                    exc_type, exc_value, exc_traceback = sys.exc_info()
+                    e = ''.join(traceback.format_exception(exc_type, exc_value,exc_traceback))
+                    print(e)
                     tries += 1
                     if tries == 2:
                         self.connectionIssues.emit()
@@ -82,11 +86,11 @@ class QueryWorker(FunctionWorker):
             if not success:
                 raise(ConnectionError('The query could not be completed.  Please check your internet connectivity.'))
 
+        
         except Exception as e:
             if not isinstance(e, PGError):
                 exc_type, exc_value, exc_traceback = sys.exc_info()
-                e = ''.join(traceback.format_exception(exc_type, exc_value,
-                                          exc_traceback))
+                e = ''.join(traceback.format_exception(exc_type, exc_value,exc_traceback))
             self.finished = True
             self.errorEncountered.emit(e)
             return
@@ -97,12 +101,12 @@ class QueryWorker(FunctionWorker):
             return
         print('finished')
         self.dataReady.emit(results)
+        
         self.finished = True
-
+        
     def run_query(self):
         profile = self.kwargs['profile']
         config = self.kwargs['config']
-
         with CorpusContext(config) as c:
             a_type = getattr(c, profile.to_find)
             query = c.query_graph(a_type)
@@ -115,10 +119,12 @@ class QueryWorker(FunctionWorker):
             results = query.all()
             if results is not None:
                 print(len(results))
+        self.actionCompleted.emit('query')
         return query, results
 
 
 class ImportCorpusWorker(QueryWorker):
+
     def run_query(self):
         time.sleep(0.1)
         name = self.kwargs['name']
@@ -147,6 +153,7 @@ class ImportCorpusWorker(QueryWorker):
             if reset:
                 c.reset(call_back = self.kwargs['call_back'], stop_check = self.kwargs['stop_check'])
             could_not_parse = c.load(parser, directory)
+            self.actionCompleted.emit('importing corpus') 
         return could_not_parse
 
 class ExportQueryWorker(QueryWorker):
@@ -170,7 +177,7 @@ class ExportQueryWorker(QueryWorker):
                 results = query.to_csv(export_path)
             except PermissionError:
                 raise(PGError('The file you specified could not be written to. Please ensure you have proper permissions and programs that lock the file (i.e., Excel) do not have it open.'))
-
+            self.actionCompleted.emit('exporting') 
         return True
 
 class DiscourseQueryWorker(QueryWorker):
@@ -208,6 +215,7 @@ class AcousticAnalysisWorker(QueryWorker):
                             stop_check = self.kwargs['stop_check'],
                             call_back = self.kwargs['call_back'],
                             acoustics = acoustics)
+            self.actionCompleted.emit('analysing acousics')         
         return True
 
 class PauseEncodingWorker(QueryWorker):
@@ -220,6 +228,7 @@ class PauseEncodingWorker(QueryWorker):
             c.encode_pauses(pause_words,
                             stop_check = stop_check,
                             call_back = call_back)
+            self.actionCompleted.emit('encoding pauses') 
             if stop_check():
                 call_back('Resetting pauses...')
                 call_back(0, 0)
@@ -238,6 +247,7 @@ class UtteranceEncodingWorker(QueryWorker):
             c.encode_utterances(min_pause_length, min_utterance_length,
                             stop_check = stop_check,
                             call_back = call_back)
+            self.actionCompleted.emit('encoding utterances') 
             if stop_check():
                 call_back('Resetting utterances...')
                 call_back(0, 0)
@@ -254,6 +264,7 @@ class SpeechRateWorker(QueryWorker):
         with CorpusContext(config) as c:
             c.encode_speech_rate(to_count, stop_check = stop_check,
                             call_back = call_back)
+            self.actionCompleted.emit('encoding speech rate') 
             if stop_check():
                 call_back('Resetting speech rate...')
                 call_back(0, 0)
@@ -269,6 +280,7 @@ class UtterancePositionWorker(QueryWorker):
         with CorpusContext(config) as c:
             c.encode_utterance_position(stop_check = stop_check,
                             call_back = call_back)
+            self.actionCompleted.emit('encoding utterance position')            
             if stop_check():
                 call_back('Resetting utterance positions...')
                 call_back(0, 0)
@@ -287,6 +299,7 @@ class SyllabicEncodingWorker(QueryWorker):
         with CorpusContext(config) as c:
             c.reset_class('syllabic')
             c.encode_class(segments, 'syllabic')
+            self.actionCompleted.emit('encoding syllabics')
             if stop_check():
                 call_back('Resetting syllabics...')
                 call_back(0, 0)
@@ -304,6 +317,8 @@ class SyllableEncodingWorker(QueryWorker):
         call_back(0, 0)
         with CorpusContext(config) as c:
             c.encode_syllables(algorithm = algorithm, call_back = call_back, stop_check = stop_check)
+            self.actionCompleted.emit('encoding syllables')
+
             if stop_check():
                 call_back('Resetting syllables...')
                 call_back(0, 0)
@@ -323,6 +338,7 @@ class PhoneSubsetEncodingWorker(QueryWorker):
         with CorpusContext(config) as c:
             c.reset_class(label)
             c.encode_class(segments, label)
+            self.actionCompleted.emit('encoding '+ self.kwargs['label'].replace('_',' '))
             if stop_check():
                 call_back('Resetting {}s...'.format(label))
                 call_back(0, 0)
@@ -332,6 +348,7 @@ class PhoneSubsetEncodingWorker(QueryWorker):
 
 class LexiconEnrichmentWorker(QueryWorker):
     def run_query(self):
+        print("in the lexical worker")
         config = self.kwargs['config']
         case_sensitive = self.kwargs['case_sensitive']
         path = self.kwargs['path']
@@ -341,10 +358,13 @@ class LexiconEnrichmentWorker(QueryWorker):
         call_back(0, 0)
         with CorpusContext(config) as c:
             enrich_lexicon_from_csv(c, path)
+            self.actionCompleted.emit('enriching lexicon')
             if stop_check():
                 call_back('Resetting lexicon...')
                 call_back(0, 0)
                 c.reset_lexicon()
+                
+                print("emitted {}".format(actionCompleted))
                 return False
         return True
 
@@ -358,11 +378,27 @@ class FeatureEnrichmentWorker(QueryWorker):
         call_back(0, 0)
         with CorpusContext(config) as c:
             enrich_features_from_csv(c, path)
+            self.actionCompleted.emit('enriching phonological inventory')
             if stop_check():
                 call_back('Resetting phonological inventory...')
                 call_back(0, 0)
                 c.reset_lexicon()
                 return False
+        return True
+
+
+class SpeakerEnrichmentWorker(QueryWorker):
+    def run_query(self):
+        config = self.kwargs['config']
+        path = self.kwargs['path']
+        stop_check = self.kwargs['stop_check']
+        call_back = self.kwargs['call_back']
+        call_back('Enriching speakers...')
+        call_back(0,0)
+        with CorpusContext(config) as c:
+            enrich_speakers_from_csv(c, path)
+            self.actionCompleted.emit('enriching speakers')
+            
         return True
 
 class HierarchicalPropertiesWorker(QueryWorker):
@@ -382,9 +418,75 @@ class HierarchicalPropertiesWorker(QueryWorker):
             elif self.kwargs['type'] == 'rate':
                 c.encode_rate(self.kwargs['higher'], self.kwargs['lower'],
                             self.kwargs['name'], subset = self.kwargs['subset'])
+            self.actionCompleted.emit('encoding '+ self.kwargs['name'].replace('_',' '))
             if stop_check():
                 return False
         return True
+
+class RelativizedMeasuresWorker(QueryWorker):
+    def run_query(self):
+        res  = ""
+        data_type = 'word'
+        config = self.kwargs['config']
+        stop_check = self.kwargs['stop_check']
+        call_back = self.kwargs['call_back']
+        call_back('Encoding {}...'.format(self.kwargs['measure']))
+        call_back(0, 0)
+        with CorpusContext(config) as c:
+            string = "!"
+            if self.kwargs['measure'] == 'word_median':
+                res = c.word_median()
+            elif self.kwargs['measure'] == 'all_word_median':
+                res = c.all_word_median()
+            elif self.kwargs['measure'] == 'word_mean_duration':
+                res = c.word_mean_duration()
+            elif self.kwargs['measure'] == 'word_std_dev':
+                res = c.word_std_dev()
+            elif self.kwargs['measure'] == 'baseline_duration':
+                res = c.baseline_duration()
+            elif self.kwargs['measure'] == 'phone_mean':
+                data_type = 'phone'
+                res = c.phone_mean_duration()
+            elif self.kwargs['measure'] == 'phone_median':
+                data_type = 'phone'
+                res = c.phone_median()
+            elif self.kwargs['measure'] == 'phone_std_dev':
+                data_type = 'phone'
+                res = c.phone_std_dev()
+            elif self.kwargs['measure'] == 'all_word_median':
+                res = c.all_word_median()
+            elif self.kwargs['measure'] == 'phone_mean_duration_with_speaker':
+                data_type = 'speaker'
+                res = c.phone_mean_duration_with_speaker()
+            elif self.kwargs['measure'] == 'word_mean_by_speaker':
+                data_type = 'speaker'
+                res = c.word_mean_duration_with_speaker()
+            elif self.kwargs['measure'] == 'all_phone_median':
+                data_type = 'phone'
+                res = c.all_phone_median()
+            elif self.kwargs['measure'] == 'syllable_mean':
+                data_type = 'syllable'
+                res = c.syllable_mean_duration()
+            elif self.kwargs['measure'] == 'syllable_median':
+                data_type = 'syllable'
+                res = c.syllable_median()
+            elif self.kwargs['measure'] == 'syllable_std_dev':
+                data_type = 'syllable'
+                res = c.syllable_std_dev()
+            elif self.kwargs['measure'] == 'mean_speech_rate':
+                data_type = 'speaker'
+                res = c.average_speech_rate()
+
+            else:
+                print("error")
+            c.encode_measure(res, data_type)
+            self.actionCompleted.emit('encoding '+ self.kwargs['measure'].replace('_',' '))
+            if stop_check():
+                return False
+        return True
+
+
+
 
 class PrecedingCacheWorker(QueryWorker):
     def run_query(self):

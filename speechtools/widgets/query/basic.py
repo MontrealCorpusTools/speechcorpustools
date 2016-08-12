@@ -68,10 +68,21 @@ class AttributeSelect(NonScrollingComboBox):
 
 class SpeakerAttributeSelect(AttributeSelect):
     def __init__(self, hierarchy):
+        self.types = []
         QtWidgets.QComboBox.__init__(self)
-        self.addItem('name')
-        self.types = [str]
+        #self.addItem('name')
+        for k,v in sorted(hierarchy.speaker_properties, key = lambda x: x[0]):
+            self.addItem(k)
+            self.types.append(v)
 
+class DiscourseAttributeSelect(AttributeSelect):
+    def __init__(self, hierarchy):
+        self.types = []
+        QtWidgets.QComboBox.__init__(self)
+
+        for k,v in sorted(hierarchy.discourse_properties, key = lambda x : x[0]):
+            self.addItem(k)
+            self.types.append(v)
 
 class AttributeWidget(QtWidgets.QWidget):
     attributeTypeChanged = QtCore.pyqtSignal(object, object, object)
@@ -127,12 +138,17 @@ class AttributeWidget(QtWidgets.QWidget):
                 widget = AttributeSelect(self.hierarchy, current_annotation_type, self.alignment)
             widget.currentIndexChanged.connect(self.updateAttribute)
             self.mainLayout.addWidget(widget)
-        elif combobox.currentText() in ['speaker', 'discourse']:
+        elif combobox.currentText() == 'speaker':
             widget = SpeakerAttributeSelect(self.hierarchy)
             widget.currentIndexChanged.connect(self.updateAttribute)
             self.mainLayout.addWidget(widget)
             self.attributeTypeChanged.emit(combobox.currentText(), widget.label(), widget.type())
 
+        elif combobox.currentText() == 'discourse':
+            widget = DiscourseAttributeSelect(self.hierarchy)
+            widget.currentIndexChanged.connect(self.updateAttribute)
+            self.mainLayout.addWidget(widget)
+            self.attributeTypeChanged.emit(combobox.currentText(), widget.label(), widget.type())
         else:
             self.attributeTypeChanged.emit(current_annotation_type, combobox.label(), combobox.type())
 
@@ -277,6 +293,7 @@ class ValueWidget(QtWidgets.QWidget):
             self.valueWidget.addItem('True')
             self.valueWidget.addItem('False')
             self.valueWidget.addItem('Null')
+
         if new_type == str:
             pass
         else:
@@ -306,6 +323,7 @@ class ValueWidget(QtWidgets.QWidget):
                     self.valueWidget.addItem('Null')
                     boolean = True
 
+
                 else:
                     self.valueWidget = NonScrollingComboBox()
                     for l in self.levels:
@@ -317,8 +335,10 @@ class ValueWidget(QtWidgets.QWidget):
                 completer = QtWidgets.QCompleter(self.levels)
                 completer.setCaseSensitivity(QtCore.Qt.CaseInsensitive)
                 self.valueWidget.setCompleter(completer)
+
         self.mainLayout.addWidget(self.compWidget)
         self.mainLayout.addWidget(self.valueWidget)
+
         return boolean
 
     def setToFind(self, to_find):

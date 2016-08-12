@@ -8,7 +8,7 @@ from polyglotdb import CorpusContext
 
 from ...profiles import available_export_profiles, ExportProfile, Column
 
-from .basic import AttributeSelect as QueryAttributeSelect, SpeakerAttributeSelect
+from .basic import AttributeSelect as QueryAttributeSelect, SpeakerAttributeSelect, DiscourseAttributeSelect
 
 import collections
 
@@ -118,10 +118,15 @@ class AttributeWidget(QtWidgets.QWidget):
             widget = AttributeSelect(self.hierarchy, current_annotation_type)
             widget.currentIndexChanged.connect(self.updateAttribute)
             self.mainLayout.addWidget(widget)
-        elif combobox.currentText() in ['speaker', 'discourse']:
+        elif combobox.currentText() == 'speaker':
             widget = SpeakerAttributeSelect(self.hierarchy)
             widget.currentIndexChanged.connect(self.updateAttribute)
             self.mainLayout.addWidget(widget)
+        elif combobox.currentText() == 'discourse':
+            widget = DiscourseAttributeSelect(self.hierarchy)
+            widget.currentIndexChanged.connect(self.updateAttribute)
+            self.mainLayout.addWidget(widget)
+
         self.finalChanged.emit('_'.join(self.attribute()[1:]))
 
     def annotationType(self):
