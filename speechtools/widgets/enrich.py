@@ -427,6 +427,7 @@ class EncodeStressDialog(BaseDialog):
             c.reset_to_old_label()
 
 
+
 class EncodeRelativizedMeasuresDialog(BaseDialog):
     def __init__(self, config, parent):
         super(EncodeRelativizedMeasuresDialog, self).__init__(parent)
@@ -456,12 +457,14 @@ class EncodeRelativizedMeasuresDialog(BaseDialog):
     def change_view(self, text):
         layout = QtWidgets.QFormLayout()
         self.radioWidget.setParent(None)
+
         if text == 'Word':
             self.radioWidget = RadioSelectWidget('Desired measure:', OrderedDict([
             ('Word Mean Duration', 'word_mean_duration'),
             ('Word Median Duration', 'word_median'),
             ('Word Standard Deviation','word_std_dev'),
             ('Baseline Duration', 'baseline_duration')]))
+
         if text == 'Phone':
             self.radioWidget = RadioSelectWidget('Desired measure:', OrderedDict([('Phone Mean Duration','phone_mean'),
             ('Phone Median Duration','phone_median'),

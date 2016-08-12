@@ -297,6 +297,7 @@ class ValueWidget(QtWidgets.QWidget):
             self.valueWidget.addItem('False')
             self.valueWidget.addItem('Null')
             self.ann_type = bool
+
         if new_type == str:
             self.updateValueWidget()
             #pass
@@ -328,6 +329,7 @@ class ValueWidget(QtWidgets.QWidget):
                     self.valueWidget.addItem('Null')
                     boolean = True
                     self.ann_type = bool
+
 
                 else:
                     self.valueWidget = NonScrollingComboBox()

@@ -348,6 +348,7 @@ class PhoneSubsetEncodingWorker(QueryWorker):
 
 class LexiconEnrichmentWorker(QueryWorker):
     def run_query(self):
+        print("in the lexical worker")
         config = self.kwargs['config']
         case_sensitive = self.kwargs['case_sensitive']
         path = self.kwargs['path']
@@ -423,6 +424,8 @@ class HierarchicalPropertiesWorker(QueryWorker):
 
 class RelativizedMeasuresWorker(QueryWorker):
     def run_query(self):
+        res  = ""
+        data_type = 'word'
         config = self.kwargs['config']
         stop_check = self.kwargs['stop_check']
         call_back = self.kwargs['call_back']

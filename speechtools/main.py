@@ -24,7 +24,6 @@ from .widgets.enrich import (EncodePauseDialog, EncodeUtteranceDialog,
                             EnrichLexiconDialog, EnrichFeaturesDialog,
                             EncodeHierarchicalPropertiesDialog, EncodeRelativizedMeasuresDialog, EnrichSpeakersDialog, EncodeStressDialog)
 
-
 from .helper import get_system_font_height
 
 from .progress import ProgressWidget
