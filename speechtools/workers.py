@@ -13,7 +13,7 @@ from polyglotdb import CorpusContext
 from polyglotdb.config import CorpusConfig
 
 from polyglotdb.io import (inspect_buckeye, inspect_textgrid, inspect_timit,
-                        inspect_labbcat, inspect_mfa, inspect_fave,
+                        inspect_labbcat, inspect_mfa, inspect_fave, inspect_partitur,
                         guess_textgrid_format)
 from polyglotdb.io.enrichment import enrich_lexicon_from_csv, enrich_features_from_csv, enrich_speakers_from_csv
 
@@ -136,6 +136,8 @@ class ImportCorpusWorker(QueryWorker):
                 parser = inspect_buckeye(directory)
             elif name == 'timit':
                 parser = inspect_timit(directory)
+            elif name == 'partitur':
+                parser = inspect_partitur(directory)
             else:
                 form = guess_textgrid_format(directory)
                 if form == 'labbcat':
