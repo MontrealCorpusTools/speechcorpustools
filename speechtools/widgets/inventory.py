@@ -33,8 +33,16 @@ class PhoneSelectWidget(QtWidgets.QWidget):
         self.selectWidget.setSelectionMode(QtWidgets.QAbstractItemView.MultiSelection)
 
         with CorpusContext(config) as c:
-            for p in c.lexicon.phones():
-                self.selectWidget.addItem(p)
+            statement = 'MATCH (n:phone_type:{corpus_name}) RETURN n.label as label'.format(corpus_name=c.corpus_name)
+            res = c.execute_cypher(statement)
+            phones = []
+            for item in res:
+                phones.append(item['label'])
+            phones = sorted(phones, key = lambda x : x[0])    
+            for phone in phones:
+                self.selectWidget.addItem(phone)
+            #for p in c.lexicon.phones():
+                #self.selectWidget.addItem(p)
         layout.addWidget(self.selectWidget)
         self.setLayout(layout)
 
@@ -45,4 +53,24 @@ class PhoneSelectWidget(QtWidgets.QWidget):
     def value(self):
         phones = [x.text() for x in self.selectWidget.selectedItems()]
         return phones
+
+class RegexPhoneSelectWidget(QtWidgets.QTableWidget):
+    def __init__(self, data, x,y):
+        QtWidgets.QTableWidget.__init__(self,y,x)
+        self.data = data
+        self.setdata()
+        self.resizeRowsToContents()
+
+    def setdata(self):
+        
+        headers = [col for col in self.data.keys()]
+
+        for i, k in enumerate(self.data.keys()):
+            for j, v in enumerate(self.data[k]):
+                item = QtWidgets.QTableWidgetItem(v)
+                self.setItem(j,i,item)
+        self.setHorizontalHeaderLabels(headers)
+
+
+
 

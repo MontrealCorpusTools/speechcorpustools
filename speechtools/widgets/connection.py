@@ -40,6 +40,10 @@ class CorporaList(QtWidgets.QGroupBox):
         timitAction.triggered.connect(lambda x: self.importCorpus('timit'))
         menu.addAction(timitAction)
 
+        partiturAction = QtWidgets.QAction('BAS Partitur', self)
+        partiturAction.triggered.connect(lambda x: self.importCorpus('partitur'))
+        menu.addAction(partiturAction)
+        
         faAction = QtWidgets.QAction('Force-aligned TextGrids', self)
         faAction.triggered.connect(self.importForceAligned)
         menu.addAction(faAction)

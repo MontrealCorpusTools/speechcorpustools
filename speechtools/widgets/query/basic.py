@@ -213,6 +213,7 @@ class ValueWidget(QtWidgets.QWidget):
             self.hierarchy = c.hierarchy
         self.to_find = to_find
         self.levels = None
+        self.ann_type = None
         super(ValueWidget, self).__init__()
 
         self.mainLayout = QtWidgets.QHBoxLayout()
@@ -240,7 +241,7 @@ class ValueWidget(QtWidgets.QWidget):
             self.compWidget.addItem('Not right aligned with')
             self.compWidget.addItem('Not left aligned with')
             self.valueWidget = AttributeWidget(self.config, self.to_find, alignment = True)
-
+            self.ann_type = 'alignment'
         elif new_type == 'subset':
             self.compWidget.addItem('==')
             self.compWidget.addItem('!=')
@@ -251,7 +252,7 @@ class ValueWidget(QtWidgets.QWidget):
             if annotation in self.hierarchy.subset_tokens:
                 for s in self.hierarchy.subset_tokens[annotation]:
                     self.valueWidget.addItem(s)
-
+            self.ann_type = 'subset'
         elif new_type in (int, float):
             self.compWidget.addItem('==')
             self.compWidget.addItem('!=')
@@ -260,8 +261,8 @@ class ValueWidget(QtWidgets.QWidget):
             self.compWidget.addItem('<')
             self.compWidget.addItem('<=')
             self.valueWidget = QtWidgets.QLineEdit()
+            self.ann_type = float
         elif new_type == str:
-
             if self.hierarchy.has_type_property(annotation, label):
                 with CorpusContext(self.config) as c:
                     if label == 'label':
@@ -271,7 +272,7 @@ class ValueWidget(QtWidgets.QWidget):
                 boolean = self.updateValueWidget()
             elif annotation == 'speaker':
                 with CorpusContext(self.config) as c:
-                    self.levels = c.speakers
+                    self.levels = c.census.get_speaker_property_levels(label)
                 boolean = self.updateValueWidget()
             elif annotation == 'discourse':
                 with CorpusContext(self.config) as c:
@@ -285,20 +286,25 @@ class ValueWidget(QtWidgets.QWidget):
                 self.compWidget.addItem('==')
                 self.compWidget.addItem('!=')
                 self.compWidget.addItem('regex')
+                self.ann_type = str
             self.mainLayout.addWidget(self.compWidget)
             self.mainLayout.addWidget(self.valueWidget)
+            
         elif new_type == bool:
             self.compWidget.addItem('==')
             self.valueWidget = QtWidgets.QComboBox()
             self.valueWidget.addItem('True')
             self.valueWidget.addItem('False')
             self.valueWidget.addItem('Null')
+            self.ann_type = bool
 
         if new_type == str:
-            pass
+            self.updateValueWidget()
+            #pass
         else:
             self.mainLayout.addWidget(self.compWidget)
             self.mainLayout.addWidget(self.valueWidget)
+            #self.ann_type = str
 
     def updateValueWidget(self):
         boolean = False
@@ -322,6 +328,7 @@ class ValueWidget(QtWidgets.QWidget):
                     self.valueWidget.addItem('False')
                     self.valueWidget.addItem('Null')
                     boolean = True
+                    self.ann_type = bool
 
 
                 else:
@@ -329,6 +336,7 @@ class ValueWidget(QtWidgets.QWidget):
                     for l in self.levels:
                         self.valueWidget.addItem(l)
                     self.mainLayout.addWidget(self.valueWidget)
+                    self.ann_type = str
 
             else:
                 self.valueWidget = QtWidgets.QLineEdit()
@@ -357,18 +365,21 @@ class ValueWidget(QtWidgets.QWidget):
         elif isinstance(self.valueWidget, QtWidgets.QComboBox):
             text = self.valueWidget.currentText()
         else:
-            text = self.valueWidget.text()
+            text = str(self.valueWidget.text())
+
         if text == 'Null':
             value = None
         elif text == 'True':
             value = True
         elif text == 'False':
             value = False
-        else:
+        elif self.ann_type is not str:
             try:
                 value = float(text)
             except ValueError:
                 value = text
+        else:
+            value = text
         return value
 
     def setOperator(self, operator):
