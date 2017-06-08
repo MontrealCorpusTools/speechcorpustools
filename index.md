@@ -18,4 +18,4 @@ McAuliffe, M., Stengel-Eskin, E., Socolof, M. and Sonderegger, M. (2016). Speech
 
 If you cannot cite a computer program, please cite:
 
-Michael McAuliffe, Elias Stengel-Eskin, Michaela Socolof, and Morgan Sonderegger (2017). Polyglot and Speech Corpus Tools: a system for representing, integrating, and querying speech corpora. In *Proceedings of the 18th Conference of the International Speech Communication Association*. [Paper pdf](https://montrealcorpustools.github.io/speechcorpustools/images/PG-SCT_paper_Interspeech2017.pdf)
+Michael McAuliffe, Elias Stengel-Eskin, Michaela Socolof, and Morgan Sonderegger (2017). Polyglot and Speech Corpus Tools: a system for representing, integrating, and querying speech corpora. In *Proceedings of the 18th Conference of the International Speech Communication Association*. [Paper PDF](https://montrealcorpustools.github.io/speechcorpustools/images/PG-SCT_paper_Interspeech2017.pdf)
