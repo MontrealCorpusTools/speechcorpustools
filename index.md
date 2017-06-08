@@ -1,0 +1,21 @@
+## Speech Corpus Tools
+
+Speech Corpus Tools is a desktop application built to represent and query large scale speech corpora.  Speech Corpus Tools uses PolyglotDB to interact with multiple databases that are built for the kinds of data in speech corpora.  Neo4j contains the representations of the discourses and speech in time as a directed acyclic graph.  SQL databases contain the lexical, phonological and speaker information in table format, and also contain all of the calculated acoustic information.  Please see the manual for more information and tutorials (http://speech-corpus-tools.readthedocs.io/)
+
+### Executable downloads
+
+Please visit the release page (https://github.com/MontrealCorpusTools/speechcorpustools/releases) and download the latest release.
+
+### Authors and Contributors
+
+* Michael McAuliffe (@mmcauliffe, michael.e.mcauliffe@gmail.com)
+* Elias Stengel-Eskin (@esteng)
+* Michaela Socolof (@michaelasocolof)
+
+### Citation
+
+McAuliffe, M., Stengel-Eskin, E., Socolof, M. and Sonderegger, M. (2016). Speech Corpus Tools [Computer program]. Version 0.5, retrieved 13 July 2016 from http://montrealcorpustools.github.io/speechcorpustools.
+
+If you cannot cite a computer program, please cite:
+
+McAuliffe, M. and Sonderegger M. (2016). Speech Corpus Tools: an application for easier analysis of large speech corpora. Presented at the Tools for Big Data in Laboratory Phonology workshop.

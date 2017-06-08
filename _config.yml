@@ -1,0 +1,8 @@
+title: Speech Corpus Tools
+description: Easier analysis of large speech corpora
+google_analytics: 
+show_downloads: true
+theme: jekyll-theme-dinky
+
+gems:
+  - jekyll-mentions
